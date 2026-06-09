@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#E62027">
+  <title>Admin · Tiendita</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/svg+xml" href="./logo.svg">
+  <link rel="apple-touch-icon" href="./logo.svg">
+  <link rel="stylesheet" href="./styles.css?v=2">
+</head>
+<body>
+
+  <div class="page">
+
+    <header class="app-header">
+      <a href="./catalogo.html" class="app-header__brand">
+        <img src="./logo.svg" alt="" class="app-header__logo">
+        <span class="app-header__name">TIENDITA</span>
+        <span class="app-header__heart">♥</span>
+      </a>
+      <div class="app-header__actions">
+        <span class="pill pill--ghost">Admin</span>
+      </div>
+    </header>
+
+    <main class="app-main">
+
+      <div class="section-eyebrow">Panel</div>
+      <h1 class="section-h">Admin dashboard</h1>
+
+      <div id="dashState" class="text-center" style="padding:32px">
+        <div class="bot-typing" style="display:inline-flex">
+          <span class="bot-typing__dot"></span>
+          <span class="bot-typing__dot"></span>
+          <span class="bot-typing__dot"></span>
+        </div>
+        <p style="color:#6B7280;margin-top:8px">Cargando...</p>
+      </div>
+
+      <div id="dashboard" class="hidden">
+
+        <div class="admin-grid">
+          <div class="admin-stat admin-stat--hero">
+            <div class="admin-stat__label">Ventas hoy</div>
+            <div class="admin-stat__value" id="kVentasHoy">$0</div>
+            <div class="admin-stat__sub" id="kUdsHoy">0 unidades</div>
+          </div>
+          <div class="admin-stat">
+            <div class="admin-stat__label" style="color:#6B7280">Deuda total</div>
+            <div class="admin-stat__value" style="color:#E62027" id="kDeudaTot">$0</div>
+            <div class="admin-stat__sub" style="color:#94A3B8" id="kUsuariosDeuda">0 usuarios</div>
+          </div>
+          <div class="admin-stat">
+            <div class="admin-stat__label" style="color:#6B7280">Stock bajo</div>
+            <div class="admin-stat__value" id="kStockBajo">0</div>
+            <div class="admin-stat__sub" style="color:#94A3B8">productos</div>
+          </div>
+        </div>
+
+        <div class="admin-list">
+          <h3 class="admin-list__h">
+            Usuarios con deuda
+            <span class="pill pill--rosa" id="usrCount">0</span>
+          </h3>
+          <div id="usrList"></div>
+        </div>
+
+        <div class="admin-list">
+          <h3 class="admin-list__h">
+            Productos en alerta
+            <span class="pill pill--warn" id="stockCount">0</span>
+          </h3>
+          <div id="stockList"></div>
+        </div>
+
+        <div class="admin-list">
+          <h3 class="admin-list__h">Acciones rápidas</h3>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button id="btnReporte" class="btn btn--rojo btn--full">📧 Enviar reporte diario</button>
+            <button id="btnAgregarUsr" class="btn btn--primary btn--full">➕ Agregar usuario</button>
+            <button id="btnReabastecer" class="btn btn--outline btn--full">📦 Reabastecer producto</button>
+          </div>
+        </div>
+
+        <div class="admin-list">
+          <h3 class="admin-list__h">
+            Últimas sugerencias
+            <span class="pill" id="sugCount">0</span>
+          </h3>
+          <div id="sugList"></div>
+        </div>
+
+      </div>
+    </main>
+
+    <nav class="app-bottomnav">
+      <a href="./catalogo.html" class="app-bottomnav__item">
+        <span class="app-bottomnav__ico">🛍</span>Catálogo
+      </a>
+      <a href="./perfil.html" class="app-bottomnav__item">
+        <span class="app-bottomnav__ico">👤</span>Perfil
+      </a>
+      <a href="./admin.html" class="app-bottomnav__item app-bottomnav__item--active">
+        <span class="app-bottomnav__ico">⚙</span>Admin
+      </a>
+    </nav>
+  </div>
+
+  <div id="offlineBanner" class="offline-banner">Sin conexión</div>
+
+  <script src="./api.js?v=2"></script>
+  <script src="./app.js?v=2"></script>
+  <script>
+    const session = tiendita.requireSession();
+    if (!session) throw new Error('redirigiendo');
+    if (session.rol !== 'admin') {
+      tiendita.toast('Acceso restringido', 'error');
+      setTimeout(() => window.location.href = './catalogo.html', 1200);
+      throw new Error('no admin');
+    }
+
+    tiendita.watchOnline();
+    tiendita.initDebug();
+
+    async function cargar() {
+      const res = await api.adminDashboard(session.correo);
+      document.getElementById('dashState').classList.add('hidden');
+
+      if (!res.ok) {
+        tiendita.toast(res.error || 'Error', 'error');
+        return;
+      }
+
+      document.getElementById('dashboard').classList.remove('hidden');
+
+      // KPIs
+      document.getElementById('kVentasHoy').textContent = tiendita.pesos(res.ventasHoy).replace('.00','');
+      document.getElementById('kUdsHoy').textContent = res.unidadesHoy + ' unidades';
+      document.getElementById('kDeudaTot').textContent = tiendita.pesos(res.deudaTotal).replace('.00','');
+      document.getElementById('kUsuariosDeuda').textContent = (res.usuariosConDeuda || []).length + ' usuarios';
+      document.getElementById('kStockBajo').textContent = (res.stockBajo || []).length;
+
+      // Usuarios con deuda
+      const usrList = document.getElementById('usrList');
+      const usuarios = res.usuariosConDeuda || [];
+      document.getElementById('usrCount').textContent = usuarios.length;
+      if (usuarios.length === 0) {
+        usrList.innerHTML = '<p style="color:#6B7280;text-align:center;padding:16px;font-size:14px">Nadie debe nada 🎉</p>';
+      } else {
+        usrList.innerHTML = usuarios.map(u => `
+          <div class="admin-list__row">
+            <div style="flex:1;min-width:0">
+              <div class="admin-list__name">${escapeHtml(u.nombre || u.correo)}</div>
+              <div class="admin-list__sub">${escapeHtml(u.correo)}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="admin-list__amount">${tiendita.pesos(u.deuda)}</div>
+              <button class="btn btn--primary btn--tiny" data-act="liquidar" data-correo="${escapeHtml(u.correo)}" data-deuda="${u.deuda}">Cobrar</button>
+            </div>
+          </div>`).join('');
+      }
+
+      // Stock bajo
+      const stockList = document.getElementById('stockList');
+      const productos = res.stockBajo || [];
+      document.getElementById('stockCount').textContent = productos.length;
+      if (productos.length === 0) {
+        stockList.innerHTML = '<p style="color:#6B7280;text-align:center;padding:16px;font-size:14px">Todo bien abastecido ✓</p>';
+      } else {
+        stockList.innerHTML = productos.map(p => `
+          <div class="admin-list__row">
+            <div style="flex:1;min-width:0">
+              <div class="admin-list__name">${escapeHtml(p.nombre)}</div>
+              <div class="admin-list__sub">${p.stock} uds · mín ${p.stockMinimo}</div>
+            </div>
+            <button class="btn btn--outline btn--tiny" data-act="resurtir" data-sku="${escapeHtml(p.sku)}" data-nombre="${escapeHtml(p.nombre)}">Resurtir</button>
+          </div>`).join('');
+      }
+
+      // Sugerencias
+      const sugList = document.getElementById('sugList');
+      const sugs = res.sugerencias || [];
+      document.getElementById('sugCount').textContent = sugs.length;
+      if (sugs.length === 0) {
+        sugList.innerHTML = '<p style="color:#6B7280;text-align:center;padding:16px;font-size:14px">Sin sugerencias por ahora.</p>';
+      } else {
+        sugList.innerHTML = sugs.slice(0, 8).map(s => `
+          <div class="admin-list__row" style="align-items:flex-start">
+            <div style="flex:1;min-width:0">
+              <div class="admin-list__name">${escapeHtml(s.correo)} <span style="font-weight:normal;font-size:11px;color:#6B7280">· ${escapeHtml(s.tipo)}</span></div>
+              <div class="admin-list__sub" style="margin-top:4px;color:#1A1A1A;white-space:normal;line-height:1.4">${escapeHtml(s.mensaje)}</div>
+              <div style="font-size:11px;color:#94A3B8;margin-top:4px">${s.fechaMx || ''}${s.calificacion ? ' · ' + '★'.repeat(s.calificacion) : ''}</div>
+            </div>
+          </div>`).join('');
+      }
+
+      // wire acciones
+      document.querySelectorAll('[data-act="liquidar"]').forEach(b => {
+        b.addEventListener('click', async () => {
+          const correo = b.dataset.correo;
+          const deuda  = b.dataset.deuda;
+          if (!confirm('¿Liquidar $' + deuda + ' de ' + correo + '?')) return;
+          b.disabled = true; b.textContent = '...';
+          const r = await api.liquidar(session.correo, correo, 'efectivo');
+          if (r.ok) {
+            tiendita.toast('Liquidado $' + r.deudaLiquidada);
+            cargar();
+          } else {
+            tiendita.toast(r.error || 'Error', 'error');
+            b.disabled = false; b.textContent = 'Cobrar';
+          }
+        });
+      });
+
+      document.querySelectorAll('[data-act="resurtir"]').forEach(b => {
+        b.addEventListener('click', async () => {
+          const sku = b.dataset.sku;
+          const nombre = b.dataset.nombre;
+          const cant = prompt('¿Cuántas unidades agregaste de ' + nombre + '?', '20');
+          if (!cant) return;
+          const n = parseInt(cant, 10);
+          if (!n || n <= 0) { tiendita.toast('Cantidad inválida', 'warn'); return; }
+          b.disabled = true; b.textContent = '...';
+          const r = await api.reabastecer(session.correo, sku, n);
+          if (r.ok) {
+            tiendita.toast('+' + n + ' uds de ' + nombre);
+            cargar();
+          } else {
+            tiendita.toast(r.error || 'Error', 'error');
+            b.disabled = false; b.textContent = 'Resurtir';
+          }
+        });
+      });
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+    }
+
+    document.getElementById('btnReporte').addEventListener('click', async () => {
+      if (!confirm('¿Enviar reporte ahora a tu correo?')) return;
+      const btn = document.getElementById('btnReporte');
+      btn.disabled = true;
+      btn.textContent = 'Enviando...';
+      const r = await api.forzarReporte(session.correo);
+      btn.disabled = false;
+      btn.textContent = '📧 Enviar reporte diario';
+      tiendita.toast(r.ok ? 'Reporte enviado' : (r.error || 'Error'), r.ok ? 'ok' : 'error');
+    });
+
+    document.getElementById('btnAgregarUsr').addEventListener('click', async () => {
+      const correo = prompt('Correo del nuevo usuario:');
+      if (!correo) return;
+      const nombre = prompt('Nombre:', correo.split('@')[0]);
+      const limite = parseFloat(prompt('Límite de crédito en MXN:', '500')) || 500;
+      const r = await api.agregarUsuario(session.correo, correo, nombre, limite);
+      tiendita.toast(r.ok ? 'Usuario agregado' : (r.error || 'Error'), r.ok ? 'ok' : 'error');
+      if (r.ok) cargar();
+    });
+
+    document.getElementById('btnReabastecer').addEventListener('click', () => {
+      tiendita.toast('Usa "Resurtir" en cada producto', 'warn');
+    });
+
+    cargar();
+  </script>
+</body>
+</html>

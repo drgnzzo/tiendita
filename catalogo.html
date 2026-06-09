@@ -8,7 +8,7 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" type="image/svg+xml" href="./logo.svg">
   <link rel="apple-touch-icon" href="./logo.svg">
-  <link rel="stylesheet" href="./styles.css?v=1">
+  <link rel="stylesheet" href="./styles.css?v=2">
 </head>
 <body>
 
@@ -21,32 +21,70 @@
         <span class="app-header__heart">♥</span>
       </a>
       <div class="app-header__actions">
-        <span id="deudaPill" class="pill pill--rosa">Deuda: $0</span>
+        <span id="deudaPill" class="pill pill--blanca">Deuda $0</span>
       </div>
     </header>
 
     <main class="app-main">
 
-      <h1 class="catalogo__title">Catálogo</h1>
+      <div class="catalogo-top">
+        <h1 class="catalogo__title">
+          Catálogo <span class="catalogo__title-script">consiéntete</span>
+        </h1>
 
-      <div id="filtros" class="catalogo__filtros"></div>
+        <div class="search-bar">
+          <span class="search-bar__icon">🔍</span>
+          <input id="search" type="search" placeholder="Buscar producto..." autocomplete="off">
+        </div>
 
-      <div id="estadoCarga" class="text-center">
-        <div class="spinner"></div>
-        <p style="color:#6B7280">Cargando catálogo...</p>
+        <div id="filtros" class="catalogo__filtros"></div>
+      </div>
+
+      <div id="estadoCarga" class="catalogo">
+        <!-- skeleton loaders -->
+        <div class="product-skeleton">
+          <div class="skeleton product-skeleton__icon"></div>
+          <div class="product-skeleton__info">
+            <div class="skeleton product-skeleton__line"></div>
+            <div class="skeleton product-skeleton__line product-skeleton__line--short"></div>
+          </div>
+          <div class="skeleton product-skeleton__price"></div>
+        </div>
+        <div class="product-skeleton">
+          <div class="skeleton product-skeleton__icon"></div>
+          <div class="product-skeleton__info">
+            <div class="skeleton product-skeleton__line"></div>
+            <div class="skeleton product-skeleton__line product-skeleton__line--short"></div>
+          </div>
+          <div class="skeleton product-skeleton__price"></div>
+        </div>
+        <div class="product-skeleton">
+          <div class="skeleton product-skeleton__icon"></div>
+          <div class="product-skeleton__info">
+            <div class="skeleton product-skeleton__line"></div>
+            <div class="skeleton product-skeleton__line product-skeleton__line--short"></div>
+          </div>
+          <div class="skeleton product-skeleton__price"></div>
+        </div>
       </div>
 
       <div id="catalogo" class="catalogo hidden"></div>
 
       <div id="estadoVacio" class="empty hidden">
-        <div class="empty__icon">😔</div>
+        <div class="empty__icon">🛍️</div>
         <div class="empty__title">Sin productos por ahora</div>
         <div class="empty__sub">El admin está reabasteciendo.</div>
+        <div class="empty__script">vuelve pronto</div>
+      </div>
+
+      <div id="estadoNoMatch" class="empty hidden">
+        <div class="empty__icon">🔍</div>
+        <div class="empty__title">No encontré nada</div>
+        <div class="empty__sub">Prueba con otra palabra.</div>
       </div>
 
     </main>
 
-    <!-- Bottom nav (mobile) -->
     <nav class="app-bottomnav">
       <a href="./catalogo.html" class="app-bottomnav__item app-bottomnav__item--active">
         <span class="app-bottomnav__ico">🛒</span>
@@ -54,7 +92,7 @@
       </a>
       <a href="./perfil.html" class="app-bottomnav__item">
         <span class="app-bottomnav__ico">👤</span>
-        Perfil
+        Mi cuenta
       </a>
     </nav>
 
@@ -66,16 +104,18 @@
       <div class="cart-bar__label"><span id="cartCount">0</span> productos</div>
       <div class="cart-bar__total" id="cartTotal">$0.00</div>
     </div>
-    <span class="btn btn--primary">Confirmar →</span>
+    <span class="btn btn--primary btn--tiny">Ver carrito →</span>
   </button>
 
   <!-- Modal del carrito -->
   <div id="sheetBackdrop" class="sheet-backdrop">
     <div class="sheet" onclick="event.stopPropagation()">
-      <h2 class="sheet__title">Tu carrito</h2>
+      <h2 class="sheet__title">
+        Tu carrito <span class="sheet__title-script">¡a la cuenta!</span>
+      </h2>
       <div id="sheetItems"></div>
       <div class="sheet__total">
-        <span class="sheet__total-label">Total a sumar a tu cuenta</span>
+        <span class="sheet__total-label">Se suma a tu cuenta</span>
         <span class="sheet__total-value" id="sheetTotal">$0.00</span>
       </div>
       <div style="display:flex;gap:8px;margin-top:24px">
@@ -91,11 +131,11 @@
   <!-- Panel del bot -->
   <div id="botPanel" class="bot-panel">
     <div class="bot-panel__head">
-      <span class="bot-panel__title">¿Qué necesitas?</span>
+      <span class="bot-panel__title">¿qué necesitas?</span>
       <button id="botClose" class="bot-panel__close" aria-label="Cerrar">×</button>
     </div>
     <div id="botLog" class="bot-panel__log">
-      <div class="bot-msg bot-msg--bot">Hola, pregúntame "¿cuánto debo?" o "¿hay coca?". Escribe "ayuda" para ver más.</div>
+      <div class="bot-msg bot-msg--bot">Hola 💕 pregúntame "¿cuánto debo?" o "¿hay coca?". Escribe "ayuda" para ver más.</div>
     </div>
     <form id="botForm" class="bot-panel__form" onsubmit="return false">
       <input id="botInput" type="text" placeholder="Escribe..." autocomplete="off">
@@ -103,30 +143,31 @@
     </form>
   </div>
 
-  <script src="./api.js?v=1"></script>
-  <script src="./app.js?v=1"></script>
+  <script src="./api.js?v=2"></script>
+  <script src="./app.js?v=2"></script>
   <script>
-    // ---- Sesion ----
     const session = tiendita.requireSession();
     if (!session) throw new Error('redirigiendo');
 
-    // ---- Estado global ----
     let productos = [];
     let categoriaActiva = 'todos';
+    let textoBusqueda = '';
 
     const elCatalogo  = document.getElementById('catalogo');
     const elCarga     = document.getElementById('estadoCarga');
     const elVacio     = document.getElementById('estadoVacio');
+    const elNoMatch   = document.getElementById('estadoNoMatch');
     const elFiltros   = document.getElementById('filtros');
     const elDeuda     = document.getElementById('deudaPill');
+    const elSearch    = document.getElementById('search');
 
-    // ---- Pintar deuda ----
     function renderDeuda() {
-      elDeuda.textContent = 'Deuda: ' + tiendita.pesos(session.deudaAcumulada);
+      const cerca = session.deudaAcumulada >= session.limiteCredito * 0.8;
+      elDeuda.textContent = 'Deuda ' + tiendita.pesosCorto(session.deudaAcumulada);
+      elDeuda.className = 'pill ' + (cerca ? 'pill--warn' : 'pill--blanca');
     }
     renderDeuda();
 
-    // ---- Cargar catalogo ----
     async function cargarCatalogo() {
       const res = await api.catalogo();
       elCarga.classList.add('hidden');
@@ -165,35 +206,52 @@
     }
 
     function renderCatalogo() {
-      const filtrados = categoriaActiva === 'todos'
-        ? productos
+      let filtrados = categoriaActiva === 'todos'
+        ? productos.slice()
         : productos.filter(p => p.categoria === categoriaActiva);
+
+      if (textoBusqueda) {
+        const q = textoBusqueda.toLowerCase();
+        filtrados = filtrados.filter(p =>
+          p.nombre.toLowerCase().includes(q) ||
+          (p.categoria || '').toLowerCase().includes(q)
+        );
+      }
+
+      if (filtrados.length === 0) {
+        elCatalogo.innerHTML = '';
+        elNoMatch.classList.remove('hidden');
+        return;
+      }
+      elNoMatch.classList.add('hidden');
 
       elCatalogo.innerHTML = filtrados.map((p, idx) => {
         const iconColor = idx % 2 === 0 ? 'rojo' : 'rosa';
-        let metaTxt, metaCls;
+        let metaTxt, metaCls, badge = '';
         if (p.stock === 0) {
-          metaTxt = 'Agotado';
+          metaTxt = 'Sin stock';
           metaCls = 'product__meta--agotado';
+          badge = '<div class="product__badge product__badge--agotado">AGOTADO</div>';
         } else if (p.stock <= p.stockMinimo) {
           metaTxt = 'Últimas ' + p.stock + ' uds';
           metaCls = 'product__meta--bajo';
+          badge = '<div class="product__badge">ÚLTIMAS</div>';
         } else {
           metaTxt = p.stock + ' uds';
           metaCls = '';
         }
         const disabled = p.stock === 0 ? 'disabled' : '';
-
         return `
           <div class="product">
+            ${badge}
             <div class="product__icon product__icon--${iconColor}">${iconoPorCategoria(p.categoria)}</div>
             <div class="product__info">
-              <div class="product__name">${escapeHtml(p.nombre)}</div>
+              <div class="product__name">${tiendita.esc(p.nombre)}</div>
               <div class="product__meta ${metaCls}">${metaTxt}</div>
             </div>
             <div class="product__action">
-              <div class="product__price">${tiendita.pesos(p.precio).replace('.00','')}</div>
-              <button class="btn btn--primary btn--tiny" data-sku="${p.sku}" data-precio="${p.precio}" data-nombre="${escapeHtml(p.nombre)}" ${disabled}>Llevar</button>
+              <div class="product__price">${tiendita.pesosCorto(p.precio)}</div>
+              <button class="btn btn--primary btn--tiny" data-sku="${p.sku}" data-precio="${p.precio}" data-nombre="${tiendita.esc(p.nombre)}" ${disabled}>Llevar</button>
             </div>
           </div>
         `;
@@ -205,6 +263,10 @@
           const precio = btn.dataset.precio;
           const nombre = btn.dataset.nombre;
           tiendita.addToCart(sku, nombre, precio);
+          btn.classList.remove('btn--bounce');
+          // forzar reflow para reiniciar la animacion
+          void btn.offsetWidth;
+          btn.classList.add('btn--bounce');
           renderCart();
           tiendita.toast(nombre + ' agregado');
         });
@@ -222,12 +284,18 @@
       return map[cat] || '🛍️';
     }
 
-    function escapeHtml(s) {
-      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
-    }
+    // ---- buscador ----
+    let searchTimer;
+    elSearch.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        textoBusqueda = elSearch.value.trim();
+        renderCatalogo();
+      }, 180);
+    });
 
     // ---- Carrito ----
-    const elCartBar  = document.getElementById('cartBar');
+    const elCartBar   = document.getElementById('cartBar');
     const elCartCount = document.getElementById('cartCount');
     const elCartTotal = document.getElementById('cartTotal');
 
@@ -241,18 +309,14 @@
     }
     renderCart();
 
-    // ---- Sheet del carrito ----
+    // ---- Sheet ----
     const elSheet      = document.getElementById('sheetBackdrop');
     const elSheetItems = document.getElementById('sheetItems');
     const elSheetTotal = document.getElementById('sheetTotal');
 
-    function abrirSheet() {
-      renderSheet();
-      elSheet.classList.add('is-visible');
-    }
-    function cerrarSheet() {
-      elSheet.classList.remove('is-visible');
-    }
+    function abrirSheet() { renderSheet(); elSheet.classList.add('is-visible'); }
+    function cerrarSheet() { elSheet.classList.remove('is-visible'); }
+
     function renderSheet() {
       const cart = tiendita.getCart();
       if (cart.length === 0) {
@@ -262,13 +326,13 @@
       }
       elSheetItems.innerHTML = cart.map(it => `
         <div class="sheet__item">
-          <div>
-            <div style="font-weight:500">${escapeHtml(it.nombre)}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:14px">${tiendita.esc(it.nombre)}</div>
             <div style="font-size:12px;color:#6B7280">${tiendita.pesos(it.precio)} c/u</div>
           </div>
           <div class="sheet__qty">
             <button class="sheet__qty-btn" data-action="dec" data-sku="${it.sku}">−</button>
-            <span style="min-width:24px;text-align:center;font-weight:500">${it.cantidad}</span>
+            <span style="min-width:24px;text-align:center;font-weight:600">${it.cantidad}</span>
             <button class="sheet__qty-btn" data-action="inc" data-sku="${it.sku}">+</button>
           </div>
         </div>
@@ -305,15 +369,15 @@
       const res = await api.comprar(session.correo, items);
 
       if (res.ok) {
-        // actualizar sesion con la nueva deuda
         session.deudaAcumulada = res.deudaNueva;
         tiendita.setSession(session);
         tiendita.clearCart();
         renderCart();
         renderDeuda();
         cerrarSheet();
+        tiendita.confetti(100);
         tiendita.toast('¡Listo! Tu nueva deuda: ' + tiendita.pesos(res.deudaNueva));
-        // recargar el catalogo para reflejar stock actualizado
+        // refrescar catalogo para reflejar stock actualizado
         elCarga.classList.remove('hidden');
         elCatalogo.classList.add('hidden');
         cargarCatalogo();
@@ -356,7 +420,6 @@
       agregarBotMsg(res.respuesta || (res.error || '...'), 'bot');
     });
 
-    // ---- Arrancar ----
     cargarCatalogo();
   </script>
 

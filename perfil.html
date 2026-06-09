@@ -8,7 +8,7 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" type="image/svg+xml" href="./logo.svg">
   <link rel="apple-touch-icon" href="./logo.svg">
-  <link rel="stylesheet" href="./styles.css?v=1">
+  <link rel="stylesheet" href="./styles.css?v=2">
 </head>
 <body>
 
@@ -21,32 +21,70 @@
         <span class="app-header__heart">♥</span>
       </a>
       <div class="app-header__actions">
-        <button id="btnSalir" class="pill pill--negro" style="cursor:pointer;border-color:#FFFFFF">Salir</button>
+        <a id="adminLink" href="./admin.html" class="pill pill--ghost hidden">Admin</a>
+        <button id="btnSalir" class="pill pill--negro">Salir</button>
       </div>
     </header>
 
     <main class="app-main">
 
       <div class="perfil__hero">
+        <div class="section-eyebrow" style="color:rgba(255,255,255,0.85)">Tu cuenta</div>
         <div class="perfil__nombre" id="usrNombre">—</div>
         <div class="perfil__correo" id="usrCorreo">—</div>
       </div>
 
       <div class="perfil-grid">
 
-        <div class="card debt">
-          <div class="debt__label">Tu deuda acumulada</div>
-          <div class="debt__value" id="debtValue">$0.00</div>
-          <div class="debt__limit">Límite de crédito: <span id="debtLimit">$0</span></div>
-          <div class="debt__bar"><div id="debtFill" class="debt__bar-fill" style="width:0%"></div></div>
-          <p style="font-size:13px;color:#6B7280;margin-top:16px;line-height:1.5">
-            La deuda se paga completa en quincena. Cuando se confirma el pago, vuelve a cero.
+        <!-- Card de deuda con donut -->
+        <div class="card">
+          <div class="section-eyebrow">Deuda acumulada</div>
+
+          <div class="deuda-donut">
+            <svg viewBox="0 0 120 120" class="donut-svg">
+              <defs>
+                <linearGradient id="donutGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#FF6B9D"/>
+                  <stop offset="100%" stop-color="#D63384"/>
+                </linearGradient>
+              </defs>
+              <circle cx="60" cy="60" r="50" class="donut-bg"/>
+              <circle id="donutFill" cx="60" cy="60" r="50" class="donut-fill"
+                      stroke-dasharray="0 314.16" transform="rotate(-90 60 60)"/>
+              <text id="donutLabel" x="60" y="68" class="donut-label">0%</text>
+            </svg>
+            <div class="donut-info">
+              <div class="donut-info__label">Tu deuda</div>
+              <div class="donut-info__value" id="debtValue">$0.00</div>
+              <div class="donut-info__limit">Límite: <span id="debtLimit">$0</span></div>
+            </div>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="stat__label">Total gastado</div>
+              <div class="stat__value" id="statTotal">$0</div>
+            </div>
+            <div class="stat">
+              <div class="stat__label">Este mes</div>
+              <div class="stat__value" id="statMes">$0</div>
+            </div>
+            <div class="stat">
+              <div class="stat__label">Favorito</div>
+              <div class="stat__value" id="statFav" style="font-size:13px">—</div>
+            </div>
+          </div>
+
+          <p style="font-size:12px;color:#6B7280;margin-top:16px;line-height:1.5">
+            Tu deuda se paga completa en quincena. Cuando se confirme el pago, vuelve a cero.
           </p>
         </div>
 
+        <!-- Card de sugerencia -->
         <div class="card">
-          <h3 class="section-title" style="margin-top:0">Sugerir algo</h3>
-          <div class="sugerencia-form">
+          <div class="section-eyebrow">Cuéntame</div>
+          <h3 style="font-family:var(--f-serif);font-size:22px;margin:0 0 16px">Sugerir algo</h3>
+          <div class="sugerencia-form" style="padding:0">
             <label class="label" for="sugTipo">Tipo</label>
             <select id="sugTipo">
               <option value="producto">Quiero un producto</option>
@@ -58,6 +96,7 @@
             <label class="label" for="sugMsg">Mensaje</label>
             <textarea id="sugMsg" placeholder="Cuéntame..." maxlength="500"></textarea>
 
+            <label class="label" style="margin-top:12px">Calificación</label>
             <div class="stars" id="stars">
               <span class="star" data-val="1">★</span>
               <span class="star" data-val="2">★</span>
@@ -72,57 +111,82 @@
 
       </div>
 
-      <h3 class="section-title">Tu historial</h3>
+      <div class="section-eyebrow" style="margin-top:32px">Recientes</div>
+      <h3 class="section-h">Tu historial</h3>
       <div id="historial">
-        <div class="spinner"></div>
+        <div class="skeleton-product"><div class="skeleton sk-icon"></div><div class="sk-lines"><div class="skeleton sk-line"></div><div class="skeleton sk-line"></div></div><div class="skeleton sk-price"></div></div>
       </div>
 
     </main>
 
     <nav class="app-bottomnav">
       <a href="./catalogo.html" class="app-bottomnav__item">
-        <span class="app-bottomnav__ico">🛒</span>
-        Catálogo
+        <span class="app-bottomnav__ico">🛍</span>Catálogo
       </a>
       <a href="./perfil.html" class="app-bottomnav__item app-bottomnav__item--active">
-        <span class="app-bottomnav__ico">👤</span>
-        Perfil
+        <span class="app-bottomnav__ico">👤</span>Perfil
       </a>
     </nav>
-
   </div>
 
-  <script src="./api.js?v=1"></script>
-  <script src="./app.js?v=1"></script>
+  <div id="offlineBanner" class="offline-banner">Sin conexión</div>
+
+  <script src="./api.js?v=2"></script>
+  <script src="./app.js?v=2"></script>
   <script>
     const session = tiendita.requireSession();
     if (!session) throw new Error('redirigiendo');
 
-    // ---- Pintar perfil ----
+    tiendita.watchOnline();
+    tiendita.initDebug();
+
+    if (session.rol === 'admin') {
+      document.getElementById('adminLink').classList.remove('hidden');
+    }
+
     document.getElementById('usrNombre').textContent = session.nombre || 'Sin nombre';
     document.getElementById('usrCorreo').textContent = session.correo;
 
-    function pintarDeuda(deuda, limite) {
+    function actualizarDonut(deuda, limite) {
+      const pct = limite > 0 ? Math.min(100, (deuda / limite) * 100) : 0;
+      const C = 2 * Math.PI * 50; // circumference
+      const dashFilled = (pct / 100) * C;
+      document.getElementById('donutFill').setAttribute('stroke-dasharray', dashFilled + ' ' + (C - dashFilled));
+      document.getElementById('donutLabel').textContent = Math.round(pct) + '%';
       document.getElementById('debtValue').textContent = tiendita.pesos(deuda);
       document.getElementById('debtLimit').textContent = tiendita.pesos(limite);
-      const pct = limite > 0 ? Math.min(100, (deuda / limite) * 100) : 0;
-      const fill = document.getElementById('debtFill');
-      fill.style.width = pct + '%';
-      fill.classList.toggle('debt__bar-fill--alto', pct > 70);
     }
-    pintarDeuda(session.deudaAcumulada, session.limiteCredito);
+    actualizarDonut(session.deudaAcumulada, session.limiteCredito);
 
-    // ---- Cargar perfil fresh + historial ----
     async function refrescar() {
       const res = await api.perfil(session.correo);
       if (res.ok) {
         Object.assign(session, res.usuario);
         tiendita.setSession(session);
-        pintarDeuda(session.deudaAcumulada, session.limiteCredito);
+        actualizarDonut(session.deudaAcumulada, session.limiteCredito);
         renderHistorial(res.historial || []);
+        calcularStats(res.historial || []);
       } else {
         renderHistorial([]);
       }
+    }
+
+    function calcularStats(items) {
+      let total = 0, mes = 0;
+      const ahora = new Date();
+      const esteMes = ahora.getFullYear() + '-' + String(ahora.getMonth() + 1).padStart(2, '0');
+      const conteo = {};
+      items.forEach(v => {
+        const m = parseFloat(v.monto) || 0;
+        total += m;
+        // verificar si es de este mes (timestamp en ISO)
+        if (v.timestamp && v.timestamp.substring(0, 7) === esteMes) mes += m;
+        if (v.producto) conteo[v.producto] = (conteo[v.producto] || 0) + (parseFloat(v.cantidad) || 1);
+      });
+      document.getElementById('statTotal').textContent = tiendita.pesos(total).replace('.00','');
+      document.getElementById('statMes').textContent = tiendita.pesos(mes).replace('.00','');
+      const fav = Object.keys(conteo).sort((a,b) => conteo[b] - conteo[a])[0];
+      document.getElementById('statFav').textContent = fav ? (fav.length > 14 ? fav.substring(0,14)+'...' : fav) : '—';
     }
 
     function renderHistorial(items) {
@@ -130,28 +194,26 @@
       if (!items || items.length === 0) {
         el.innerHTML = `
           <div class="empty">
-            <div class="empty__icon">🛍️</div>
-            <div class="empty__title">Aún no has comprado nada</div>
-            <div class="empty__sub">Tu primera compra aparecerá aquí.</div>
+            <div class="empty__icon">🛍</div>
+            <div class="empty__title">Aún nada por aquí</div>
+            <div class="empty__sub">Tu primera compra aparecerá acá.</div>
           </div>`;
         return;
       }
       el.innerHTML = items.map(v => `
         <div class="history__item">
-          <div>
+          <div style="flex:1;min-width:0">
             <div class="history__producto">${escapeHtml(v.producto)} ${v.cantidad > 1 ? '× ' + v.cantidad : ''}</div>
             <div class="history__fecha">${v.fechaMx || ''} · ${v.estatus}</div>
           </div>
           <div class="history__monto">${tiendita.pesos(v.monto)}</div>
-        </div>
-      `).join('');
+        </div>`).join('');
     }
 
     function escapeHtml(s) {
       return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
     }
 
-    // ---- Estrellas ----
     let calificacion = 0;
     const stars = document.querySelectorAll('.star');
     stars.forEach(s => {
@@ -161,14 +223,10 @@
       });
     });
 
-    // ---- Sugerencia ----
     document.getElementById('btnSugerir').addEventListener('click', async () => {
       const tipo = document.getElementById('sugTipo').value;
       const msg  = document.getElementById('sugMsg').value.trim();
-      if (msg.length < 3) {
-        tiendita.toast('Escribe algo más', 'warn');
-        return;
-      }
+      if (msg.length < 3) { tiendita.toast('Escribe algo más', 'warn'); return; }
       const btn = document.getElementById('btnSugerir');
       btn.disabled = true;
       btn.textContent = 'Enviando...';
@@ -185,13 +243,11 @@
       }
     });
 
-    // ---- Salir ----
     document.getElementById('btnSalir').addEventListener('click', () => {
       if (confirm('¿Cerrar sesión?')) tiendita.cerrarSesion();
     });
 
     refrescar();
   </script>
-
 </body>
 </html>
