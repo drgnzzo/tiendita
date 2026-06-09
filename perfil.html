@@ -8,7 +8,7 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" type="image/svg+xml" href="./logo.svg">
   <link rel="apple-touch-icon" href="./logo.svg">
-  <link rel="stylesheet" href="./styles.css?v=2">
+  <link rel="stylesheet" href="./styles.css?v=3">
 </head>
 <body>
 
@@ -20,6 +20,10 @@
         <span class="app-header__name">TIENDITA</span>
         <span class="app-header__heart">♥</span>
       </a>
+      <nav class="app-header__nav">
+        <a href="./catalogo.html" class="app-header__tab">Catálogo</a>
+        <a href="./perfil.html" class="app-header__tab app-header__tab--active">Mi cuenta</a>
+      </nav>
       <div class="app-header__actions">
         <a id="adminLink" href="./admin.html" class="pill pill--ghost hidden">Admin</a>
         <button id="btnSalir" class="pill pill--negro">Salir</button>
@@ -131,8 +135,8 @@
 
   <div id="offlineBanner" class="offline-banner">Sin conexión</div>
 
-  <script src="./api.js?v=2"></script>
-  <script src="./app.js?v=2"></script>
+  <script src="./api.js?v=3"></script>
+  <script src="./app.js?v=3"></script>
   <script>
     const session = tiendita.requireSession();
     if (!session) throw new Error('redirigiendo');

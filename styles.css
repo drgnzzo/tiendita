@@ -124,6 +124,39 @@ a { color: inherit; }
   gap: var(--s-2);
   color: var(--blanco);
   text-decoration: none;
+  flex-shrink: 0;
+}
+
+/* tabs de navegación en el header (visibles en todas las pantallas) */
+.app-header__nav {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  margin-right: var(--s-3);
+}
+.app-header__tab {
+  padding: 8px 14px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blanco);
+  text-decoration: none;
+  background: transparent;
+  border: 2px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+.app-header__tab:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+.app-header__tab--active {
+  background: var(--blanco);
+  color: var(--vino);
+  border-color: var(--blanco);
+}
+@media (max-width: 480px) {
+  /* en móvil chico esconde las tabs (queda el bottomnav) */
+  .app-header__nav { display: none; }
 }
 .app-header__logo {
   width: 36px;
@@ -504,6 +537,7 @@ a { color: inherit; }
 
 .catalogo {
   display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: var(--s-3);
   padding-bottom: 130px;
 }
@@ -1103,12 +1137,6 @@ a { color: inherit; }
   .login__logo { width: 150px; height: 150px; }
   .login__name { font-size: 60px; }
 
-  .catalogo {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--s-3);
-  }
-  .catalogo-top { grid-column: 1 / -1; }
-
   .product__icon { width: 64px; height: 64px; font-size: 32px; }
   .product__name { font-size: 15px; }
   .product__price { font-size: 24px; }
@@ -1123,7 +1151,7 @@ a { color: inherit; }
 
 @media (min-width: 1024px) {
   .app-main {
-    max-width: 1100px;
+    max-width: 1400px;
     margin: 0 auto;
     width: 100%;
     padding: var(--s-6) var(--s-5);
@@ -1135,14 +1163,14 @@ a { color: inherit; }
   }
 
   .catalogo {
-    grid-template-columns: repeat(3, 1fr);
     padding-bottom: var(--s-5);
   }
 
   .login__logo { width: 180px; height: 180px; }
   .login__name { font-size: 68px; }
+  .login__card { max-width: 440px; }
 
-  .cart-bar { right: calc((100vw - 1100px) / 2 + var(--s-5)); }
+  .cart-bar { right: max(var(--s-5), calc((100vw - 1400px) / 2 + var(--s-5))); }
 
   .perfil-grid {
     display: grid;
@@ -1151,6 +1179,11 @@ a { color: inherit; }
     margin-bottom: var(--s-5);
   }
   .perfil-grid > * { min-width: 0; }
+}
+
+/* pantallas muy anchas: aprovechar mas ancho */
+@media (min-width: 1600px) {
+  .app-main { max-width: 1600px; }
 }
 
 /* ---- Reduced motion ---- */

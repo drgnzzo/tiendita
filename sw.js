@@ -3,16 +3,16 @@
  * Bump CACHE_VERSION cuando subas cambios.
  */
 
-const CACHE_VERSION = 'tiendita-v3';
+const CACHE_VERSION = 'tiendita-v4';
 const ASSETS = [
   './',
   './index.html',
   './catalogo.html',
   './perfil.html',
   './admin.html',
-  './styles.css?v=2',
-  './api.js?v=2',
-  './app.js?v=2',
+  './styles.css?v=3',
+  './api.js?v=3',
+  './app.js?v=3',
   './logo.svg',
   './manifest.json'
 ];
