@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#E62027">
+  <meta name="description" content="Tiendita - acceso para empleados">
+  <title>Tiendita</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/svg+xml" href="./logo.svg">
+  <link rel="apple-touch-icon" href="./logo.svg">
+  <link rel="stylesheet" href="./styles.css?v=1">
+</head>
+<body>
+
+  <div class="login">
+
+    <div class="login__brand">
+      <img src="./logo.svg" alt="" class="login__logo">
+      <div class="login__name">TIENDITA</div>
+      <div class="login__tagline">llévatelo · paga en quincena</div>
+    </div>
+
+    <div class="card login__card">
+
+      <div id="errorBox" class="login__error"></div>
+
+      <label for="email" class="label">Tu correo</label>
+      <input
+        id="email"
+        type="email"
+        class="input"
+        placeholder="tu.correo@gmail.com"
+        autocomplete="email"
+        inputmode="email"
+        spellcheck="false">
+
+      <div style="height:12px"></div>
+
+      <button id="btnLogin" class="btn btn--rojo btn--big btn--full">
+        Entrar
+      </button>
+
+      <p style="font-size:12px;color:#6B7280;margin-top:16px;text-align:center;line-height:1.5">
+        Si no tienes acceso, pide al admin que te dé de alta.
+      </p>
+    </div>
+
+  </div>
+
+  <script src="./api.js?v=1"></script>
+  <script src="./app.js?v=1"></script>
+  <script>
+    // Si ya hay sesion, mandar al catalogo
+    tiendita.redirectIfLogged();
+
+    const input    = document.getElementById('email');
+    const btn      = document.getElementById('btnLogin');
+    const errorBox = document.getElementById('errorBox');
+
+    function showError(msg) {
+      errorBox.textContent = msg;
+      errorBox.classList.add('is-visible');
+      input.classList.add('input--error');
+    }
+
+    function clearError() {
+      errorBox.classList.remove('is-visible');
+      input.classList.remove('input--error');
+    }
+
+    async function intentarLogin() {
+      const email = input.value.trim().toLowerCase();
+      if (!email || !email.includes('@')) {
+        showError('Pon un correo valido.');
+        return;
+      }
+      clearError();
+      btn.disabled = true;
+      const originalText = btn.textContent;
+      btn.textContent = 'Entrando...';
+
+      const res = await api.login(email);
+
+      if (res.ok) {
+        tiendita.setSession(res.usuario);
+        window.location.href = './catalogo.html';
+      } else {
+        showError(res.error || 'No se pudo iniciar sesion.');
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    }
+
+    btn.addEventListener('click', intentarLogin);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') intentarLogin();
+    });
+    input.addEventListener('input', clearError);
+    input.focus();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#E62027">
+  <title>Catálogo · Tiendita</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/svg+xml" href="./logo.svg">
+  <link rel="apple-touch-icon" href="./logo.svg">
+  <link rel="stylesheet" href="./styles.css?v=1">
+</head>
+<body>
+
+  <div class="page">
+
+    <header class="app-header">
+      <a href="./catalogo.html" class="app-header__brand">
+        <img src="./logo.svg" alt="" class="app-header__logo">
+        <span class="app-header__name">TIENDITA</span>
+        <span class="app-header__heart">♥</span>
+      </a>
+      <div class="app-header__actions">
+        <span id="deudaPill" class="pill pill--rosa">Deuda: $0</span>
+      </div>
+    </header>
+
+    <main class="app-main">
+
+      <h1 class="catalogo__title">Catálogo</h1>
+
+      <div id="filtros" class="catalogo__filtros"></div>
+
+      <div id="estadoCarga" class="text-center">
+        <div class="spinner"></div>
+        <p style="color:#6B7280">Cargando catálogo...</p>
+      </div>
+
+      <div id="catalogo" class="catalogo hidden"></div>
+
+      <div id="estadoVacio" class="empty hidden">
+        <div class="empty__icon">😔</div>
+        <div class="empty__title">Sin productos por ahora</div>
+        <div class="empty__sub">El admin está reabasteciendo.</div>
+      </div>
+
+    </main>
+
+    <!-- Bottom nav (mobile) -->
+    <nav class="app-bottomnav">
+      <a href="./catalogo.html" class="app-bottomnav__item app-bottomnav__item--active">
+        <span class="app-bottomnav__ico">🛒</span>
+        Catálogo
+      </a>
+      <a href="./perfil.html" class="app-bottomnav__item">
+        <span class="app-bottomnav__ico">👤</span>
+        Perfil
+      </a>
+    </nav>
+
+  </div>
+
+  <!-- Carrito flotante -->
+  <button id="cartBar" class="cart-bar">
+    <div>
+      <div class="cart-bar__label"><span id="cartCount">0</span> productos</div>
+      <div class="cart-bar__total" id="cartTotal">$0.00</div>
+    </div>
+    <span class="btn btn--primary">Confirmar →</span>
+  </button>
+
+  <!-- Modal del carrito -->
+  <div id="sheetBackdrop" class="sheet-backdrop">
+    <div class="sheet" onclick="event.stopPropagation()">
+      <h2 class="sheet__title">Tu carrito</h2>
+      <div id="sheetItems"></div>
+      <div class="sheet__total">
+        <span class="sheet__total-label">Total a sumar a tu cuenta</span>
+        <span class="sheet__total-value" id="sheetTotal">$0.00</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:24px">
+        <button id="btnCerrarSheet" class="btn btn--ghost" style="flex:1">Seguir</button>
+        <button id="btnConfirmar" class="btn btn--rojo" style="flex:2">Confirmar compra</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bot FAB -->
+  <button id="botFab" class="bot-fab" aria-label="Abrir bot">💬</button>
+
+  <!-- Panel del bot -->
+  <div id="botPanel" class="bot-panel">
+    <div class="bot-panel__head">
+      <span class="bot-panel__title">¿Qué necesitas?</span>
+      <button id="botClose" class="bot-panel__close" aria-label="Cerrar">×</button>
+    </div>
+    <div id="botLog" class="bot-panel__log">
+      <div class="bot-msg bot-msg--bot">Hola, pregúntame "¿cuánto debo?" o "¿hay coca?". Escribe "ayuda" para ver más.</div>
+    </div>
+    <form id="botForm" class="bot-panel__form" onsubmit="return false">
+      <input id="botInput" type="text" placeholder="Escribe..." autocomplete="off">
+      <button type="submit" aria-label="Enviar">→</button>
+    </form>
+  </div>
+
+  <script src="./api.js?v=1"></script>
+  <script src="./app.js?v=1"></script>
+  <script>
+    // ---- Sesion ----
+    const session = tiendita.requireSession();
+    if (!session) throw new Error('redirigiendo');
+
+    // ---- Estado global ----
+    let productos = [];
+    let categoriaActiva = 'todos';
+
+    const elCatalogo  = document.getElementById('catalogo');
+    const elCarga     = document.getElementById('estadoCarga');
+    const elVacio     = document.getElementById('estadoVacio');
+    const elFiltros   = document.getElementById('filtros');
+    const elDeuda     = document.getElementById('deudaPill');
+
+    // ---- Pintar deuda ----
+    function renderDeuda() {
+      elDeuda.textContent = 'Deuda: ' + tiendita.pesos(session.deudaAcumulada);
+    }
+    renderDeuda();
+
+    // ---- Cargar catalogo ----
+    async function cargarCatalogo() {
+      const res = await api.catalogo();
+      elCarga.classList.add('hidden');
+
+      if (!res.ok) {
+        tiendita.toast(res.error || 'Error cargando catalogo', 'error');
+        elVacio.classList.remove('hidden');
+        return;
+      }
+
+      productos = res.productos || [];
+      if (productos.length === 0) {
+        elVacio.classList.remove('hidden');
+        return;
+      }
+
+      construirFiltros();
+      renderCatalogo();
+      elCatalogo.classList.remove('hidden');
+    }
+
+    function construirFiltros() {
+      const cats = ['todos', ...new Set(productos.map(p => p.categoria).filter(Boolean))];
+      elFiltros.innerHTML = '';
+      cats.forEach(cat => {
+        const chip = document.createElement('button');
+        chip.className = 'chip' + (cat === categoriaActiva ? ' chip--active' : '');
+        chip.textContent = cat === 'todos' ? 'Todos' : cat;
+        chip.addEventListener('click', () => {
+          categoriaActiva = cat;
+          construirFiltros();
+          renderCatalogo();
+        });
+        elFiltros.appendChild(chip);
+      });
+    }
+
+    function renderCatalogo() {
+      const filtrados = categoriaActiva === 'todos'
+        ? productos
+        : productos.filter(p => p.categoria === categoriaActiva);
+
+      elCatalogo.innerHTML = filtrados.map((p, idx) => {
+        const iconColor = idx % 2 === 0 ? 'rojo' : 'rosa';
+        let metaTxt, metaCls;
+        if (p.stock === 0) {
+          metaTxt = 'Agotado';
+          metaCls = 'product__meta--agotado';
+        } else if (p.stock <= p.stockMinimo) {
+          metaTxt = 'Últimas ' + p.stock + ' uds';
+          metaCls = 'product__meta--bajo';
+        } else {
+          metaTxt = p.stock + ' uds';
+          metaCls = '';
+        }
+        const disabled = p.stock === 0 ? 'disabled' : '';
+
+        return `
+          <div class="product">
+            <div class="product__icon product__icon--${iconColor}">${iconoPorCategoria(p.categoria)}</div>
+            <div class="product__info">
+              <div class="product__name">${escapeHtml(p.nombre)}</div>
+              <div class="product__meta ${metaCls}">${metaTxt}</div>
+            </div>
+            <div class="product__action">
+              <div class="product__price">${tiendita.pesos(p.precio).replace('.00','')}</div>
+              <button class="btn btn--primary btn--tiny" data-sku="${p.sku}" data-precio="${p.precio}" data-nombre="${escapeHtml(p.nombre)}" ${disabled}>Llevar</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      elCatalogo.querySelectorAll('button[data-sku]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const sku    = btn.dataset.sku;
+          const precio = btn.dataset.precio;
+          const nombre = btn.dataset.nombre;
+          tiendita.addToCart(sku, nombre, precio);
+          renderCart();
+          tiendita.toast(nombre + ' agregado');
+        });
+      });
+    }
+
+    function iconoPorCategoria(cat) {
+      const map = {
+        'Bebidas': '🥤',
+        'Snacks':  '🍿',
+        'Dulces':  '🍬',
+        'Sopas':   '🍜',
+        'Helados': '🍦'
+      };
+      return map[cat] || '🛍️';
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+    }
+
+    // ---- Carrito ----
+    const elCartBar  = document.getElementById('cartBar');
+    const elCartCount = document.getElementById('cartCount');
+    const elCartTotal = document.getElementById('cartTotal');
+
+    function renderCart() {
+      const count = tiendita.cartCount();
+      const total = tiendita.cartTotal();
+      elCartCount.textContent = count;
+      elCartTotal.textContent = tiendita.pesos(total);
+      if (count > 0) elCartBar.classList.add('is-visible');
+      else           elCartBar.classList.remove('is-visible');
+    }
+    renderCart();
+
+    // ---- Sheet del carrito ----
+    const elSheet      = document.getElementById('sheetBackdrop');
+    const elSheetItems = document.getElementById('sheetItems');
+    const elSheetTotal = document.getElementById('sheetTotal');
+
+    function abrirSheet() {
+      renderSheet();
+      elSheet.classList.add('is-visible');
+    }
+    function cerrarSheet() {
+      elSheet.classList.remove('is-visible');
+    }
+    function renderSheet() {
+      const cart = tiendita.getCart();
+      if (cart.length === 0) {
+        elSheetItems.innerHTML = '<p style="color:#6B7280;text-align:center;padding:24px">Tu carrito está vacío.</p>';
+        elSheetTotal.textContent = '$0.00';
+        return;
+      }
+      elSheetItems.innerHTML = cart.map(it => `
+        <div class="sheet__item">
+          <div>
+            <div style="font-weight:500">${escapeHtml(it.nombre)}</div>
+            <div style="font-size:12px;color:#6B7280">${tiendita.pesos(it.precio)} c/u</div>
+          </div>
+          <div class="sheet__qty">
+            <button class="sheet__qty-btn" data-action="dec" data-sku="${it.sku}">−</button>
+            <span style="min-width:24px;text-align:center;font-weight:500">${it.cantidad}</span>
+            <button class="sheet__qty-btn" data-action="inc" data-sku="${it.sku}">+</button>
+          </div>
+        </div>
+      `).join('');
+      elSheetTotal.textContent = tiendita.pesos(tiendita.cartTotal());
+
+      elSheetItems.querySelectorAll('button[data-sku]').forEach(b => {
+        b.addEventListener('click', () => {
+          const sku    = b.dataset.sku;
+          const delta  = b.dataset.action === 'inc' ? 1 : -1;
+          tiendita.changeQty(sku, delta);
+          renderSheet();
+          renderCart();
+        });
+      });
+    }
+
+    elCartBar.addEventListener('click', abrirSheet);
+    elSheet.addEventListener('click', cerrarSheet);
+    document.getElementById('btnCerrarSheet').addEventListener('click', cerrarSheet);
+
+    // ---- Confirmar compra ----
+    document.getElementById('btnConfirmar').addEventListener('click', async () => {
+      const cart = tiendita.getCart();
+      if (cart.length === 0) {
+        tiendita.toast('El carrito está vacío', 'warn');
+        return;
+      }
+      const btn = document.getElementById('btnConfirmar');
+      btn.disabled = true;
+      btn.textContent = 'Procesando...';
+
+      const items = cart.map(it => ({ sku: it.sku, cantidad: it.cantidad }));
+      const res = await api.comprar(session.correo, items);
+
+      if (res.ok) {
+        // actualizar sesion con la nueva deuda
+        session.deudaAcumulada = res.deudaNueva;
+        tiendita.setSession(session);
+        tiendita.clearCart();
+        renderCart();
+        renderDeuda();
+        cerrarSheet();
+        tiendita.toast('¡Listo! Tu nueva deuda: ' + tiendita.pesos(res.deudaNueva));
+        // recargar el catalogo para reflejar stock actualizado
+        elCarga.classList.remove('hidden');
+        elCatalogo.classList.add('hidden');
+        cargarCatalogo();
+      } else {
+        tiendita.toast(res.error || 'Error', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Confirmar compra';
+      }
+    });
+
+    // ---- Bot ----
+    const elBotFab    = document.getElementById('botFab');
+    const elBotPanel  = document.getElementById('botPanel');
+    const elBotLog    = document.getElementById('botLog');
+    const elBotInput  = document.getElementById('botInput');
+    const elBotForm   = document.getElementById('botForm');
+    const elBotClose  = document.getElementById('botClose');
+
+    elBotFab.addEventListener('click', () => {
+      elBotPanel.classList.toggle('is-visible');
+      if (elBotPanel.classList.contains('is-visible')) elBotInput.focus();
+    });
+    elBotClose.addEventListener('click', () => elBotPanel.classList.remove('is-visible'));
+
+    function agregarBotMsg(texto, tipo) {
+      const div = document.createElement('div');
+      div.className = 'bot-msg bot-msg--' + tipo;
+      div.textContent = texto;
+      elBotLog.appendChild(div);
+      elBotLog.scrollTop = elBotLog.scrollHeight;
+    }
+
+    elBotForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const q = elBotInput.value.trim();
+      if (!q) return;
+      agregarBotMsg(q, 'user');
+      elBotInput.value = '';
+      const res = await api.bot(session.correo, q);
+      agregarBotMsg(res.respuesta || (res.error || '...'), 'bot');
+    });
+
+    // ---- Arrancar ----
+    cargarCatalogo();
+  </script>
+
+</body>
+</html>

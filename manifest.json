@@ -1,0 +1,20 @@
+{
+  "name": "Tiendita",
+  "short_name": "Tiendita",
+  "description": "Tiendita de oficina con credito quincenal",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#E62027",
+  "lang": "es-MX",
+  "icons": [
+    {
+      "src": "logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
