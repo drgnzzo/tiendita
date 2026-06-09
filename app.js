@@ -1,58 +1,60 @@
 /**
- * TIENDITA — App helpers v2
- *
- * Maneja sesion local, navegacion, carrito en localStorage, registro del SW,
- * confetti al confirmar compra, banner de estado online/offline.
+ * TIENDITA — App helpers v3
+ * Sesion en sessionStorage (NO persiste al cerrar pestaña → siempre pide login al abrir)
+ * Carrito en sessionStorage (se borra al cerrar)
  */
 
 window.tiendita = {
 
   // ============================================================
-  // SESION
+  // SESION (sessionStorage para no persistir entre pestañas)
   // ============================================================
   KEY: 'tiendita_session',
 
   getSession() {
-    try { return JSON.parse(localStorage.getItem(this.KEY) || 'null'); }
+    try { return JSON.parse(sessionStorage.getItem(this.KEY) || 'null'); }
     catch (_) { return null; }
   },
   setSession(usuario) {
-    localStorage.setItem(this.KEY, JSON.stringify(usuario));
+    sessionStorage.setItem(this.KEY, JSON.stringify(usuario));
   },
   clearSession() {
-    localStorage.removeItem(this.KEY);
+    sessionStorage.removeItem(this.KEY);
+    // limpia tambien rastros viejos de localStorage por si quedan
+    try { localStorage.removeItem(this.KEY); } catch(_) {}
+    try { localStorage.removeItem(this.CART_KEY); } catch(_) {}
   },
   cerrarSesion() {
     this.clearSession();
     this.clearCart();
-    window.location.href = './index.html';
+    window.location.replace('./index.html');
   },
   requireSession() {
     const s = this.getSession();
     if (!s) {
-      window.location.href = './index.html';
+      window.location.replace('./index.html');
       return null;
     }
     return s;
   },
   redirectIfLogged() {
-    if (this.getSession()) window.location.href = './catalogo.html';
+    if (this.getSession()) window.location.replace('./catalogo.html');
   },
 
   // ============================================================
-  // CARRITO (persistente en localStorage)
+  // CARRITO (sessionStorage tambien)
   // ============================================================
   CART_KEY: 'tiendita_cart',
 
   getCart() {
-    try { return JSON.parse(localStorage.getItem(this.CART_KEY) || '[]'); }
+    try { return JSON.parse(sessionStorage.getItem(this.CART_KEY) || '[]'); }
     catch (_) { return []; }
   },
   setCart(items) {
-    localStorage.setItem(this.CART_KEY, JSON.stringify(items));
+    sessionStorage.setItem(this.CART_KEY, JSON.stringify(items));
   },
   clearCart() {
-    localStorage.removeItem(this.CART_KEY);
+    sessionStorage.removeItem(this.CART_KEY);
   },
   addToCart(sku, nombre, precio) {
     const cart = this.getCart();
@@ -106,7 +108,7 @@ window.tiendita = {
   },
 
   // ============================================================
-  // CONFETTI (rosa + rojo, al confirmar compra)
+  // CONFETTI
   // ============================================================
   confetti(cantidad) {
     const wrap = document.createElement('div');
@@ -122,7 +124,6 @@ window.tiendita = {
       piece.style.left = (Math.random() * 100) + 'vw';
       piece.style.animationDuration = (1.5 + Math.random() * 2) + 's';
       piece.style.animationDelay = (Math.random() * 0.4) + 's';
-      // mezcla de formas: rectangulos y circulos
       if (Math.random() > 0.6) piece.style.borderRadius = '50%';
       const size = 6 + Math.random() * 8;
       piece.style.width  = size + 'px';
@@ -133,7 +134,7 @@ window.tiendita = {
   },
 
   // ============================================================
-  // NETWORK STATUS (banner offline)
+  // NETWORK BANNER
   // ============================================================
   initNetwork() {
     const banner = document.createElement('div');
@@ -149,17 +150,15 @@ window.tiendita = {
     window.addEventListener('offline', update);
     update();
   },
+  watchOnline()  { this.initNetwork(); }, // alias por compatibilidad
+  initDebug()    { /* placeholder */ },
 
-  // ============================================================
-  // ESCAPE HTML
-  // ============================================================
   esc(s) {
     return String(s).replace(/[&<>"']/g, c =>
       ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
   }
 };
 
-// Registro del Service Worker (PWA)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch((err) => {
@@ -168,5 +167,4 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Banner de red en todas las paginas
 document.addEventListener('DOMContentLoaded', () => tiendita.initNetwork());

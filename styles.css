@@ -869,6 +869,38 @@ a { color: inherit; }
   font-weight: 500;
 }
 
+/* Stats grid (Total gastado / Este mes / Favorito) */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-2);
+  margin-top: var(--s-4);
+  padding-top: var(--s-3);
+  border-top: 1px dashed var(--rosa-light);
+}
+.stat {
+  text-align: center;
+  padding: var(--s-2);
+  background: var(--rosa-cream);
+  border-radius: var(--r-md);
+  border: 1px solid var(--rosa-soft);
+}
+.stat__label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--gris);
+  margin-bottom: 4px;
+}
+.stat__value {
+  font-family: var(--fuente-display);
+  font-size: 18px;
+  color: var(--rojo);
+  line-height: 1.1;
+}
+.stat__value--small { font-size: 12px; font-family: var(--fuente-body); font-weight: 600; color: var(--negro); }
+
 .section-title {
   font-family: var(--fuente-display);
   font-size: 20px;

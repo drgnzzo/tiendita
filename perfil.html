@@ -8,7 +8,7 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" type="image/svg+xml" href="./logo.svg">
   <link rel="apple-touch-icon" href="./logo.svg">
-  <link rel="stylesheet" href="./styles.css?v=4">
+  <link rel="stylesheet" href="./styles.css?v=5">
 </head>
 <body>
 
@@ -23,9 +23,9 @@
       <nav class="app-header__nav">
         <a href="./catalogo.html" class="app-header__tab">Catálogo</a>
         <a href="./perfil.html" class="app-header__tab app-header__tab--active">Mi cuenta</a>
+        <a id="adminLink" href="./admin.html" class="app-header__tab hidden">Admin</a>
       </nav>
       <div class="app-header__actions">
-        <a id="adminLink" href="./admin.html" class="pill pill--ghost hidden">Admin</a>
         <button id="btnSalir" class="pill pill--negro">Salir</button>
       </div>
     </header>
@@ -33,36 +33,20 @@
     <main class="app-main">
 
       <div class="perfil__hero">
-        <div class="section-eyebrow" style="color:rgba(255,255,255,0.85)">Tu cuenta</div>
-        <div class="perfil__nombre" id="usrNombre">—</div>
+        <div class="perfil__greet">Bienvenida 💕</div>
+        <h1 class="perfil__nombre" id="usrNombre">—</h1>
         <div class="perfil__correo" id="usrCorreo">—</div>
       </div>
 
       <div class="perfil-grid">
 
-        <!-- Card de deuda con donut -->
+        <!-- Card de deuda -->
         <div class="card">
-          <div class="section-eyebrow">Deuda acumulada</div>
-
-          <div class="deuda-donut">
-            <svg viewBox="0 0 120 120" class="donut-svg">
-              <defs>
-                <linearGradient id="donutGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#FF6B9D"/>
-                  <stop offset="100%" stop-color="#D63384"/>
-                </linearGradient>
-              </defs>
-              <circle cx="60" cy="60" r="50" class="donut-bg"/>
-              <circle id="donutFill" cx="60" cy="60" r="50" class="donut-fill"
-                      stroke-dasharray="0 314.16" transform="rotate(-90 60 60)"/>
-              <text id="donutLabel" x="60" y="68" class="donut-label">0%</text>
-            </svg>
-            <div class="donut-info">
-              <div class="donut-info__label">Tu deuda</div>
-              <div class="donut-info__value" id="debtValue">$0.00</div>
-              <div class="donut-info__limit">Límite: <span id="debtLimit">$0</span></div>
-            </div>
-          </div>
+          <div class="debt__label">Tu deuda</div>
+          <div class="debt__value" id="debtValue">$0.00</div>
+          <div class="debt__limit">Límite: <span id="debtLimit">$0</span></div>
+          <div class="debt__bar"><div class="debt__bar-fill" id="debtBar" style="width:0%"></div></div>
+          <div class="debt__note" id="debtNote">Tu deuda se paga completa en quincena. Cuando se confirme el pago, vuelve a cero.</div>
 
           <div class="stats">
             <div class="stat">
@@ -75,74 +59,66 @@
             </div>
             <div class="stat">
               <div class="stat__label">Favorito</div>
-              <div class="stat__value" id="statFav" style="font-size:13px">—</div>
+              <div class="stat__value stat__value--small" id="statFav">—</div>
             </div>
           </div>
-
-          <p style="font-size:12px;color:#6B7280;margin-top:16px;line-height:1.5">
-            Tu deuda se paga completa en quincena. Cuando se confirme el pago, vuelve a cero.
-          </p>
         </div>
 
         <!-- Card de sugerencia -->
-        <div class="card">
-          <div class="section-eyebrow">Cuéntame</div>
-          <h3 style="font-family:var(--f-serif);font-size:22px;margin:0 0 16px">Sugerir algo</h3>
-          <div class="sugerencia-form" style="padding:0">
-            <label class="label" for="sugTipo">Tipo</label>
-            <select id="sugTipo">
-              <option value="producto">Quiero un producto</option>
-              <option value="mejora">Mejora del servicio</option>
-              <option value="queja">Queja</option>
-              <option value="otro">Otro</option>
-            </select>
+        <div class="card sugerencia-form">
+          <div class="debt__label">Cuéntame</div>
+          <h3 class="section-title" style="margin-top:4px">Sugerir algo <span class="section-title-script">¿qué se te antoja?</span></h3>
 
-            <label class="label" for="sugMsg">Mensaje</label>
-            <textarea id="sugMsg" placeholder="Cuéntame..." maxlength="500"></textarea>
+          <label class="label" for="sugTipo">Tipo</label>
+          <select id="sugTipo">
+            <option value="producto">Quiero un producto</option>
+            <option value="mejora">Mejora del servicio</option>
+            <option value="queja">Queja</option>
+            <option value="otro">Otro</option>
+          </select>
 
-            <label class="label" style="margin-top:12px">Calificación</label>
-            <div class="stars" id="stars">
-              <span class="star" data-val="1">★</span>
-              <span class="star" data-val="2">★</span>
-              <span class="star" data-val="3">★</span>
-              <span class="star" data-val="4">★</span>
-              <span class="star" data-val="5">★</span>
-            </div>
+          <label class="label" for="sugMsg">Mensaje</label>
+          <textarea id="sugMsg" placeholder="Cuéntame..." maxlength="500"></textarea>
 
-            <button id="btnSugerir" class="btn btn--primary btn--full">Enviar</button>
+          <label class="label">Calificación</label>
+          <div class="stars" id="stars">
+            <span class="star" data-val="1">★</span>
+            <span class="star" data-val="2">★</span>
+            <span class="star" data-val="3">★</span>
+            <span class="star" data-val="4">★</span>
+            <span class="star" data-val="5">★</span>
           </div>
+
+          <button id="btnSugerir" class="btn btn--primary btn--full">Enviar</button>
         </div>
 
       </div>
 
-      <div class="section-eyebrow" style="margin-top:32px">Recientes</div>
-      <h3 class="section-h">Tu historial</h3>
+      <h3 class="section-title">Historial <span class="section-title-script">lo último</span></h3>
       <div id="historial">
-        <div class="skeleton-product"><div class="skeleton sk-icon"></div><div class="sk-lines"><div class="skeleton sk-line"></div><div class="skeleton sk-line"></div></div><div class="skeleton sk-price"></div></div>
+        <div class="spinner"></div>
       </div>
 
     </main>
 
     <nav class="app-bottomnav">
       <a href="./catalogo.html" class="app-bottomnav__item">
-        <span class="app-bottomnav__ico">🛍</span>Catálogo
+        <span class="app-bottomnav__ico">🛍</span>
+        Catálogo
       </a>
       <a href="./perfil.html" class="app-bottomnav__item app-bottomnav__item--active">
-        <span class="app-bottomnav__ico">👤</span>Perfil
+        <span class="app-bottomnav__ico">👤</span>
+        Mi cuenta
       </a>
     </nav>
+
   </div>
 
-  <div id="offlineBanner" class="offline-banner">Sin conexión</div>
-
-  <script src="./api.js?v=4"></script>
-  <script src="./app.js?v=4"></script>
+  <script src="./api.js?v=5"></script>
+  <script src="./app.js?v=5"></script>
   <script>
     const session = tiendita.requireSession();
     if (!session) throw new Error('redirigiendo');
-
-    tiendita.watchOnline();
-    tiendita.initDebug();
 
     if (session.rol === 'admin') {
       document.getElementById('adminLink').classList.remove('hidden');
@@ -151,23 +127,37 @@
     document.getElementById('usrNombre').textContent = session.nombre || 'Sin nombre';
     document.getElementById('usrCorreo').textContent = session.correo;
 
-    function actualizarDonut(deuda, limite) {
+    function renderDeuda(deuda, limite) {
       const pct = limite > 0 ? Math.min(100, (deuda / limite) * 100) : 0;
-      const C = 2 * Math.PI * 50; // circumference
-      const dashFilled = (pct / 100) * C;
-      document.getElementById('donutFill').setAttribute('stroke-dasharray', dashFilled + ' ' + (C - dashFilled));
-      document.getElementById('donutLabel').textContent = Math.round(pct) + '%';
-      document.getElementById('debtValue').textContent = tiendita.pesos(deuda);
+      const elValue = document.getElementById('debtValue');
+      const elBar = document.getElementById('debtBar');
+      const elNote = document.getElementById('debtNote');
+
+      elValue.textContent = tiendita.pesos(deuda);
+      elValue.classList.toggle('debt__value--cero', deuda === 0);
       document.getElementById('debtLimit').textContent = tiendita.pesos(limite);
+      elBar.style.width = pct + '%';
+      elBar.classList.toggle('debt__bar-fill--alto', pct >= 80);
+
+      if (deuda === 0) {
+        elNote.textContent = '¡Tu cuenta está en ceros! ✨';
+        elNote.classList.remove('debt__note--cerca');
+      } else if (pct >= 80) {
+        elNote.innerHTML = '⚠️ Estás cerca de tu límite. Considera liquidar pronto.';
+        elNote.classList.add('debt__note--cerca');
+      } else {
+        elNote.textContent = 'Tu deuda se paga completa en quincena. Cuando se confirme el pago, vuelve a cero.';
+        elNote.classList.remove('debt__note--cerca');
+      }
     }
-    actualizarDonut(session.deudaAcumulada, session.limiteCredito);
+    renderDeuda(session.deudaAcumulada, session.limiteCredito);
 
     async function refrescar() {
       const res = await api.perfil(session.correo);
       if (res.ok) {
         Object.assign(session, res.usuario);
         tiendita.setSession(session);
-        actualizarDonut(session.deudaAcumulada, session.limiteCredito);
+        renderDeuda(session.deudaAcumulada, session.limiteCredito);
         renderHistorial(res.historial || []);
         calcularStats(res.historial || []);
       } else {
@@ -183,14 +173,13 @@
       items.forEach(v => {
         const m = parseFloat(v.monto) || 0;
         total += m;
-        // verificar si es de este mes (timestamp en ISO)
         if (v.timestamp && v.timestamp.substring(0, 7) === esteMes) mes += m;
         if (v.producto) conteo[v.producto] = (conteo[v.producto] || 0) + (parseFloat(v.cantidad) || 1);
       });
-      document.getElementById('statTotal').textContent = tiendita.pesos(total).replace('.00','');
-      document.getElementById('statMes').textContent = tiendita.pesos(mes).replace('.00','');
+      document.getElementById('statTotal').textContent = tiendita.pesosCorto(total);
+      document.getElementById('statMes').textContent   = tiendita.pesosCorto(mes);
       const fav = Object.keys(conteo).sort((a,b) => conteo[b] - conteo[a])[0];
-      document.getElementById('statFav').textContent = fav ? (fav.length > 14 ? fav.substring(0,14)+'...' : fav) : '—';
+      document.getElementById('statFav').textContent   = fav ? (fav.length > 16 ? fav.substring(0,16)+'…' : fav) : '—';
     }
 
     function renderHistorial(items) {
@@ -198,24 +187,20 @@
       if (!items || items.length === 0) {
         el.innerHTML = `
           <div class="empty">
-            <div class="empty__icon">🛍</div>
+            <div class="empty__icon">🛍️</div>
             <div class="empty__title">Aún nada por aquí</div>
             <div class="empty__sub">Tu primera compra aparecerá acá.</div>
           </div>`;
         return;
       }
-      el.innerHTML = items.map(v => `
+      el.innerHTML = items.slice(0, 15).map(v => `
         <div class="history__item">
           <div style="flex:1;min-width:0">
-            <div class="history__producto">${escapeHtml(v.producto)} ${v.cantidad > 1 ? '× ' + v.cantidad : ''}</div>
+            <div class="history__producto">${tiendita.esc(v.producto)}${v.cantidad > 1 ? ' × ' + v.cantidad : ''}</div>
             <div class="history__fecha">${v.fechaMx || ''} · ${v.estatus}</div>
           </div>
           <div class="history__monto">${tiendita.pesos(v.monto)}</div>
         </div>`).join('');
-    }
-
-    function escapeHtml(s) {
-      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
     }
 
     let calificacion = 0;
@@ -247,8 +232,9 @@
       }
     });
 
+    // Salir directo, sin confirm
     document.getElementById('btnSalir').addEventListener('click', () => {
-      if (confirm('¿Cerrar sesión?')) tiendita.cerrarSesion();
+      tiendita.cerrarSesion();
     });
 
     refrescar();

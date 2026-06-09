@@ -8,7 +8,7 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" type="image/svg+xml" href="./logo.svg">
   <link rel="apple-touch-icon" href="./logo.svg">
-  <link rel="stylesheet" href="./styles.css?v=4">
+  <link rel="stylesheet" href="./styles.css?v=5">
 </head>
 <body>
 
@@ -26,7 +26,7 @@
         <a href="./admin.html" class="app-header__tab app-header__tab--active">Admin</a>
       </nav>
       <div class="app-header__actions">
-        <span class="pill pill--ghost">Admin</span>
+        <button id="btnSalir" class="pill pill--negro">Salir</button>
       </div>
     </header>
 
@@ -115,8 +115,8 @@
 
   <div id="offlineBanner" class="offline-banner">Sin conexión</div>
 
-  <script src="./api.js?v=4"></script>
-  <script src="./app.js?v=4"></script>
+  <script src="./api.js?v=5"></script>
+  <script src="./app.js?v=5"></script>
   <script>
     const session = tiendita.requireSession();
     if (!session) throw new Error('redirigiendo');
@@ -267,6 +267,10 @@
 
     document.getElementById('btnReabastecer').addEventListener('click', () => {
       tiendita.toast('Usa "Resurtir" en cada producto', 'warn');
+    });
+
+    document.getElementById('btnSalir').addEventListener('click', () => {
+      tiendita.cerrarSesion();
     });
 
     cargar();
