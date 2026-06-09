@@ -539,7 +539,7 @@ a { color: inherit; }
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: var(--s-3);
-  padding-bottom: 130px;
+  padding-bottom: 110px;
 }
 
 .product {
@@ -1154,20 +1154,27 @@ a { color: inherit; }
     max-width: 1400px;
     margin: 0 auto;
     width: 100%;
-    padding: var(--s-6) var(--s-5);
+    padding: var(--s-4) var(--s-5);
   }
   .app-bottomnav { display: none; }
   .app-header {
-    padding-left:  max(var(--s-6), var(--safe-left));
-    padding-right: max(var(--s-6), var(--safe-right));
+    padding-left:  max(var(--s-5), var(--safe-left));
+    padding-right: max(var(--s-5), var(--safe-right));
   }
 
   .catalogo {
-    padding-bottom: var(--s-5);
+    padding-bottom: 0;
   }
 
-  .login__logo { width: 180px; height: 180px; }
-  .login__name { font-size: 68px; }
+  /* Login compacto: el card debe caber en una laptop 13" sin scroll */
+  .login {
+    padding-top: var(--s-4);
+    padding-bottom: var(--s-4);
+  }
+  .login__logo { width: 130px; height: 130px; margin-bottom: var(--s-3); }
+  .login__name { font-size: 52px; }
+  .login__tagline { font-size: 22px; margin-top: var(--s-2); }
+  .login__brand { margin-bottom: var(--s-4); }
   .login__card { max-width: 440px; }
 
   .cart-bar { right: max(var(--s-5), calc((100vw - 1400px) / 2 + var(--s-5))); }
@@ -1175,10 +1182,15 @@ a { color: inherit; }
   .perfil-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--s-5);
-    margin-bottom: var(--s-5);
+    gap: var(--s-4);
+    margin-bottom: var(--s-4);
   }
   .perfil-grid > * { min-width: 0; }
+
+  /* Reduce hero/spacing del perfil en desktop */
+  .perfil__hero { padding: var(--s-4); margin-bottom: var(--s-3); }
+  .perfil__nombre { font-size: 26px; }
+  .section-title { margin: var(--s-4) 0 var(--s-2); font-size: 18px; }
 }
 
 /* pantallas muy anchas: aprovechar mas ancho */
