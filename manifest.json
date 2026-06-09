@@ -1,19 +1,22 @@
 {
   "name": "Tiendita",
   "short_name": "Tiendita",
-  "description": "Tiendita de oficina con credito quincenal",
   "start_url": "./index.html",
-  "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#FFFFFF",
+  "background_color": "#FFFAFB",
   "theme_color": "#E62027",
-  "lang": "es-MX",
+  "description": "Tiendita - tienda interna con crédito quincenal",
   "icons": [
     {
-      "src": "logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "./logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]

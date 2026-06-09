@@ -159,12 +159,12 @@ a { color: inherit; }
   .app-header__nav { display: none; }
 }
 .app-header__logo {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
-  border-radius: var(--r-sm);
+  border-radius: 50%;
+  object-fit: cover;
   background: var(--blanco);
-  padding: 2px;
 }
 .app-header__name {
   font-family: var(--fuente-display);
@@ -405,11 +405,13 @@ a { color: inherit; }
   z-index: 1;
 }
 .login__logo {
-  width: 130px;
-  height: 130px;
+  width: 140px;
+  height: 140px;
   margin: 0 auto var(--s-4);
-  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.3));
   animation: float 4s ease-in-out infinite;
+  object-fit: contain;
+  border-radius: 50%;
 }
 @keyframes float {
   0%, 100% { transform: translateY(0); }
