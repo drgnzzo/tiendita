@@ -4,9 +4,12 @@
  *   - Estaticos (CSS, JS, SVG): cache-first con fallback a red
  *   - HTML: network-first con fallback a cache
  *   - Cache busting via CACHE_VERSION (incrementa cuando subas cambios)
+ *
+ * v2: filtra schemes no http(s) para no chocar con extensiones de Chrome
+ *     que inyectan requests con scheme chrome-extension://
  */
 
-const CACHE_VERSION = 'tiendita-v1';
+const CACHE_VERSION = 'tiendita-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -39,12 +42,18 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
-  const url = new URL(req.url);
 
-  // No interceptar llamadas al backend de Apps Script
-  if (url.hostname.includes('script.google.com')) return;
+  let url;
+  try { url = new URL(req.url); } catch (_) { return; }
 
-  const isHtml = req.headers.get('accept')?.includes('text/html');
+  // Solo cachear http(s). Esto descarta chrome-extension://, moz-extension://,
+  // data:, blob:, etc., que el Cache API no soporta.
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+
+  // No interceptar llamadas al backend de Apps Script ni a otros origenes externos
+  if (url.origin !== self.location.origin) return;
+
+  const isHtml = (req.headers.get('accept') || '').includes('text/html');
 
   if (isHtml) {
     // Network-first para HTML
@@ -52,17 +61,20 @@ self.addEventListener('fetch', (event) => {
       fetch(req)
         .then((res) => {
           const copy = res.clone();
-          caches.open(CACHE_VERSION).then((cache) => cache.put(req, copy));
+          caches.open(CACHE_VERSION).then((cache) => cache.put(req, copy).catch(() => {}));
           return res;
         })
         .catch(() => caches.match(req).then((r) => r || caches.match('./index.html')))
     );
   } else {
-    // Cache-first para estaticos
+    // Cache-first para estaticos del mismo origen
     event.respondWith(
       caches.match(req).then((cached) => cached || fetch(req).then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE_VERSION).then((cache) => cache.put(req, copy));
+        // Solo cachea respuestas validas del mismo origen
+        if (res && res.status === 200 && res.type === 'basic') {
+          const copy = res.clone();
+          caches.open(CACHE_VERSION).then((cache) => cache.put(req, copy).catch(() => {}));
+        }
         return res;
       }))
     );
