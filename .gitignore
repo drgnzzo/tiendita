@@ -1,0 +1,17 @@
+.env
+.env.*
+.clasprc.json
+.clasp.json
+*.pem
+*.key
+credentials*.json
+*token*.json
+/logs/**
+!/logs/.gitkeep
+node_modules/
+__pycache__/
+*.csv
+*.xlsx
+*.zip
+*.bak
+tests/shots/
