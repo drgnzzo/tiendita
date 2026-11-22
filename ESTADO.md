@@ -70,3 +70,7 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - Móvil: pestañas en una fila deslizable, botones secundarios de cada fila pasan al menú ⋯, filas más compactas, roles plegados.
 - Se subió la versión de views-admin.js que sí trae el orden por secciones (la de la carpeta estaba vieja).
 - Pendiente: publicar con TIENDITA.bat (clasp push para las funciones nuevas del Sheet) y probar con datos reales.
+
+## Auditoría móvil (cierre de versión)
+- Revisión automática a 360/390/430/768 px: botones de al menos 44px, campos con letra de 16px (sin zoom en iPhone), nada fuera de pantalla, botón del chat movido a la izquierda para no tapar "Llevar".
+- Pendiente para la siguiente versión: probar en celular real, fotos de productos, deshacer venta, recordatorios por WhatsApp, exportar reportes, lo más pedido.

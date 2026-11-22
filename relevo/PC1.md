@@ -30,3 +30,5 @@ Leer ESTADO.md. No editar relevo/PC2.md.
 
 - Hecho: Auditoría (corte de inventario) + optimización móvil del panel.
 - Pendiente: TIENDITA.bat, probar corte real en el celular, revisar hojas nuevas en el Sheet.
+
+- Hecho: auditoría móvil automática y arreglos. Versión lista para publicar con TIENDITA.bat.
