@@ -13,7 +13,7 @@ function makeEnv(seed) {
         setValue(v) { while (self.rows.length < r) self.rows.push([]); const row = self.rows[r-1]; while (row.length < c) row.push(''); row[c-1] = v; },
         setValues(vs) { vs.forEach((vr, i) => { while (self.rows.length < r+i) self.rows.push([]); const row = self.rows[r+i-1]; vr.forEach((v, j) => { while (row.length < c+j) row.push(''); row[c+j-1] = v; }); }); },
         getValues() { const out=[]; for (let i=0;i<nr;i++){ const row=self.rows[r-1+i]||[]; const o=[]; for(let j=0;j<nc;j++) o.push(row[c-1+j]===undefined?'':row[c-1+j]); out.push(o);} return out; },
-        setFontWeight(){return this;}, setBackground(){return this;}, setFontColor(){return this;}, setHorizontalAlignment(){return this;}, setNumberFormat(){return this;}
+        clearContent() { for (let i=0;i<nr;i++){ const row=self.rows[r-1+i]; if(!row) continue; for(let j=0;j<nc;j++) row[c-1+j]=''; } return this; }, setNote(){return this;}, setDataValidation(){return this;}, setFontWeight(){return this;}, setBackground(){return this;}, setFontColor(){return this;}, setHorizontalAlignment(){return this;}, setNumberFormat(){return this;}
       }; },
       setFrozenRows() {}, setColumnWidth() {}, setTabColor(){} };
     sheets[name] = sh; return sh;

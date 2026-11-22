@@ -179,7 +179,7 @@ if errorlevel 1 (
 )
 call "_ui.bat" OK "Pruebas del backend correctas"
 findstr /c:"PEGA_AQUI_LA_URL_NUEVA" docs\js\config.js >nul 2>&1
-if not errorlevel 1 call "_ui.bat" AVISO "docs\js\config.js aun tiene la URL de ejemplo. La pagina no se conectara hasta ponerla"
+if not errorlevel 1 call "_ui.bat" AVISO "docs\js\config.js aun tiene la URL de ejemplo: la pagina no se conectara hasta ponerla"
 powershell -NoProfile -ExecutionPolicy Bypass -File "_seguro.ps1" >> "!LOGV!" 2>&1
 if errorlevel 1 (
   call "_ui.bat" ERR "La revision de secretos bloqueo la subida. Detalle abajo y en !LOGV!"

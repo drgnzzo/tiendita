@@ -503,11 +503,11 @@ async function vUsuarios(c) {
         <div>
           <div class="fila-admin__nombre">${u.nombre} <span class="sello ${u.rol === 'admin' ? 'sello--tinta' : u.rol === 'operador' ? 'sello--ok' : ''}">${ROL_TXT[u.rol]}</span>
             ${u.activo ? '' : html`<span class="sello">Desactivado</span>`}</div>
-          <div class="fila-admin__meta num">${u.correo} · debe ${money(u.deuda)} de ${money(u.limite)}${!u.tienePin ? ' · sin PIN' : u.debeCambiarPin ? ' · PIN temporal' : ''}</div>
+          <div class="fila-admin__meta num">${u.correo} · debe ${money(u.deuda)} de ${money(u.limite)}${u.rol === 'cliente' ? '' : !u.tienePin ? ' · sin PIN' : u.debeCambiarPin ? ' · PIN temporal' : ''}</div>
         </div>
         <div class="fila-admin__acc">
           <button class="btn btn--suave btn--chico" data-a="editar" data-correo="${u.correo}">Editar</button>
-          <button class="btn btn--suave btn--chico" data-a="pin" data-correo="${u.correo}" data-nombre="${u.nombre}">Nuevo PIN</button>
+          ${u.rol === 'cliente' ? '' : html`<button class="btn btn--suave btn--chico" data-a="pin" data-correo="${u.correo}" data-nombre="${u.nombre}">Nuevo PIN</button>`}
         </div>
       </div>`)}`);
   on(c, 'click', '[data-a="nuevo"]', () => formUsuario(null));
@@ -566,6 +566,6 @@ function formUsuario(u) {
     }));
     if (!res.ok) { caja.textContent = res.error; return; }
     h.cerrar(); recargar();
-    if (res.nuevo) mostrarPin(nombre, res.pinTemporal); else toast(res.mensaje);
+    if (res.pinTemporal) mostrarPin(nombre, res.pinTemporal); else toast(res.mensaje);
   });
 }

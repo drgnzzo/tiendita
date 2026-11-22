@@ -1,12 +1,12 @@
-# Tiendita v2 — Pasos (en este orden)
+# Tiendita v2 — Cómo se usa
 
-El link de siempre (drgnzzo.github.io/tiendita) NO cambia. No se usa Cloudflare.
+## En la web (drgnzzo.github.io/tiendita)
+Solo comprar y ver tu cuenta. Entras con tu correo, sin PIN. Nadie cambia inventario desde ahí.
 
-1. **Doble clic en `TIENDITA.bat`.** La primera vez pide entrar a GitHub (cuenta drgnzzo) y a Google (cuenta dueña del script). Sube el código nuevo a Apps Script y a GitHub. No cambia lo que ve la gente todavía.
-2. **Apps Script** (cuenta dueña): abre la hoja, menú **🏪 TIENDITA → Configuración inicial v2** → Sí. Anota los PIN temporales que muestre.
-3. **Apps Script → Implementar → Nueva implementación → Aplicación web** (Ejecutar como: Yo; Acceso: Cualquier persona). Copia la URL que termina en `/exec`.
-4. Abre `docs\js\config.js`, cambia `PEGA_AQUI_LA_URL_NUEVA` por esa URL, guarda. Doble clic en `TIENDITA.bat` otra vez.
-5. **GitHub → repo tiendita → Settings → Pages** → Branch `main`, carpeta **/docs** → Save. En 1–2 minutos el link de siempre muestra la página nueva.
-6. **Regreso si algo falla:** en Settings → Pages vuelve a poner carpeta **/ (root)**. La página vieja sigue guardada ahí.
-
-Orden para el inventario: ver `ESTADO.md` y la sección "Cómo llevar el inventario" que te explicó Claude.
+## En la hoja de Google (menú 🏪 TIENDITA > 🗒️ Trabajo diario)
+- **Llegó mercancía:** hoja *Entradas*. Una fila por producto: escoge el producto, piezas, lo que pagaste en total y el proveedor. Menú: Aplicar ENTRADAS.
+- **Se perdió o se caducó algo:** hoja *Ajustes*. Producto, cantidad con signo menos (-2) y el motivo. Menú: Aplicar AJUSTES.
+- **Me pagaron:** hoja *Cobros*. Correo, monto y forma de pago. Menú: Aplicar COBROS.
+- **Contar lo que hay de verdad:** menú Preparar CONTEO, escribe lo que contaste en la columna *Contaste*, menú Aplicar CONTEO. Solo se corrigen las diferencias.
+- Cada fila aplicada queda con ✅ o ❌ en la columna *Estado*. Una fila con ✅ no se vuelve a aplicar.
+- **Regla de oro:** no escribas el stock directo en la hoja *Productos*. Todo entra por estas hojas y así queda anotado en *Movimientos*.

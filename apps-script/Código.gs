@@ -238,6 +238,15 @@ function onOpen() {
   ui.createMenu('🏪 TIENDITA')
     .addItem('▶️ Configuración inicial v2 (una vez)', 'configuracionInicialV2')
     .addSeparator()
+    .addSubMenu(ui.createMenu('🗒️ Trabajo diario')
+      .addItem('📥 Aplicar ENTRADAS (llegó mercancía)', 'menuAplicarEntradas')
+      .addItem('✏️ Aplicar AJUSTES (merma o error)', 'menuAplicarAjustes')
+      .addItem('💵 Aplicar COBROS (me pagaron)', 'menuAplicarCobros')
+      .addSeparator()
+      .addItem('📋 Preparar CONTEO físico', 'menuPrepararConteo')
+      .addItem('✅ Aplicar CONTEO', 'menuAplicarConteo')
+      .addSeparator()
+      .addItem('🧰 Preparar las hojas de trabajo', 'menuPrepararHojasTrabajo'))
     .addSubMenu(ui.createMenu('👥 Usuarios')
       .addItem('➕ Agregar usuario', 'menuAgregarUsuario')
       .addItem('🔑 Reiniciar PIN de alguien', 'menuReiniciarPin')
@@ -470,6 +479,12 @@ function menuInfoSistema() {
 //  El correo SIEMPRE sale del token, nunca de lo que mande el navegador.
 //  Cada accion declara que permiso necesita; el rol decide si lo tiene.
 
+// MODO TIENDA: la pagina web solo sirve para comprar y ver tu cuenta. Entra cualquiera
+// registrado con su correo, sin PIN, y nadie puede cambiar inventario ni cobros desde
+// la web: eso se hace en la hoja de Google (menu TIENDITA > Trabajo diario).
+// Poner en false solo si algun dia se quiere un panel de administracion web con PIN.
+var WEB_SOLO_TIENDA = true;
+
 const ROLES = { ADMIN: 'admin', OPERADOR: 'operador', CLIENTE: 'cliente' };
 
 // Permisos por rol. '*' = todo. El operador ayuda con inventario y cobros
@@ -539,10 +554,12 @@ function _handleRequest(e, method) {
       return _jsonResponse(apiLogin(params.email, params.pin));
     }
 
-    const usuario = _usuarioDeToken(params.token);
+    let usuario = _usuarioDeToken(params.token);
     if (!usuario) {
       return _jsonResponse({ ok: false, error: 'Tu sesión expiró. Entra de nuevo.', code: 'AUTH' });
     }
+    // En modo tienda, desde la web todos cuentan como clientes.
+    if (WEB_SOLO_TIENDA) usuario = Object.assign({}, usuario, { rol: ROLES.CLIENTE });
     const ruta = API_RUTAS[action];
     if (!ruta) {
       return _jsonResponse({ ok: false, error: 'Acción no reconocida: ' + action, code: 'UNKNOWN_ACTION' });
@@ -1568,11 +1585,27 @@ function _sumarFallo(correo) {
 
 function apiLogin(email, pin) {
   const correo = _texto(email, 120).toLowerCase();
-  if (!correo || !pin) return { ok: false, error: 'Escribe tu correo y tu PIN.', code: 'MISSING' };
+  if (!correo) return { ok: false, error: 'Escribe tu correo.', code: 'MISSING' };
   if (_fallos(correo) >= SEG.MAX_INTENTOS) {
     return { ok: false, error: 'Demasiados intentos. Espera 15 minutos o pide un PIN nuevo al admin.', code: 'LOCKED' };
   }
   const u = obtenerUsuario(correo);
+  // Modo tienda: todos entran solo con su correo, y desde la web cuentan como clientes.
+  if (WEB_SOLO_TIENDA) {
+    if (!u || !u.activo) {
+      return { ok: false, error: 'Ese correo no está registrado o está desactivado. Pídele a Samantha que te dé de alta.', code: 'BAD_LOGIN' };
+    }
+    const comoCliente = Object.assign({}, u, { rol: ROLES.CLIENTE });
+    _log('LOGIN', correo, 'Inicio de sesion (web, solo correo)');
+    return { ok: true, token: _crearToken(u), usuario: _usuarioPublico(comoCliente), permisos: _permisosDe(ROLES.CLIENTE), debeCambiarPin: false };
+  }
+  // Clientes: entran solo con su correo (sin PIN).
+  if (u && u.activo && u.rol === ROLES.CLIENTE) {
+    _log('LOGIN', correo, 'Inicio de sesion (cliente)');
+    return { ok: true, token: _crearToken(u), usuario: _usuarioPublico(u), permisos: _permisosDe(u.rol), debeCambiarPin: false };
+  }
+  // Admin y operador (y correos que no existen, para no revelar quien es quien): piden PIN.
+  if (!pin) return { ok: false, error: 'Escribe tu PIN.', code: 'NEEDS_PIN' };
   const generico = 'Correo o PIN incorrectos. Si es tu primera vez, pide tu PIN al admin.';
   if (!u || !u.activo || !u.pinHash || !_pinCorrecto(u, pin)) {
     _sumarFallo(correo);
@@ -2174,13 +2207,20 @@ function apiUsrGuardar(u, p) {
       s.getRange(existente.fila, 6).setValue(activo);
       s.getRange(existente.fila, 8).setValue(rol);
       _log('USER_EDIT', u.correo, 'Editado: ' + correo + ' rol=' + rol + ' activo=' + activo);
+      _invalidarCache();
+      // Si pasa a admin u operador y aun no tiene PIN, se le da uno temporal.
+      if (!WEB_SOLO_TIENDA && rol !== ROLES.CLIENTE && !existente.pinHash) {
+        const pin = _asignarPinTemporal(correo);
+        return { ok: true, pinTemporal: pin, mensaje: 'Cambios guardados. Ahora necesita PIN.' };
+      }
       return { ok: true, mensaje: 'Cambios guardados.' };
     }
 
     s.appendRow([correo, _seguroCelda(nombre), 0, limite, '', activo, new Date(), rol, '', true]);
     _invalidarCache();
-    const pin = _asignarPinTemporal(correo);
     _log('USER_ADD', u.correo, 'Usuario agregado: ' + correo + ' rol=' + rol);
+    if (WEB_SOLO_TIENDA || rol === ROLES.CLIENTE) return { ok: true, nuevo: true, mensaje: 'Usuario creado. Entra solo con su correo.' };
+    const pin = _asignarPinTemporal(correo);
     return { ok: true, nuevo: true, pinTemporal: pin, mensaje: 'Usuario creado.' };
   });
 }
@@ -2214,10 +2254,11 @@ function configuracionInicialV2() {
     'Configuración inicial v2',
     'Esto va a:\n\n' +
     '• Crear las hojas Movimientos y Pagos (si no existen)\n' +
-    '• Agregar columnas de PIN a Usuarios\n' +
+    '• Crear las hojas de trabajo: Entradas, Ajustes, Conteo y Cobros\n' +
+    '• Agregar columnas de PIN a Usuarios (no se usan en modo tienda)\n' +
     '• Dejar como admin a: ' + ADMINS_INICIALES.join(', ') + '\n' +
     '• Copiar el stock actual al libro de movimientos\n' +
-    '• Generar un PIN temporal para cada persona sin PIN\n\n' +
+    '• Nadie usa PIN: todos entran a la web solo con su correo\n\n' +
     'No borra ni cambia tus ventas, productos ni deudas.\n\n¿Continuar?',
     ui.ButtonSet.YES_NO);
   if (r !== ui.Button.YES) return;
@@ -2225,6 +2266,7 @@ function configuracionInicialV2() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   _asegurarHoja(CONFIG.HOJAS.MOVIMIENTOS, MOV_HEADERS);
   _asegurarHoja(CONFIG.HOJAS.PAGOS, PAGOS_HEADERS);
+  _prepararHojasTrabajo();
 
   const sUsr = ss.getSheetByName(CONFIG.HOJAS.USUARIOS);
   sUsr.getRange(1, SEG.COL_PIN, 1, 2).setValues([['PIN_Hash', 'Debe_Cambiar_PIN']]);
@@ -2258,11 +2300,11 @@ function configuracionInicialV2() {
   // PINs temporales
   const lista = [];
   apiUsrLista().usuarios.forEach(u => {
-    if (u.activo && !u.tienePin) lista.push({ nombre: u.nombre, correo: u.correo, pin: _asignarPinTemporal(u.correo) });
+    if (!WEB_SOLO_TIENDA && u.activo && u.rol !== ROLES.CLIENTE && !u.tienePin) lista.push({ nombre: u.nombre, correo: u.correo, pin: _asignarPinTemporal(u.correo) });
   });
   _log('CONFIG_V2', CONFIG.ADMIN_EMAIL, 'Configuración inicial v2 ejecutada. PINs nuevos: ' + lista.length);
 
-  if (lista.length === 0) { ui.alert('✅ Listo. Nadie necesitaba PIN nuevo.'); return; }
+  if (lista.length === 0) { ui.alert('✅ Listo.\n\nYa puedes trabajar desde el menú 🏪 TIENDITA > 🗒️ Trabajo diario.\nLa web no usa PIN: todos entran con su correo.'); return; }
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const filasHtml = lista.map(x =>
     '<tr><td>' + esc(x.nombre) + '</td><td>' + esc(x.correo) + '</td><td style="font:700 18px monospace">' + x.pin + '</td></tr>').join('');
@@ -2300,4 +2342,148 @@ function menuVerificarStock() {
   ui.alert(dif.length === 0 ? '✅ El stock coincide con el libro de movimientos.' :
     '⚠️ Hay ' + dif.length + ' diferencias (alguien editó Productos a mano):\n\n' + dif.slice(0, 15).join('\n'));
 }
+
+
+// ============================================================
+// §14  HOJAS DE TRABAJO (inventario y cobros desde la hoja de Google)
+// ============================================================
+//  Aqui se trabaja el dia a dia: se escribe una fila, se pulsa el menu y listo.
+//  Todo pasa por las mismas funciones que cuidan el stock (libro de Movimientos),
+//  asi que nada se cuenta dos veces ni queda sin anotar.
+//  La seguridad es la de Google: solo entra quien tenga acceso a esta hoja.
+
+const HT = {
+  ENTRADAS: { nombre: 'Entradas', cab: ['Producto', 'Piezas', 'Costo total pagado', 'Proveedor', 'Estado'] },
+  AJUSTES:  { nombre: 'Ajustes',  cab: ['Producto', 'Cantidad (+ o -)', 'Motivo', 'Estado'] },
+  CONTEO:   { nombre: 'Conteo',   cab: ['SKU', 'Producto', 'En sistema', 'Contaste', 'Estado'] },
+  COBROS:   { nombre: 'Cobros',   cab: ['Correo', 'Monto', 'Forma de pago', 'Notas', 'Estado'] }
+};
+
+function _actorHoja() {
+  let c = '';
+  try { c = Session.getActiveUser().getEmail(); } catch (_) {}
+  return { correo: c || 'hoja', rol: ROLES.ADMIN };
+}
+
+function _alertaHoja(titulo, mensaje) {
+  try { const ui = SpreadsheetApp.getUi(); ui.alert(titulo, mensaje, ui.ButtonSet.OK); } catch (_) {}
+}
+
+// Busca un producto por nombre (o por SKU). Falla si no existe o si hay dos iguales.
+function _productoPorNombre(texto) {
+  const t = String(texto || '').trim().toLowerCase();
+  if (!t) throw new Error('Falta escoger el producto.');
+  const hallados = listarProductos().filter(p => p.nombre.trim().toLowerCase() === t || String(p.sku).toLowerCase() === t);
+  if (hallados.length === 0) throw new Error('No existe el producto "' + texto + '". Escógelo de la lista.');
+  if (hallados.length > 1) throw new Error('Hay más de un producto llamado "' + texto + '". Usa el SKU.');
+  return hallados[0];
+}
+
+function _prepararHojasTrabajo() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  Object.keys(HT).forEach(k => _asegurarHoja(HT[k].nombre, HT[k].cab));
+  try {
+    const prod = ss.getSheetByName(CONFIG.HOJAS.PRODUCTOS), usr = ss.getSheetByName(CONFIG.HOJAS.USUARIOS);
+    const lista = (rango) => SpreadsheetApp.newDataValidation().requireValueInRange(rango, true).setAllowInvalid(false).build();
+    ss.getSheetByName(HT.ENTRADAS.nombre).getRange('A2:A300').setDataValidation(lista(prod.getRange('B2:B500')));
+    ss.getSheetByName(HT.AJUSTES.nombre).getRange('A2:A300').setDataValidation(lista(prod.getRange('B2:B500')));
+    ss.getSheetByName(HT.COBROS.nombre).getRange('A2:A300').setDataValidation(lista(usr.getRange('A2:A500')));
+    ss.getSheetByName(HT.COBROS.nombre).getRange('C2:C300').setDataValidation(
+      SpreadsheetApp.newDataValidation().requireValueInList(['efectivo', 'transferencia', 'otro'], true).setAllowInvalid(false).build());
+    ss.getSheetByName(HT.ENTRADAS.nombre).getRange(1, 3).setNote('Lo que pagaste por TODAS las piezas. Si lo dejas vacío se usa el costo que ya tiene el producto.');
+    ss.getSheetByName(HT.AJUSTES.nombre).getRange(1, 2).setNote('Usa número negativo para restar (merma, se caducó, se perdió) y positivo para sumar.');
+    ss.getSheetByName(HT.COBROS.nombre).getRange(1, 3).setNote('efectivo, transferencia u otro. Si lo dejas vacío cuenta como efectivo.');
+  } catch (_) { /* las listas desplegables son un extra: si fallan, igual se puede escribir a mano */ }
+}
+
+// Procesa las filas pendientes de una hoja. Una fila ya procesada (con Estado) no se vuelve a tocar.
+function _procesarHoja(def, colEstado, hayDatos, fnFila) {
+  return _conCandado(() => {
+    const s = _asegurarHoja(def.nombre, def.cab);
+    const data = s.getDataRange().getValues();
+    const actor = _actorHoja();
+    let ok = 0, fallos = 0;
+    for (let i = 1; i < data.length; i++) {
+      const fila = data[i];
+      if (String(fila[colEstado] || '').trim() !== '') continue;
+      if (!hayDatos(fila)) continue;
+      let texto;
+      try { texto = '✅ ' + fnFila(fila, actor) + ' · ' + _fechaLargaMx(); ok++; }
+      catch (e) { texto = '❌ ' + e.message; fallos++; }
+      s.getRange(i + 1, colEstado + 1).setValue(texto);
+      _invalidarCache();
+    }
+    return { ok: true, aplicadas: ok, fallos: fallos };
+  });
+}
+
+function _exigir(r) { if (!r || !r.ok) throw new Error((r && r.error) || 'No se pudo guardar.'); return r; }
+function _stockActual(sku) { _invalidarCache(); const p = obtenerProducto(sku); return p ? p.stock : '?'; }
+const _noVacia = (f) => String(f[0] || '').trim() !== '';
+
+function procesarEntradasHoja() {
+  return _procesarHoja(HT.ENTRADAS, 4, _noVacia, (f, u) => {
+    const prod = _productoPorNombre(f[0]);
+    const lin = { sku: prod.sku, piezas: f[1] };
+    if (String(f[2]).trim() !== '') lin.costoTotal = f[2]; else lin.costoUnit = prod.costo;
+    _exigir(apiInvEntrada(u, { lineas: [lin], proveedor: f[3], notas: 'Desde la hoja Entradas' }));
+    return 'Entraron ' + f[1] + ' de ' + prod.nombre + '. Ahora hay ' + _stockActual(prod.sku);
+  });
+}
+
+function procesarAjustesHoja() {
+  return _procesarHoja(HT.AJUSTES, 3, _noVacia, (f, u) => {
+    const prod = _productoPorNombre(f[0]);
+    _exigir(apiInvAjuste(u, { sku: prod.sku, delta: f[1], motivo: f[2] }));
+    return prod.nombre + ' ' + (Number(f[1]) > 0 ? '+' : '') + f[1] + '. Ahora hay ' + _stockActual(prod.sku);
+  });
+}
+
+function procesarCobrosHoja() {
+  return _procesarHoja(HT.COBROS, 4, _noVacia, (f, u) => {
+    const metodo = String(f[2] || 'efectivo').trim().toLowerCase() || 'efectivo';
+    const r = _exigir(apiCobrosPago(u, { correo: f[0], monto: f[1], metodo: metodo, notas: f[3] }));
+    return 'Pago de ' + _money(Number(f[1])) + ' guardado. Debe ' + _money(r.deudaDespues);
+  });
+}
+
+// Conteo fisico: se llena la columna "Contaste" y se aplica; solo se corrigen las diferencias.
+function prepararConteoHoja() {
+  return _conCandado(() => {
+    const s = _asegurarHoja(HT.CONTEO.nombre, HT.CONTEO.cab);
+    const last = s.getLastRow();
+    if (last > 1) s.getRange(2, 1, last - 1, HT.CONTEO.cab.length).clearContent();
+    _invalidarCache();
+    const filas = listarProductos()
+      .map(p => [p.sku, p.nombre, p.stock, '', '']);
+    if (filas.length) s.getRange(2, 1, filas.length, HT.CONTEO.cab.length).setValues(filas);
+    return { ok: true, productos: filas.length };
+  });
+}
+
+function procesarConteoHoja() {
+  return _procesarHoja(HT.CONTEO, 4, (f) => String(f[3]).trim() !== '', (f, u) => {
+    const prod = obtenerProducto(String(f[0]));
+    if (!prod) throw new Error('No existe el SKU ' + f[0]);
+    const antes = prod.stock;
+    const r = _exigir(apiInvConteo(u, { conteos: [{ sku: prod.sku, real: f[3] }] }));
+    const d = Number(f[3]) - antes;
+    return d === 0 ? 'Coincide (' + antes + ')' : (d > 0 ? 'Sobraban ' + d : 'Faltaban ' + (-d)) + '. Quedó en ' + f[3];
+  });
+}
+
+// ---- menu ----
+function _resumenHoja(titulo, r) {
+  if (!r.aplicadas && !r.fallos) { _alertaHoja(titulo, 'No hay filas nuevas. Escribe filas debajo de los encabezados y vuelve a intentar.'); return; }
+  _alertaHoja(titulo, '✅ Aplicadas: ' + r.aplicadas + (r.fallos ? '\n❌ Con error: ' + r.fallos + ' (míralas en la columna Estado)' : ''));
+}
+function menuPrepararHojasTrabajo() { _prepararHojasTrabajo(); _alertaHoja('Listo', 'Hojas listas: Entradas, Ajustes, Conteo y Cobros.'); }
+function menuAplicarEntradas() { _resumenHoja('Entradas', procesarEntradasHoja()); }
+function menuAplicarAjustes() { _resumenHoja('Ajustes', procesarAjustesHoja()); }
+function menuAplicarCobros() { _resumenHoja('Cobros', procesarCobrosHoja()); }
+function menuPrepararConteo() {
+  const r = prepararConteoHoja();
+  _alertaHoja('Conteo listo', 'Se listaron ' + r.productos + ' productos en la hoja Conteo.\n\nEscribe en "Contaste" lo que hay de verdad (puedes dejar vacíos los que no cuentes) y luego usa "Aplicar CONTEO".');
+}
+function menuAplicarConteo() { _resumenHoja('Conteo', procesarConteoHoja()); }
 
