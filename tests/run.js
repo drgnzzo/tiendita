@@ -146,6 +146,7 @@ t('correo no registrado no entra', () => assert.strictEqual(call('login', { emai
 t('usuario desactivado no entra', () => assert.strictEqual(call('login', { email: 'jasso@gmail.com' }).ok, false));
 t('cliente también entra sin PIN', () => { et = call('login', { email: 'eric@gmail.com' }); assert.ok(et.ok); });
 
+t('el catálogo público no muestra lo agotado', () => { const l = call('catalogo', {}).productos; assert.ok(l.length > 0 && l.every(p => p.stock > 0), JSON.stringify(l.map(p => p.stock))); });
 t('el catálogo público no muestra el costo', () => { assert.ok(!JSON.stringify(call('catalogo', {})).includes('"costo"')); assert.ok(!JSON.stringify(call('buscar', { q: 'c' })).includes('"costo"')); });
 t('tienda de siempre: el catálogo se ve sin correo ni token', () => { const r = call('catalogo', {}); assert.ok(r.ok && r.productos.length > 0, JSON.stringify(r).slice(0, 200)); assert.ok(call('buscar', { q: 'a' }).ok); });
 t('tienda de siempre: catálogo y perfil solo con correo', () => {

@@ -662,17 +662,17 @@ function _seguroCelda(v) {
 // ---------- Endpoints de clientes ----------
 
 function apiCatalogo() {
-  return { ok: true, productos: listarProductos().map(_sinCosto) };
+  return { ok: true, productos: _publicos(listarProductos()) };
 }
 
 function apiBuscar(q) {
-  const productos = listarProductos();
+  const productos = _publicos(listarProductos());
   const palabra = _normalizar(q);
-  if (!palabra) return { ok: true, productos: productos.map(_sinCosto) };
+  if (!palabra) return { ok: true, productos: productos };
   return {
     ok: true,
     productos: productos.filter(p =>
-      _normalizar(p.nombre).includes(palabra) || _normalizar(p.categoria).includes(palabra)).map(_sinCosto)
+      _normalizar(p.nombre).includes(palabra) || _normalizar(p.categoria).includes(palabra))
   };
 }
 
@@ -708,6 +708,8 @@ function apiReporteEnviar(u) {
 // ============================================================
 
 // El costo (lo que te cuesta a ti) nunca sale en el catalogo publico.
+// Lo que ve el cliente: solo lo que hay en existencia y sin el costo.
+function _publicos(lista) { return lista.filter(p => p.stock > 0).map(_sinCosto); }
 function _sinCosto(p) { const c = Object.assign({}, p); delete c.costo; return c; }
 
 function listarProductos() {

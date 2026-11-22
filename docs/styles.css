@@ -1227,6 +1227,35 @@ a { color: inherit; }
   .app-main { max-width: 1600px; }
 }
 
+
+/* ============================================================
+   AJUSTES DE TAMAÑO Y ORDEN (móvil, tablet y escritorio)
+   ============================================================ */
+/* Botones fáciles de tocar con el dedo */
+.product .btn { min-height: 40px; padding: 8px 18px; font-size: 14px; }
+.product__name { font-size: 15px; }
+.product__meta { font-size: 12px; }
+.product__icon { width: 60px; height: 60px; }
+
+/* Un solo menú: arriba en tablet y escritorio, abajo en celular */
+@media (max-width: 639px) { .app-header__nav { display: none; } }
+@media (min-width: 640px) {
+  .app-header__nav { display: flex; }
+  .app-bottomnav { display: none; }
+  .catalogo { padding-bottom: 110px; }
+
+  /* Productos más grandes: tarjeta vertical */
+  .catalogo { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--s-4); }
+  .product { flex-direction: column; text-align: center; padding: var(--s-4); gap: var(--s-3); }
+  .product__icon { width: 92px; height: 92px; font-size: 46px; }
+  .product__info { flex: none; width: 100%; }
+  .product__name { font-size: 17px; }
+  .product__meta { font-size: 13px; }
+  .product__action { flex-direction: row; align-items: center; justify-content: space-between; width: 100%; margin-top: auto; }
+  .product__price { font-size: 30px; }
+  .product .btn { min-height: 44px; padding: 10px 22px; font-size: 15px; }
+}
+
 /* ---- Reduced motion ---- */
 @media (prefers-reduced-motion: reduce) {
   * { transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; }

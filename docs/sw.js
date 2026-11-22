@@ -3,16 +3,16 @@
  * Tolerante a fallos: si un asset falla, no rompe el install.
  */
 
-const CACHE_VERSION = 'tiendita-v12';
+const CACHE_VERSION = 'tiendita-v13';
 const ASSETS = [
   './',
   './index.html',
   './catalogo.html',
   './perfil.html',
   './admin.html',
-  './styles.css?v=10',
-  './api.js?v=10',
-  './app.js?v=10',
+  './styles.css?v=11',
+  './api.js?v=11',
+  './app.js?v=11',
   './logo-192.png', './logo-512.png',
   './manifest.json'
 ];
