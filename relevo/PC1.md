@@ -20,3 +20,4 @@ Leer ESTADO.md. No editar relevo/PC2.md.
 - Hecho: tema claro forzado, panel sin tienda duplicada, a todo el ancho, 5 pestañas, formularios rápidos. Pendiente: correr TIENDITA.bat y revisar con la usuaria.
 
 - Hecho: tema suave (fondos no blancos, paleta reducida, jerarquía de botones). Pendiente: publicar con TIENDITA.bat (5d7fb32 + este commit) y revisar con capturas.
+- Hecho: catálogo con espaciado nuevo e iconos por nombre; soporta Imagen_URL (se llena desde Editar producto > Enlace de la foto).

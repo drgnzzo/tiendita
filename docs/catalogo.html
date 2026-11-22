@@ -10,7 +10,7 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" type="image/png" href="./logo-192.png">
   <link rel="apple-touch-icon" href="./logo-180.png">
-  <link rel="stylesheet" href="./styles.css?v=13">
+  <link rel="stylesheet" href="./styles.css?v=14">
 </head>
 <body>
 
@@ -251,7 +251,7 @@
         return `
           <div class="product">
             ${badge}
-            <div class="product__icon product__icon--${iconColor}">${iconoPorCategoria(p.categoria)}</div>
+            <div class="product__icon product__icon--${iconColor}">${arteProducto(p)}</div>
             <div class="product__info">
               <div class="product__name">${tiendita.esc(p.nombre)}</div>
               <div class="product__meta ${metaCls}">${metaTxt}</div>
@@ -278,6 +278,31 @@
           tiendita.toast(nombre + ' agregado');
         });
       });
+    }
+
+    // Foto si el producto trae enlace (Imagen_URL); si no, un icono según su nombre.
+    function arteProducto(p) {
+      if (p.imagenUrl && /^https:\/\//i.test(p.imagenUrl)) {
+        return '<img class="product__foto" src="' + tiendita.esc(p.imagenUrl) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createTextNode(\'' + iconoPorNombre(p).replace(/'/g, '') + '\'))">';
+      }
+      return iconoPorNombre(p);
+    }
+    function iconoPorNombre(p) {
+      const n = (p.nombre || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const reglas = [
+        [/coca|refresco|pepsi|sprite|fanta|jarritos|sidral|manzanita|boing|jugo|del valle/, '🥤'],
+        [/agua|ciel|bonafont|epura/, '💧'], [/cafe|nescafe/, '☕'], [/leche|yogur|yoghurt/, '🥛'],
+        [/sopa|nissin|maruchan|fideo/, '🍜'], [/palomita|pop ?corn/, '🍿'],
+        [/papas|sabritas|chips|ruffles|doritos|cheetos|takis|churrito|fritos/, '🍟'],
+        [/mazapan|cacahuate|oblea|cajeta|dulce de leche/, '🥜'],
+        [/chocolate|kinder|snickers|carlos|barrita|proteina|barra/, '🍫'],
+        [/galleta|oreo|marias|gamesa|emperador|chokis/, '🍪'],
+        [/mantecada|bimbo|pan |panque|gansito|submarino|pinguino|donas?|cupcake/, '🧁'],
+        [/gomita|gomi|panzon|paleta|chicle|caramelo|bonbon|dulce|tamarindo|rielito/, '🍬'],
+        [/helado|nieve|paleta de hielo/, '🍦'], [/cerveza/, '🍺']
+      ];
+      for (const [re, e] of reglas) if (re.test(n)) return e;
+      return iconoPorCategoria(p.categoria);
     }
 
     function iconoPorCategoria(cat) {
