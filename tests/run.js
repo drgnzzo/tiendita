@@ -161,6 +161,40 @@ t('tienda de siempre: correo desconocido no pasa y nadie entra a admin sin token
   assert.strictEqual(call('perfil', { email: 'nadie@x.com' }).code, 'AUTH');
   assert.strictEqual(call('inv.lista', { email: 'victor.walmart.04@gmail.com' }).code, 'AUTH');
   assert.strictEqual(call('usr.lista', { email: 'victor.walmart.04@gmail.com' }).code, 'AUTH'); });
+t('admin web: crea producto nuevo con piezas y queda en Movimientos', () => {
+  ctx._ponerClaveAdminWeb('clave-larga-1');
+  const w = call('login', { email: 'admin@tiendita.com', pin: 'clave-larga-1' });
+  const r = call('prod.guardar', { token: w.token, nombre: 'Gansito Marinela', categoria: 'Dulces', precio: 18, costo: 11, stockMinimo: 2, activo: true, stockInicial: 6 });
+  assert.ok(r.ok && r.nuevo, JSON.stringify(r));
+  const l = call('inv.lista', { token: w.token }).productos.find(x => x.sku === r.sku);
+  assert.strictEqual(l.stock, 6);
+  assert.ok(call('inv.movimientos', { token: w.token }).movimientos.some(m => m.sku === r.sku && m.tipo === 'ENTRADA' && m.cantidad === 6)); });
+t('admin web: producto nuevo sin piezas queda en 0 y piezas absurdas se rechazan', () => {
+  const w = call('login', { email: 'admin@tiendita.com', pin: 'clave-larga-1' });
+  const r = call('prod.guardar', { token: w.token, nombre: 'Chicles Trident', precio: 10, activo: true });
+  assert.ok(r.ok && /sin piezas/i.test(r.mensaje), JSON.stringify(r));
+  assert.strictEqual(call('prod.guardar', { token: w.token, nombre: 'Otro', precio: 10, stockInicial: 99999 }).ok, false); });
+t('admin web: anota una venta a un cliente y sube su deuda', () => {
+  const w = call('login', { email: 'admin@tiendita.com', pin: 'clave-larga-1' });
+  const antes = call('perfil', { email: 'eric@gmail.com' }).usuario.deudaAcumulada;
+  const pr = call('catalogo', {}).productos[0];
+  const r = call('venta.admin', { token: w.token, correo: 'eric@gmail.com', items: [{ sku: pr.sku, cantidad: 1 }] });
+  assert.ok(r.ok, JSON.stringify(r));
+  assert.strictEqual(call('perfil', { email: 'eric@gmail.com' }).usuario.deudaAcumulada, antes + pr.precio);
+  assert.strictEqual(call('venta.admin', { token: w.token, correo: 'nadie@x.com', items: [{ sku: pr.sku, cantidad: 1 }] }).ok, false); });
+t('un cliente no puede anotar ventas ni ver reportes', () => {
+  const c = call('login', { email: 'eric@gmail.com' });
+  assert.strictEqual(call('venta.admin', { token: c.token, correo: 'eric@gmail.com', items: [] }).code, 'FORBIDDEN');
+  assert.strictEqual(call('reporte.mes', { token: c.token }).code, 'FORBIDDEN'); });
+t('reporte del mes: totales, tops y días cuadran', () => {
+  const w = call('login', { email: 'admin@tiendita.com', pin: 'clave-larga-1' });
+  const r = call('reporte.mes', { token: w.token });
+  assert.ok(r.ok && /^\d{4}-\d{2}$/.test(r.mes), JSON.stringify(r).slice(0, 300));
+  const sumaDias = Math.round(r.porDia.reduce((a, b) => a + b, 0) * 100) / 100;
+  assert.strictEqual(sumaDias, r.ventas);
+  assert.ok(r.topProductos.length > 0 && r.topClientes.length > 0 && r.meses.includes(r.mes));
+  assert.strictEqual(call('reporte.mes', { token: w.token, mes: '2020-01' }).ventas, 0);
+  assert.strictEqual(call('reporte.mes', { token: w.token, mes: 'basura' }).ok, true); });
 t('admin web: sin contraseña pide contraseña', () => assert.strictEqual(call('login', { email: 'admin@tiendita.com' }).code, 'NEEDS_PIN'));
 t('admin web: contraseña corta se rechaza', () => assert.throws(() => ctx._ponerClaveAdminWeb('corta')));
 let aw;

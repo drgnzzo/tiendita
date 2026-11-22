@@ -30,3 +30,12 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - Probado con navegador simulado en móvil 390, tablet 820 y escritorio 1280: login, catálogo, compra, perfil, admin y sus 5 pestañas. Sin desbordes ni errores.
 - Corregido: el catálogo público ya no muestra el costo; el logo pesaba 983 KB y ahora se usa el de 62 KB; se quitaron los archivos viejos duplicados de la raíz y el `_headers` de Cloudflare.
 - Conocido: el perfil se pide solo con el correo (como siempre). Falta probar en vivo con Apps Script real.
+
+## Panel admin ampliado (2026-11-22)
+- Formularios más anchos y en columnas; el panel usa el ancho de la pantalla (header y contenido alineados).
+- Producto nuevo desde el panel con "piezas que tienes ahora" (queda como ENTRADA en Movimientos). Botón también en Resumen, Inventario y dentro de Registrar compra.
+- Anotar venta a un cliente (venta.admin) en Resumen y Cobros.
+- Pestaña Reportes: mes, ventas, ganancia estimada, cobrado, por cobrar, ventas por día, top productos y top clientes (reporte.mes).
+- El catálogo de clientes no muestra lo agotado ni el costo.
+- _config.bat: TND_AUTO_DEPLOY=1 (el BAT actualiza la implementación; la cuenta de clasp es a.r.c.caos y ya está autorizada). Si la URL da 403, el BAT lo avisa.
+- Falta: deshacer una venta por error, exportar el reporte, foto de producto desde el panel.

@@ -6,6 +6,7 @@ const SUBS = [
   { id: 'resumen', nombre: 'Resumen', permiso: 'admin.resumen' },
   { id: 'inventario', nombre: 'Inventario', permiso: 'inv.lista' },
   { id: 'cobros', nombre: 'Cobros', permiso: 'cobros.lista' },
+  { id: 'reportes', nombre: 'Reportes', permiso: 'reporte.mes' },
   { id: 'productos', nombre: 'Productos', permiso: 'prod.guardar' },
   { id: 'usuarios', nombre: 'Usuarios', permiso: 'usr.lista' }
 ];
@@ -24,7 +25,7 @@ export async function renderAdmin(root, sub) {
     </nav>
     <div id="admin-cuerpo"></div>`);
   const cuerpo = $('#admin-cuerpo', root);
-  const vistas = { resumen: vResumen, inventario: vInventario, cobros: vCobros, productos: vProductos, usuarios: vUsuarios };
+  const vistas = { resumen: vResumen, inventario: vInventario, cobros: vCobros, reportes: vReportes, productos: vProductos, usuarios: vUsuarios };
   recargar = () => renderAdmin($('#vista'), sub);
   await vistas[sub](cuerpo);
 }
@@ -46,6 +47,8 @@ async function vResumen(c) {
 
     <div class="acciones-barra">
       <button class="btn btn--rojo" data-a="entrada">Registrar compra</button>
+      ${puede('prod.guardar') ? html`<button class="btn btn--suave" data-a="nuevo-prod">Nuevo producto</button>` : ''}
+      ${puede('venta.admin') ? html`<button class="btn btn--suave" data-a="venta">Anotar venta a un cliente</button>` : ''}
       ${puede('reporte.enviar') ? html`<button class="btn btn--suave" data-a="reporte">Enviar reporte del día</button>` : ''}
     </div>
 
@@ -90,6 +93,8 @@ async function vResumen(c) {
     </div>`);
 
   on(c, 'click', '[data-a="entrada"]', (b) => abrirEntrada({ sku: b.dataset.sku }));
+  on(c, 'click', '[data-a="nuevo-prod"]', () => nuevoProducto());
+  on(c, 'click', '[data-a="venta"]', () => abrirVenta());
   on(c, 'click', '[data-a="cobrar"]', (b) => abrirCobro(b.dataset));
   on(c, 'click', '[data-a="reporte"]', async (b) => {
     const res = await ocupado(b, 'Enviando…', () => api('reporte.enviar'));
@@ -110,6 +115,7 @@ async function vInventario(c) {
   mount(c, html`
     <div class="acciones-barra">
       <button class="btn btn--rojo" data-a="entrada">Registrar compra</button>
+      ${puede('prod.guardar') ? html`<button class="btn btn--suave" data-a="nuevo-prod">Nuevo producto</button>` : ''}
       <button class="btn btn--suave" data-a="conteo">Contar todo</button>
     </div>
     <div class="chips" id="inv-tabs">
@@ -183,6 +189,7 @@ async function vInventario(c) {
   on(c, 'click', '[data-a="entrada"]', (b) => abrirEntrada({ sku: b.dataset.sku }));
   on(c, 'click', '[data-a="ajuste"]', (b) => abrirAjuste(prods.find((p) => p.sku === b.dataset.sku)));
   on(c, 'click', '[data-a="conteo"]', () => abrirConteo(prods.filter((p) => p.activo)));
+  on(c, 'click', '[data-a="nuevo-prod"]', () => nuevoProducto());
   on(c, 'click', '[data-a="historial"]', async (b) => {
     const p = prods.find((x) => x.sku === b.dataset.sku);
     const h = abrirHoja({ titulo: 'Historial · ' + p.nombre, ancho: 'ancha', cuerpo: cargando() });
@@ -232,7 +239,10 @@ async function abrirEntrada({ sku } = {}) {
             <select id="modo"><option value="unit">Por pieza</option><option value="total">Total de la línea</option></select></div>
         </div>
         <div id="lineas">${linea(sku)}</div>
-        <button class="btn btn--suave btn--chico" type="button" id="mas-linea">+ Agregar otro producto</button>
+        <div class="acciones-barra" style="margin:8px 0">
+          <button class="btn btn--suave btn--chico" type="button" id="mas-linea">+ Agregar otro producto</button>
+          ${puede('prod.guardar') ? html`<button class="btn btn--suave btn--chico" type="button" id="prod-nuevo">¿No está? Crear producto nuevo</button>` : ''}
+        </div>
         <div class="total-fila"><span>Total de la compra</span><span class="num" id="total-entrada">$0.00</span></div>
         <div class="acciones"><button class="btn btn--rojo" type="submit">Guardar compra</button></div>
       </form>`
@@ -248,6 +258,11 @@ async function abrirEntrada({ sku } = {}) {
   };
   h.el.addEventListener('input', total);
   $('#modo', h.el).addEventListener('change', total);
+  const btnNuevo = $('#prod-nuevo', h.el);
+  if (btnNuevo) btnNuevo.addEventListener('click', () => {
+    const cats = Array.from(new Set(prods.map((x) => x.categoria).filter(Boolean))).sort();
+    h.cerrar(); formProducto(null, cats, () => abrirEntrada());
+  });
   $('#mas-linea', h.el).addEventListener('click', () => lineasEl.insertAdjacentHTML('beforeend', linea('').s));
   on(h.el, 'click', '[data-quitar]', (b) => { if ($$('[data-linea]', h.el).length > 1) { b.closest('[data-linea]').remove(); total(); } });
 
@@ -365,7 +380,10 @@ async function vCobros(c) {
     <div class="caja" style="grid-template-columns:1fr">
       <div style="border-bottom:0"><strong class="num">${money(r.total)}</strong><span>Por cobrar a ${r.deudores.length} personas</span></div>
     </div>
-    ${puede('cobros.corte') ? html`<div class="acciones-barra"><button class="btn btn--tinta" data-a="corte">Generar corte de la quincena</button></div>` : ''}
+    <div class="acciones-barra">
+      ${puede('venta.admin') ? html`<button class="btn btn--rojo" data-a="venta">Anotar venta a un cliente</button>` : ''}
+      ${puede('cobros.corte') ? html`<button class="btn btn--tinta" data-a="corte">Generar corte de la quincena</button>` : ''}
+    </div>
     <div class="dos-col">
       <section>
         <h2>Quién debe</h2>
@@ -385,6 +403,7 @@ async function vCobros(c) {
       </section>
     </div>`);
   on(c, 'click', '[data-a="cobrar"]', (b) => abrirCobro(b.dataset));
+  on(c, 'click', '[data-a="venta"]', () => abrirVenta());
   on(c, 'click', '[data-a="corte"]', async (b) => {
     const ok = await confirmar({ titulo: 'Generar corte', mensaje: 'Esto guarda una foto de lo que debe cada persona hoy. No cambia las deudas. ¿Continuar?', si: 'Generar corte' });
     if (!ok) return;
@@ -424,6 +443,7 @@ function abrirCobro({ correo, nombre, deuda }) {
 
 // ====================== PRODUCTOS ======================
 
+let prodFiltro = '';
 async function vProductos(c) {
   mount(c, cargando());
   const r = await api('inv.lista');
@@ -432,37 +452,58 @@ async function vProductos(c) {
   const cats = Array.from(new Set(prods.map((p) => p.categoria).filter(Boolean))).sort();
   mount(c, html`
     <div class="acciones-barra"><button class="btn btn--rojo" data-a="nuevo">Nuevo producto</button></div>
-    ${prods.map((p) => html`
+    <div class="campo"><input id="prod-buscar" type="search" placeholder="Buscar producto…" aria-label="Buscar producto" value="${prodFiltro}"></div>
+    <div id="prod-lista"></div>`);
+  const pintar = () => {
+    const q = prodFiltro.trim().toLowerCase();
+    const lista = prods.filter((p) => !q || (p.nombre + p.categoria + p.sku).toLowerCase().includes(q));
+    mount($('#prod-lista', c), lista.length === 0 ? vacio('Sin resultados') : html`${lista.map((p) => html`
       <div class="fila-admin" ${p.activo ? '' : raw('style="opacity:.55"')}>
-        <div><div class="fila-admin__nombre">${p.nombre} ${p.activo ? '' : html`<span class="sello">Inactivo</span>`}</div>
-          <div class="fila-admin__meta num">${p.sku} · ${p.categoria} · costo ${money(p.costo)}</div></div>
+        <div><div class="fila-admin__nombre">${p.nombre} ${p.activo ? '' : html`<span class="sello">Oculto en la tienda</span>`}</div>
+          <div class="fila-admin__meta num">${p.categoria} · ${p.stock} en existencia · costo ${money(p.costo)} · ${p.sku}</div></div>
         <div class="fila-admin__acc"><strong class="num">${money(p.precio)}</strong>
           <button class="btn btn--suave btn--chico" data-a="editar" data-sku="${p.sku}">Editar</button></div>
       </div>`)}`);
+  };
+  pintar();
+  $('#prod-buscar', c).addEventListener('input', (e) => { prodFiltro = e.target.value; pintar(); });
   on(c, 'click', '[data-a="nuevo"]', () => formProducto(null, cats));
   on(c, 'click', '[data-a="editar"]', (b) => formProducto(prods.find((p) => p.sku === b.dataset.sku), cats));
 }
 
-function formProducto(p, cats) {
+// Abre el formulario de producto nuevo con las categorías que ya existen.
+async function nuevoProducto() {
+  const r = await api('inv.lista');
+  const cats = r.ok ? Array.from(new Set(r.productos.map((p) => p.categoria).filter(Boolean))).sort() : [];
+  formProducto(null, cats);
+}
+
+function formProducto(p, cats, alGuardar) {
   const nuevo = !p;
   p = p || { nombre: '', categoria: '', precio: '', stockMinimo: 2, costo: '', codigoBarras: '', imagenUrl: '', activo: true };
   const h = abrirHoja({
-    titulo: nuevo ? 'Nuevo producto' : 'Editar producto', ancho: 'chica',
+    titulo: nuevo ? 'Producto nuevo' : 'Editar producto', ancho: 'media',
     cuerpo: html`
       <form id="form-prod" novalidate>
         <div class="error-form" id="prod-error" role="alert"></div>
-        ${campo({ id: 'pr-nombre', etiqueta: 'Nombre', valor: p.nombre, attrs: 'maxlength="80"' })}
-        <div class="campo"><label for="pr-cat">Categoría</label>
-          <input id="pr-cat" list="lista-cat" value="${p.categoria}" maxlength="30"><datalist id="lista-cat">${cats.map((x) => html`<option value="${x}">`)}</datalist></div>
         <div class="fila-campos">
+          ${campo({ id: 'pr-nombre', etiqueta: 'Nombre', valor: p.nombre, attrs: 'maxlength="80" autocomplete="off"' })}
+          <div class="campo"><label for="pr-cat">Categoría</label>
+            <input id="pr-cat" list="lista-cat" value="${p.categoria}" maxlength="30" autocomplete="off" placeholder="Bebidas, Dulces, Snacks…"><datalist id="lista-cat">${cats.map((x) => html`<option value="${x}">`)}</datalist></div>
+        </div>
+        <div class="fila-campos fila-campos--3">
           ${campo({ id: 'pr-precio', etiqueta: 'Precio de venta', tipo: 'number', valor: p.precio, attrs: 'inputmode="decimal" min="0.5" step="0.5"' })}
+          ${campo({ id: 'pr-costo', etiqueta: 'Costo por pieza', tipo: 'number', valor: p.costo, attrs: 'inputmode="decimal" min="0" step="0.01"' })}
           ${campo({ id: 'pr-min', etiqueta: 'Avisar cuando queden', tipo: 'number', valor: p.stockMinimo, attrs: 'inputmode="numeric" min="0" step="1"' })}
         </div>
-        ${campo({ id: 'pr-costo', etiqueta: 'Costo por pieza', tipo: 'number', valor: p.costo, ayuda: nuevo ? 'Si no lo sabes, déjalo vacío: se calcula al registrar compras.' : 'Se actualiza solo con cada compra. Cámbialo solo para corregirlo.', attrs: 'inputmode="decimal" min="0" step="0.01"' })}
-        ${campo({ id: 'pr-codigo', etiqueta: 'Código de barras (opcional)', valor: p.codigoBarras, attrs: 'inputmode="numeric" maxlength="40"' })}
-        ${campo({ id: 'pr-img', etiqueta: 'Enlace de la foto (opcional)', tipo: 'url', valor: p.imagenUrl, ayuda: 'Tiene que empezar con https://', attrs: 'maxlength="300"' })}
-        <div class="campo campo--fila"><input id="pr-activo" type="checkbox" ${p.activo ? raw('checked') : ''}><label for="pr-activo">Disponible en la tienda</label></div>
-        <div class="acciones"><button class="btn btn--rojo" type="submit">Guardar</button></div>
+        ${nuevo ? campo({ id: 'pr-stock', etiqueta: 'Piezas que tienes ahora', tipo: 'number', valor: '', ayuda: 'Quedan registradas como una entrada. Si todavía no llega, déjalo vacío y registra una compra después.', attrs: 'inputmode="numeric" min="0" step="1" placeholder="0"' })
+                : html`<p class="suave" style="margin:0 0 12px">Existencia actual: <strong>${p.stock}</strong>. Para cambiarla usa <em>Registrar compra</em> o <em>Ajustar</em> en Inventario.</p>`}
+        <div class="fila-campos">
+          ${campo({ id: 'pr-codigo', etiqueta: 'Código de barras (opcional)', valor: p.codigoBarras, attrs: 'inputmode="numeric" maxlength="40"' })}
+          ${campo({ id: 'pr-img', etiqueta: 'Enlace de la foto (opcional)', tipo: 'url', valor: p.imagenUrl, attrs: 'maxlength="300" placeholder="https://…"' })}
+        </div>
+        <div class="campo campo--fila"><input id="pr-activo" type="checkbox" ${p.activo ? raw('checked') : ''}><label for="pr-activo">Mostrar en la tienda (si no hay piezas, no aparece solo)</label></div>
+        <div class="acciones"><button class="btn btn--suave" type="button" data-cerrar>Cancelar</button><button class="btn btn--rojo" type="submit">${nuevo ? 'Crear producto' : 'Guardar cambios'}</button></div>
       </form>`
   });
   $('#form-prod', h.el).addEventListener('submit', async (e) => {
@@ -479,11 +520,108 @@ function formProducto(p, cats) {
       stockMinimo: Number($('#pr-min', h.el).value || 0), costo: $('#pr-costo', h.el).value,
       codigoBarras: $('#pr-codigo', h.el).value.trim(), imagenUrl: img, activo: $('#pr-activo', h.el).checked
     };
+    if (nuevo) datos.stockInicial = $('#pr-stock', h.el).value;
     const btn = e.submitter || $('button[type=submit]', h.el);
     const res = await ocupado(btn, 'Guardando…', () => api('prod.guardar', datos));
     if (!res.ok) { caja.textContent = res.error; return; }
-    h.cerrar(); toast(res.mensaje); recargar();
+    h.cerrar(); toast(res.mensaje);
+    if (alGuardar) alGuardar(); else recargar();
   });
+}
+
+// ---- anotar lo que se llevó un cliente ----
+async function abrirVenta() {
+  const [ri, ru] = await Promise.all([api('inv.lista'), puede('usr.lista') ? api('usr.lista') : Promise.resolve({ ok: false })]);
+  if (!ri.ok) { toast(ri.error, 'error'); return; }
+  const prods = ri.productos.filter((x) => x.activo && x.stock > 0).sort(porNombre);
+  const clientes = ru.ok ? ru.usuarios.filter((x) => x.activo).sort(porNombre) : [];
+  const reqId = newReqId();
+  const linea = () => html`
+    <div class="linea-venta" data-linea>
+      <div class="campo" style="margin:0"><select aria-label="Producto" data-f="sku"><option value="">Elige un producto…</option>${prods.map((x) => html`<option value="${x.sku}">${x.nombre} (${x.stock}) · ${money(x.precio)}</option>`)}</select></div>
+      <div class="campo" style="margin:0"><input aria-label="Piezas" data-f="cant" type="number" inputmode="numeric" min="1" step="1" value="1"></div>
+      <button class="icono-btn" data-quitar aria-label="Quitar línea" type="button">✕</button>
+    </div>`;
+  const h = abrirHoja({
+    titulo: 'Anotar venta a un cliente', ancho: 'media',
+    cuerpo: html`
+      <form id="form-venta" novalidate>
+        <p class="suave" style="margin:0 0 12px">Para cuando alguien se llevó algo y no lo registró. Baja el inventario y suma a su deuda.</p>
+        <div class="error-form" id="venta-error" role="alert"></div>
+        <div class="campo"><label for="vta-cli">¿Quién se lo llevó?</label>
+          ${clientes.length ? html`<select id="vta-cli"><option value="">Elige a la persona…</option>${clientes.map((x) => html`<option value="${x.correo}">${x.nombre} · debe ${money(x.deuda)}</option>`)}</select>`
+                            : html`<input id="vta-cli" type="email" placeholder="correo@ejemplo.com">`}</div>
+        <div id="vta-lineas">${linea()}</div>
+        <div class="acciones-barra" style="margin:8px 0"><button class="btn btn--suave btn--chico" type="button" id="vta-mas">+ Agregar otro producto</button></div>
+        <div class="acciones"><button class="btn btn--suave" type="button" data-cerrar>Cancelar</button><button class="btn btn--rojo" type="submit">Anotar venta</button></div>
+      </form>`
+  });
+  $('#vta-mas', h.el).addEventListener('click', () => $('#vta-lineas', h.el).insertAdjacentHTML('beforeend', linea().s));
+  on(h.el, 'click', '[data-quitar]', (b) => { if ($$('[data-linea]', h.el).length > 1) b.closest('[data-linea]').remove(); });
+  $('#form-venta', h.el).addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const caja = $('#venta-error', h.el); caja.textContent = '';
+    const correo = $('#vta-cli', h.el).value.trim();
+    if (!correo) { caja.textContent = 'Elige quién se lo llevó.'; return; }
+    const items = [];
+    for (const l of $$('[data-linea]', h.el)) {
+      const sku = $('[data-f="sku"]', l).value, cantidad = Number($('[data-f="cant"]', l).value);
+      if (!sku) continue;
+      if (!(cantidad >= 1)) { caja.textContent = 'Pon cuántas piezas fueron.'; return; }
+      items.push({ sku, cantidad });
+    }
+    if (items.length === 0) { caja.textContent = 'Agrega al menos un producto.'; return; }
+    const btn = e.submitter || $('button[type=submit]', h.el);
+    const res = await ocupado(btn, 'Anotando…', () => api('venta.admin', { correo, items, reqId }));
+    if (!res.ok) { caja.textContent = res.error; return; }
+    h.cerrar(); toast('Venta anotada. Nueva deuda: ' + money(res.deudaNueva)); recargar();
+  });
+}
+
+// ====================== REPORTES ======================
+
+let repMes = '';
+const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const nombreMes = (m) => { const [a, n] = m.split('-'); return MESES[Number(n) - 1] + ' ' + a; };
+
+async function vReportes(c) {
+  mount(c, cargando());
+  const r = await api('reporte.mes', repMes ? { mes: repMes } : {});
+  if (!r.ok) { mount(c, errorCaja(r.error)); return; }
+  repMes = r.mes;
+  const max = Math.max(1, ...r.porDia);
+  const dif = r.ventasMesAnterior > 0 ? Math.round(((r.ventas - r.ventasMesAnterior) / r.ventasMesAnterior) * 100) : null;
+  mount(c, html`
+    <div class="acciones-barra">
+      <div class="campo" style="margin:0"><label for="rep-mes" class="solo-lector">Mes</label>
+        <select id="rep-mes">${r.meses.map((m) => html`<option value="${m}" ${m === r.mes ? raw('selected') : ''}>${nombreMes(m)}</option>`)}</select></div>
+    </div>
+    <div class="caja">
+      <div><strong class="num">${money(r.ventas)}</strong><span>Vendido en ${nombreMes(r.mes)}${dif === null ? '' : ' · ' + (dif >= 0 ? '+' : '') + dif + '% vs. mes anterior'}</span></div>
+      <div><strong class="num">${money(r.ganancia)}</strong><span>Ganancia estimada · ${r.margen}% de margen</span></div>
+      <div><strong class="num">${money(r.cobrado)}</strong><span>Cobrado en el mes</span></div>
+      <div><strong class="num">${money(r.porCobrarHoy)}</strong><span>Por cobrar hoy</span></div>
+    </div>
+    <p class="suave num" style="margin-top:10px">${r.piezas} piezas en ${r.tickets} compras. ${r.nota}</p>
+    <section style="margin-top:22px">
+      <h2>Ventas por día</h2>
+      <div class="barras barras--mes" role="img" aria-label="Ventas por día del mes">
+        ${r.porDia.map((m, i) => html`<div title="Día ${i + 1}: ${money(m)}"><i style="height:${Math.round((m / max) * 100)}px"></i><span>${(i + 1) % 5 === 0 || i === 0 ? i + 1 : ''}</span></div>`)}
+      </div>
+    </section>
+    <div class="dos-col">
+      <section>
+        <h2>Lo que más se vendió</h2>
+        ${r.topProductos.length === 0 ? vacio('Sin ventas en este mes') : r.topProductos.map((x) => html`
+          <div class="renglon"><div>${x.nombre}<br><small>${x.piezas} piezas</small></div><div class="num"><strong>${money(x.monto)}</strong></div></div>`)}
+      </section>
+      <section>
+        <h2>Quién compró más</h2>
+        ${r.topClientes.length === 0 ? vacio('Sin ventas en este mes') : r.topClientes.map((x) => html`
+          <div class="renglon"><div>${x.nombre}<br><small>${x.piezas} piezas</small></div><div class="num"><strong>${money(x.monto)}</strong></div></div>`)}
+      </section>
+    </div>`);
+  $('#rep-mes', c).addEventListener('change', (e) => { repMes = e.target.value; vReportes(c); });
 }
 
 // ====================== USUARIOS ======================

@@ -305,3 +305,30 @@ h1, h2, .marca, .login__nombre { font-family: var(--fuente-display); font-weight
   .cabecera .nav a { color: #fff; }
   .cabecera .nav a[aria-current="page"] { background: #fff; color: var(--rojo-d); }
 }
+
+/* ===== Panel de administración: aprovecha el ancho de la pantalla ===== */
+@media (min-width: 1100px) { .pagina { max-width: 1280px; } }
+.hoja--chica { max-width: 520px; }
+.hoja--media { max-width: 780px; }
+.hoja--ancha { max-width: 1000px; }
+@media (min-width: 720px) {
+  .hoja__barra { padding: 18px 20px 8px 30px; }
+  .hoja__cuerpo { padding: 8px 30px 28px; }
+  .fila-campos { gap: 18px; }
+  .fila-campos--3 { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 719px) { .fila-campos--3 { grid-template-columns: 1fr; gap: 0; } }
+.linea-venta { display: grid; grid-template-columns: 1fr 90px 36px; gap: 8px; align-items: end; margin-bottom: 8px; }
+.linea-venta input, .linea-venta select { min-height: 44px; padding: 8px 10px; }
+.barras--mes { height: 150px; gap: 3px; }
+.barras--mes > div { gap: 2px; }
+.barras--mes i { max-width: none; }
+/* Listas a dos columnas en pantallas anchas */
+@media (min-width: 1000px) {
+  #prod-lista, #inv-lista { display: grid; grid-template-columns: 1fr 1fr; column-gap: 40px; }
+}
+@media (min-width: 1100px) { .cabecera__in { max-width: 1280px; } }
+@media (max-width: 719px) {
+  .fila-campos--3 { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .fila-campos--3 > :last-child { grid-column: 1 / -1; }
+}

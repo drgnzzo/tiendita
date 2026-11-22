@@ -9,5 +9,5 @@ REM ID del script de Apps Script (Configuracion del proyecto)
 set "TND_SCRIPT_ID=1yNyCzFpY04Fj8V5iUfn1M9Tk-cdw2PGyoyUvy8o7mzJ6RBwACgg3E6KE"
 REM Implementacion publicada (la de la URL /exec de siempre). El BAT la actualiza solo.
 set "TND_DEPLOY_ID=AKfycbzGiUz2A5Wy2tUBQcnUBrstB0DZ_YKcDN24cDnD3M7lJcPHdhiNd37veyuDI0U8K2MP"
-REM 1 = que el BAT actualice la implementacion solo. Con 0 la actualizas a mano en Apps Script (asi no se pierde el acceso Cualquiera).
-set "TND_AUTO_DEPLOY=0"
+REM 1 = el BAT actualiza la implementacion solo (la cuenta de clasp ya esta autorizada). Pon 0 para hacerlo a mano.
+set "TND_AUTO_DEPLOY=1"

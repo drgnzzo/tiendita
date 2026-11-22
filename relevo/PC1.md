@@ -1,16 +1,15 @@
 # Relevo PC1
 
 ## Hecho
-- Modo tienda: sin PIN para nadie. La web solo sirve para comprar y ver.
-- Inventario y cobros se hacen en el Sheet: menu TIENDITA > Trabajo diario.
-- Repo alineado con GitHub (origin/main). 71 pruebas pasan.
+- Tienda de siempre en docs/ (sin PIN para clientes); login único: admin@tiendita.com pide contraseña y entra a docs/admin/.
+- Panel admin: productos nuevos con piezas, venta a cliente, reportes del mes, formularios anchos. 88 pruebas pasan.
+- Catálogo público sin costo y sin lo agotado.
+- BAT sube a GitHub, a Apps Script y actualiza la implementación (misma URL).
 
 ## Pendiente
-1. Subir el commit (GitHub Desktop > Push origin).
-2. Correr TIENDITA.bat para mandar el codigo a Apps Script.
-3. En el Sheet: TIENDITA > Configuracion inicial v2 (una vez).
-4. Apps Script > Implementar > Nueva implementacion (Aplicacion web). Copiar la URL /exec a docs/js/config.js.
-5. GitHub Settings > Pages > main /docs.
+1. Correr TIENDITA.bat y revisar en vivo (tienda y /admin/).
+2. Probar con datos reales; mandar capturas de lo raro.
+3. Ideas: deshacer venta, exportar reporte, fotos.
 
 ## Como continuar
-Leer ESTADO.md y este archivo. No editar relevo/PC2.md.
+Leer ESTADO.md. No editar relevo/PC2.md.

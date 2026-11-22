@@ -498,7 +498,7 @@ const PERMISOS = {
   operador: [
     'catalogo', 'buscar', 'comprar', 'perfil', 'historial', 'sugerir', 'bot', 'cambiarPin',
     'admin.resumen', 'inv.lista', 'inv.entrada', 'inv.ajuste', 'inv.conteo',
-    'inv.movimientos', 'inv.compras', 'cobros.lista', 'cobros.pago'
+    'inv.movimientos', 'inv.compras', 'cobros.lista', 'cobros.pago', 'venta.admin'
   ],
   cliente: ['catalogo', 'buscar', 'comprar', 'perfil', 'historial', 'sugerir', 'bot', 'cambiarPin']
 };
@@ -537,6 +537,8 @@ const API_RUTAS = {
   'usr.lista':      (u, p) => apiUsrLista(),
   'usr.guardar':    (u, p) => apiUsrGuardar(u, p),
   'usr.resetPin':   (u, p) => apiUsrResetPin(u, p),
+  'venta.admin':    (u, p) => apiVentaAdmin(u, p),
+  'reporte.mes':    (u, p) => apiReporteMes(p),
   'reporte.enviar': (u, p) => apiReporteEnviar(u)
 };
 
@@ -691,6 +693,21 @@ function apiComprar(u, p) {
   if (!items || !Array.isArray(items) || items.length === 0) return { ok: false, error: 'Tu carrito está vacío.' };
   if (items.length > 30) return { ok: false, error: 'Demasiados productos en una sola compra.' };
   return _idempotente(p.reqId, () => registrarCompra(u.correo, items));
+}
+
+// El admin u operador anota lo que se llevo un cliente que no lo registro.
+function apiVentaAdmin(u, p) {
+  const correo = _texto(p.correo, 120).toLowerCase();
+  const cli = correo ? obtenerUsuario(correo) : null;
+  if (!cli || !cli.activo) return { ok: false, error: 'No encontré a esa persona o está desactivada.' };
+  const items = p.items;
+  if (!items || !Array.isArray(items) || items.length === 0) return { ok: false, error: 'Agrega al menos un producto.' };
+  if (items.length > 30) return { ok: false, error: 'Demasiados productos en una sola venta.' };
+  return _idempotente(p.reqId, () => {
+    const r = registrarCompra(cli.correo, items);
+    if (r && r.ok) _log('VENTA_ADMIN', u.correo, 'Venta anotada a ' + cli.correo);
+    return r;
+  });
 }
 
 function apiSugerir(u, p) {
@@ -1934,8 +1951,9 @@ function apiProdGuardar(u, p) {
   let imagen = _texto(p.imagenUrl, 300);
   if (imagen && !/^https:\/\//i.test(imagen)) return { ok: false, error: 'La imagen debe ser un enlace que empiece con https://' };
   const activo = p.activo === true || p.activo === 'true';
+  const stockInicial = (p.stockInicial == null || p.stockInicial === '') ? 0 : _entero(p.stockInicial, 0, 5000, 'El stock inicial');
 
-  return _conCandado(() => {
+  const res = _conCandado(() => {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const s = ss.getSheetByName(CONFIG.HOJAS.PRODUCTOS);
     const existente = p.sku ? obtenerProducto(String(p.sku)) : null;
@@ -1956,8 +1974,19 @@ function apiProdGuardar(u, p) {
     s.appendRow([sku, _seguroCelda(nombre), _seguroCelda(categoria), costo, precio, 0, stockMinimo,
                  _seguroCelda(codigo), imagen, activo]);
     _log('PRODUCTO', u.correo, 'Creado: ' + sku + ' ' + nombre);
-    return { ok: true, sku: sku, nuevo: true, mensaje: 'Producto creado. Registra una entrada para darle stock.' };
+    return { ok: true, sku: sku, nuevo: true, costo: costo, mensaje: 'Producto creado.' };
   });
+  // Producto nuevo con piezas: queda registrado como entrada (asi el inventario siempre cuadra).
+  if (res.ok && res.nuevo) {
+    if (stockInicial > 0) {
+      const e = apiInvEntrada(u, { lineas: [{ sku: res.sku, piezas: stockInicial, costoUnit: res.costo || 0 }],
+                                   proveedor: 'Stock inicial', notas: 'Producto nuevo', reqId: _generarId('PI') });
+      res.mensaje = e.ok ? 'Producto creado con ' + stockInicial + ' piezas.' : 'Producto creado, pero no se pudo dar el stock: ' + e.error;
+    } else {
+      res.mensaje = 'Producto creado sin piezas. Registra una compra para darle stock.';
+    }
+  }
+  return res;
 }
 
 
@@ -2121,6 +2150,62 @@ function apiCobrosCorte(u) {
 // ============================================================
 // §12  PANEL ADMIN: resumen y usuarios
 // ============================================================
+
+// Reporte de un mes (formato AAAA-MM). Sin mes: el mes actual.
+function apiReporteMes(p) {
+  const hoyIso = _fechaIsoMx();
+  const mes = /^\d{4}-(0[1-9]|1[0-2])$/.test(String(p.mes || '')) ? String(p.mes) : hoyIso.slice(0, 7);
+  const [anio, nmes] = mes.split('-').map(Number);
+  const anterior = nmes === 1 ? (anio - 1) + '-12' : anio + '-' + ('0' + (nmes - 1)).slice(-2);
+  const diasDelMes = new Date(anio, nmes, 0).getDate();
+
+  const productos = _todosLosProductos();
+  const costoPorSku = {};
+  productos.forEach(x => { costoPorSku[x.sku] = x.costo; });
+  const nombreCorreo = {};
+  listarUsuarios().forEach(x => { nombreCorreo[x.correo.toLowerCase()] = x.nombre || x.correo.split('@')[0]; });
+
+  const data = _memoSS(CONFIG.HOJAS.VENTAS);
+  const porDia = []; for (let d = 1; d <= diasDelMes; d++) porDia.push(0);
+  const prod = {}, cli = {}, tickets = {}, meses = {};
+  let monto = 0, piezas = 0, costo = 0, montoAnterior = 0;
+  for (let i = 1; i < data.length; i++) {
+    const ts = data[i][1];
+    if (!(ts instanceof Date)) continue;
+    const iso = _fechaIsoMx(ts), m = iso.slice(0, 7);
+    meses[m] = true;
+    const mt = Number(data[i][7]) || 0, cant = Number(data[i][5]) || 0;
+    if (m === anterior) montoAnterior += mt;
+    if (m !== mes) continue;
+    const c = cant * (costoPorSku[String(data[i][3])] || 0);
+    monto += mt; piezas += cant; costo += c;
+    porDia[Number(iso.slice(8, 10)) - 1] += mt;
+    const nom = String(data[i][4]) || String(data[i][3]);
+    (prod[nom] = prod[nom] || { nombre: nom, piezas: 0, monto: 0 }); prod[nom].piezas += cant; prod[nom].monto += mt;
+    const em = String(data[i][2]).toLowerCase();
+    (cli[em] = cli[em] || { correo: em, nombre: nombreCorreo[em] || em.split('@')[0], piezas: 0, monto: 0 }); cli[em].piezas += cant; cli[em].monto += mt;
+    tickets[String(data[i][0]).split('-')[0]] = true;
+  }
+  let cobrado = 0;
+  try {
+    const pg = _memoSS(CONFIG.HOJAS.PAGOS);
+    for (let i = 1; i < pg.length; i++) {
+      if (pg[i][1] instanceof Date && _fechaIsoMx(pg[i][1]).slice(0, 7) === mes) cobrado += Number(pg[i][3]) || 0;
+    }
+  } catch (e) {}
+  meses[hoyIso.slice(0, 7)] = true;
+  const top = (o) => Object.keys(o).map(k => o[k]).sort((a, b) => b.monto - a.monto).slice(0, 8)
+    .map(x => Object.assign({}, x, { monto: _round2(x.monto) }));
+  return {
+    ok: true, mes: mes, meses: Object.keys(meses).sort().reverse().slice(0, 18),
+    ventas: _round2(monto), piezas: piezas, tickets: Object.keys(tickets).length,
+    ganancia: _round2(monto - costo), margen: monto > 0 ? Math.round(((monto - costo) / monto) * 100) : 0,
+    ventasMesAnterior: _round2(montoAnterior), cobrado: _round2(cobrado),
+    porCobrarHoy: _round2(listarUsuarios().reduce((t, x) => t + (x.deuda || 0), 0)),
+    porDia: porDia.map(_round2), topProductos: top(prod), topClientes: top(cli),
+    nota: 'La ganancia usa el costo actual de cada producto, por eso es estimada.'
+  };
+}
 
 function apiAdminResumen() {
   const usuarios = listarUsuarios();
