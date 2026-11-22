@@ -10,7 +10,7 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" type="image/png" href="./logo-192.png">
   <link rel="apple-touch-icon" href="./logo-180.png">
-  <link rel="stylesheet" href="./styles.css?v=14">
+  <link rel="stylesheet" href="./styles.css?v=15">
 </head>
 <body>
 
@@ -44,7 +44,6 @@
           <input id="search" type="search" placeholder="Buscar producto..." autocomplete="off">
         </div>
 
-        <div id="filtros" class="catalogo__filtros"></div>
       </div>
 
       <div id="estadoCarga" class="catalogo">
@@ -75,7 +74,7 @@
         </div>
       </div>
 
-      <div id="catalogo" class="catalogo hidden"></div>
+      <div id="catalogo" class="catalogo-secciones hidden"></div>
 
       <div id="estadoVacio" class="empty hidden">
         <div class="empty__icon">🛍️</div>
@@ -191,25 +190,8 @@
         return;
       }
 
-      construirFiltros();
       renderCatalogo();
       elCatalogo.classList.remove('hidden');
-    }
-
-    function construirFiltros() {
-      const cats = ['todos', ...new Set(productos.map(p => p.categoria).filter(Boolean))];
-      elFiltros.innerHTML = '';
-      cats.forEach(cat => {
-        const chip = document.createElement('button');
-        chip.className = 'chip' + (cat === categoriaActiva ? ' chip--active' : '');
-        chip.textContent = cat === 'todos' ? 'Todos' : cat;
-        chip.addEventListener('click', () => {
-          categoriaActiva = cat;
-          construirFiltros();
-          renderCatalogo();
-        });
-        elFiltros.appendChild(chip);
-      });
     }
 
     function renderCatalogo() {
@@ -232,7 +214,15 @@
       }
       elNoMatch.classList.add('hidden');
 
-      elCatalogo.innerHTML = filtrados.map((p, idx) => {
+      // Orden: secciones en el orden de la comida (sopas → botanas → dulces → helados → bebidas),
+      // y dentro de cada sección de la A a la Z.
+      const ORDEN = ['Sopas', 'Snacks', 'Dulces', 'Helados', 'Bebidas'];
+      const az = (a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
+      const rango = (c) => { const i = ORDEN.indexOf(c); return i >= 0 ? i : (c ? ORDEN.length : ORDEN.length + 1); };
+      const secciones = {};
+      filtrados.forEach(p => { (secciones[p.categoria || 'Otros'] = secciones[p.categoria || 'Otros'] || []).push(p); });
+      const cats = Object.keys(secciones).sort((x, y) => (rango(x === 'Otros' ? '' : x) - rango(y === 'Otros' ? '' : y)) || x.localeCompare(y, 'es'));
+      const tarjeta = (p, idx) => {
         const iconColor = idx % 2 === 0 ? 'rojo' : 'rosa';
         let metaTxt, metaCls, badge = '';
         if (p.stock === 0) {
@@ -262,6 +252,10 @@
             </div>
           </div>
         `;
+      };
+      elCatalogo.innerHTML = cats.map(cat => {
+        const lista = secciones[cat].sort(az);
+        return `<section class="seccion"><h2 class="seccion__titulo"><span>${iconoPorCategoria(cat)}</span> ${tiendita.esc(cat)} <small>${lista.length}</small></h2><div class="catalogo">${lista.map(tarjeta).join('')}</div></section>`;
       }).join('');
 
       elCatalogo.querySelectorAll('button[data-sku]').forEach(btn => {

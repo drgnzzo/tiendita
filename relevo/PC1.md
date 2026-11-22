@@ -23,3 +23,4 @@ Leer ESTADO.md. No editar relevo/PC2.md.
 - Hecho: catálogo con espaciado nuevo e iconos por nombre; soporta Imagen_URL (se llena desde Editar producto > Enlace de la foto).
 - Hecho: panel homologado con la tienda; botón Panel visible en catálogo/perfil para admin. Pendiente: publicar con TIENDITA.bat y revisar vistas Productos/Cobros/Reportes en vivo.
 - Hecho: rediseño limpio del panel y "+ Anotar" por cliente. Pendiente: publicar con TIENDITA.bat y revisar en vivo.
+- Hecho: catálogo por secciones, criterio de orden unificado, panel más oscuro + efectos. Pendiente: que la usuaria elija dirección visual (opciones propuestas) y publicar con TIENDITA.bat.

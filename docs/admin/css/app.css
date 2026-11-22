@@ -205,7 +205,9 @@ input:focus, select:focus, textarea:focus { outline: none; background: #F7E4E9; 
   .caja strong { font-size: 22px; }
   .caja span { font-size: 13px; }
   .acciones-barra .btn { flex: 1 1 100%; }
-  .barra-productos { grid-template-columns: 1fr 1fr; }
+  .barra-productos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .barra-productos > * { min-width: 0; }
+  .barra-productos .btn { padding: 0 12px; }
   .barra-productos input { grid-column: 1 / -1; }
   .fila-admin:has(> .stock-grande) { grid-template-columns: auto 1fr; }
   .fila-admin:has(> .stock-grande) .fila-admin__acc { grid-column: 1 / -1; justify-content: flex-start; }
