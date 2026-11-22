@@ -178,8 +178,8 @@ if errorlevel 1 (
   exit /b 1
 )
 call "_ui.bat" OK "Pruebas del backend correctas"
-findstr /c:"PEGA_AQUI_LA_URL_NUEVA" docs\js\config.js >nul 2>&1
-if not errorlevel 1 call "_ui.bat" AVISO "docs\js\config.js aun tiene la URL de ejemplo: la pagina no se conectara hasta ponerla"
+findstr /c:"PEGA_AQUI_LA_URL_NUEVA" docs\admin\js\config.js >nul 2>&1
+if not errorlevel 1 call "_ui.bat" AVISO "docs\admin\js\config.js aun tiene la URL de ejemplo: el panel admin no se conectara hasta ponerla"
 powershell -NoProfile -ExecutionPolicy Bypass -File "_seguro.ps1" >> "!LOGV!" 2>&1
 if errorlevel 1 (
   call "_ui.bat" ERR "La revision de secretos bloqueo la subida. Detalle abajo y en !LOGV!"
@@ -244,6 +244,17 @@ if not "!RCP!"=="0" (
   exit /b 1
 )
 for /f "delims=" %%L in ('findstr /i "Pushed Archivos" "!TND_TMP!"') do echo %TND_M%    %C_GR%%%L%C_RS%
+if defined TND_DEPLOY_ID (
+  call clasp deploy --deploymentId "!TND_DEPLOY_ID!" --description "Tiendita %DATE% %TIME:~0,5%" >"!TND_TMP!" 2>&1
+  set "RCD=!errorlevel!"
+  >>"!TND_LOG!" type "!TND_TMP!"
+  if not "!RCD!"=="0" (
+    type "!TND_TMP!"
+    call "_ui.bat" ERR "El codigo se subio, pero no se pudo actualizar la implementacion (la URL). Revisa el mensaje de arriba"
+    exit /b 1
+  )
+  call "_ui.bat" OK "Implementacion actualizada: la URL sigue siendo la misma"
+)
 call "_ui.bat" OK "Apps Script al dia"
 exit /b 0
 
