@@ -62,7 +62,7 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - Orden único: productos por sección (Sopas→Snacks→Dulces→Helados→Bebidas→otras A-Z) y de la A a la Z; personas A-Z; deudas de mayor a menor; movimientos/pagos recientes primero. Catálogo sin botones de filtro (secciones con título y conteo). Panel en modo más oscuro (malva/vino); tarjetas hermanas a la misma altura; efectos sutiles (aurora, destellos, brillo en cabecera/botones, hover con luz). styles.css v15, app.css v13, views-admin v7, sw v22.
 
 ## Paleta "Dulcería de noche" (A + C)
-- Tienda: crema + rosa mexicano + ciruela (styles.css v16). Panel admin: oscuro ciruela con rosa/menta/mango (app.css v14).
+- Paleta final: solo rosa, rojo y vino (sin morado). Tienda crema + rosa + vino; panel vino oscuro con acentos rosa. Sin ciruela/lila.
 - Contraste revisado (texto >= 4.5, bordes >= 3.3). Correos largos en móvil ya no se encimen.
 
 ## Auditoría (corte de inventario) y móvil

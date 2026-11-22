@@ -1332,20 +1332,20 @@ body::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-event
 :root {
   --rojo: #C9006A;        --rojo-dark: #9E0053;
   --rosa: #FF5FA2;        --rosa-light: #FFB3D5;   --rosa-soft: #FFD3E8;   --rosa-cream: #FFEBDB;
-  --rosa-text: #3A0A2A;   --vino: #4A1859;         --negro: #2A1233;
+  --rosa-text: #3B0913;   --vino: #5B1624;         --negro: #341118;
   --crema: #FFF4E8;       --blanco: #FFFBF5;
   --warn: #FFB400;        --warn-text: #4A2B00;
-  --gris: #6B5876;        --gris-claro: #F3E6EC;
-  --grad-hero: linear-gradient(135deg, #E4007C 0%, #4A1859 100%);
+  --gris: #77575E;        --gris-claro: #F3E6EC;
+  --grad-hero: linear-gradient(135deg, #E4007C 0%, #5B1624 100%);
   --grad-rosa: linear-gradient(135deg, #FFC2DE 0%, #FF5FA2 100%);
   --grad-bg:   linear-gradient(180deg, #FFF4E8 0%, #FBDFD0 100%);
   --grad-card: linear-gradient(180deg, #FFFBF5 0%, #FFF0E2 100%);
-  --shadow-sm: 0 2px 6px rgba(74,24,89,.10);
+  --shadow-sm: 0 2px 6px rgba(91,22,36,.10);
   --shadow-md: 0 6px 18px rgba(228,0,124,.16);
-  --shadow-red: 0 8px 24px rgba(74,24,89,.25);
+  --shadow-red: 0 8px 24px rgba(91,22,36,.25);
 }
 html { background: #FBDFD0; }
-body::before { background: radial-gradient(40vmax 40vmax at 12% 8%, rgba(255,95,162,.26), transparent 60%), radial-gradient(46vmax 46vmax at 92% 88%, rgba(183,156,255,.30), transparent 62%), radial-gradient(30vmax 30vmax at 70% 20%, rgba(255,180,0,.16), transparent 60%); }
+body::before { background: radial-gradient(40vmax 40vmax at 12% 8%, rgba(255,95,162,.26), transparent 60%), radial-gradient(46vmax 46vmax at 92% 88%, rgba(255,156,176,.30), transparent 62%), radial-gradient(30vmax 30vmax at 70% 20%, rgba(255,180,0,.16), transparent 60%); }
 .product:hover { box-shadow: 0 14px 34px rgba(228,0,124,.35); }
-.product__icon--rojo { background: linear-gradient(135deg, #E4007C 0%, #4A1859 100%); }
-.pill--blanca { background: #FFFBF5; color: #4A1859; border-color: #FFFBF5; }
+.product__icon--rojo { background: linear-gradient(135deg, #E4007C 0%, #5B1624 100%); }
+.pill--blanca { background: #FFFBF5; color: #5B1624; border-color: #FFFBF5; }
