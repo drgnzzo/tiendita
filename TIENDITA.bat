@@ -244,7 +244,7 @@ if not "!RCP!"=="0" (
   exit /b 1
 )
 for /f "delims=" %%L in ('findstr /i "Pushed Archivos" "!TND_TMP!"') do echo %TND_M%    %C_GR%%%L%C_RS%
-if defined TND_DEPLOY_ID (
+if "!TND_AUTO_DEPLOY!"=="1" if defined TND_DEPLOY_ID (
   call clasp deploy --deploymentId "!TND_DEPLOY_ID!" --description "Tiendita %DATE% %TIME:~0,5%" >"!TND_TMP!" 2>&1
   set "RCD=!errorlevel!"
   >>"!TND_LOG!" type "!TND_TMP!"
@@ -254,6 +254,15 @@ if defined TND_DEPLOY_ID (
     exit /b 1
   )
   call "_ui.bat" OK "Implementacion actualizada: la URL sigue siendo la misma"
+)
+if defined TND_DEPLOY_ID (
+  curl.exe -s -L --max-time 25 "https://script.google.com/macros/s/!TND_DEPLOY_ID!/exec?action=ping" >"!TND_TMP!" 2>&1
+  findstr /c:"\"ok\":true" "!TND_TMP!" >nul 2>&1
+  if errorlevel 1 (
+    call "_ui.bat" AVISO "La URL de la tienda NO responde. En Apps Script: Implementar, Administrar implementaciones, lapiz, Version: Nueva version, Implementar"
+  ) else (
+    call "_ui.bat" OK "La URL de la tienda responde bien"
+  )
 )
 call "_ui.bat" OK "Apps Script al dia"
 exit /b 0
