@@ -263,6 +263,37 @@ t('cobro desde la hoja baja la deuda', () => {
   assert.strictEqual(call('perfil', { token: et.token }).usuario.deuda, antes - 1);
 });
 run('WEB_SOLO_TIENDA = false');
+console.log('\nCorte de inventario');
+let corte;
+t('corte: operador/cliente no puede cerrar corte', () => assert.strictEqual(call('corte.cerrar', { token: eric.token, conteos: [{ sku: 'COC-355', real: 1 }] }).code, 'FORBIDDEN'));
+t('corte: deja el stock igual a lo contado y guarda las hojas', () => {
+  const st = sku => call('inv.lista', { token: victor.token }).productos.find(p => p.sku === sku).stock;
+  const antes = st('COC-355');
+  corte = call('corte.cerrar', { token: victor.token, conteos: [{ sku: 'COC-355', real: antes - 2 }, { sku: 'MZP-GIG', real: st('MZP-GIG') + 3 }, { sku: 'KIN-DEL', real: st('KIN-DEL') }] });
+  assert.ok(corte.ok, corte.error);
+  assert.strictEqual(corte.conDiferencia, 2); assert.strictEqual(corte.faltantePiezas, 2); assert.strictEqual(corte.sobrantePiezas, 3);
+  const ps = call('inv.lista', { token: victor.token }).productos;
+  assert.strictEqual(ps.find(p => p.sku === 'COC-355').stock, antes - 2);
+  assert.ok(ps.find(p => p.sku === 'MZP-GIG').stock >= 3);
+  assert.strictEqual(sheets.Corte_Detalle.rows.length, 4); assert.strictEqual(sheets.Cortes_Inventario.rows.length, 2);
+});
+t('corte: lista y detalle muestran lo que faltó', () => {
+  const l = call('corte.lista', { token: victor.token }); assert.strictEqual(l.cortes[0].pendientePiezas, 2);
+  const d = call('corte.detalle', { token: victor.token, id: corte.id }); assert.strictEqual(d.filas.length, 2);
+});
+t('corte: cobrar el faltante sube la deuda y baja lo pendiente', () => {
+  const deuda0 = call('perfil', { token: eric.token }).usuario.deuda;
+  const r = call('corte.asignar', { token: victor.token, idCorte: corte.id, sku: 'COC-355', modo: 'cobrar', correo: 'eric@gmail.com', cantidad: 1 });
+  assert.ok(r.ok, r.error); assert.strictEqual(r.monto, 26);
+  assert.strictEqual(call('perfil', { token: eric.token }).usuario.deuda, deuda0 + 26);
+  assert.strictEqual(call('corte.lista', { token: victor.token }).cortes[0].pendientePiezas, 1);
+});
+t('corte: absorber y no pasarse de lo pendiente', () => {
+  assert.ok(call('corte.asignar', { token: victor.token, idCorte: corte.id, sku: 'COC-355', modo: 'absorber', cantidad: 1 }).ok);
+  assert.strictEqual(call('corte.asignar', { token: victor.token, idCorte: corte.id, sku: 'COC-355', modo: 'absorber', cantidad: 1 }).ok, false);
+  assert.strictEqual(call('corte.lista', { token: victor.token }).cortes[0].pendientePiezas, 0);
+});
+
 
 console.log(`\n${pass} pasaron, ${fail} fallaron`);
 process.exit(fail ? 1 : 0);

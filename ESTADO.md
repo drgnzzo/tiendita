@@ -64,3 +64,9 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 ## Paleta "Dulcería de noche" (A + C)
 - Tienda: crema + rosa mexicano + ciruela (styles.css v16). Panel admin: oscuro ciruela con rosa/menta/mango (app.css v14).
 - Contraste revisado (texto >= 4.5, bordes >= 3.3). Correos largos en móvil ya no se encimen.
+
+## Auditoría (corte de inventario) y móvil
+- Pestaña "Auditoría" (solo admin): se cuenta todo, el stock queda igual a lo contado y se guardan hojas `Cortes_Inventario` (resumen) y `Corte_Detalle` (había/hay por producto). Lo que faltó se cobra a una persona (suma a su deuda al precio de venta) o lo absorbe la tienda. API: corte.cerrar / corte.lista / corte.detalle / corte.asignar. 5 pruebas nuevas.
+- Móvil: pestañas en una fila deslizable, botones secundarios de cada fila pasan al menú ⋯, filas más compactas, roles plegados.
+- Se subió la versión de views-admin.js que sí trae el orden por secciones (la de la carpeta estaba vieja).
+- Pendiente: publicar con TIENDITA.bat (clasp push para las funciones nuevas del Sheet) y probar con datos reales.

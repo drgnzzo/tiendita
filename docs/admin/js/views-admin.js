@@ -13,7 +13,17 @@ const SUBS = [
   { id: 'reportes', nombre: 'Reportes', permiso: 'reporte.mes' },
     { id: 'usuarios', nombre: 'Usuarios', permiso: 'usr.lista', oculta: true }
 ];
-const porNombre = (a, b) => a.nombre.localeCompare(b.nombre, 'es');
+// Criterio de orden de todo el panel:
+//  · Productos: por sección (sopas → botanas → dulces → helados → bebidas) y de la A a la Z.
+//  · Personas: de la A a la Z.   · Deudas: la más grande primero.   · Movimientos y pagos: lo más nuevo primero.
+const ORDEN_CATS = ['Sopas', 'Snacks', 'Dulces', 'Helados', 'Bebidas'];
+const porNombre = (a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
+const rangoCat = (c) => { const i = ORDEN_CATS.indexOf(c); return i >= 0 ? i : (c ? ORDEN_CATS.length : ORDEN_CATS.length + 1); };
+const porSeccion = (a, b) => (rangoCat(a.categoria) - rangoCat(b.categoria)) || (a.categoria || '').localeCompare(b.categoria || '', 'es') || porNombre(a, b);
+const porDeuda = (a, b) => (b.deuda - a.deuda) || porNombre(a, b);
+const agrupar = (lista) => { const g = []; lista.forEach((p) => { const c = p.categoria || 'Otros'; let x = g[g.length - 1]; if (!x || x.cat !== c) { x = { cat: c, items: [] }; g.push(x); } x.items.push(p); }); return g; };
+// <option> agrupadas por sección, para los menús de elegir producto
+const opcionesProd = (prods, texto, sel) => agrupar(prods.slice().sort(porSeccion)).map((g) => html`<optgroup label="${g.cat}">${g.items.map((p) => html`<option value="${p.sku}" ${p.sku === sel ? raw('selected') : ''}>${texto(p)}</option>`)}</optgroup>`);
 const cargando = (t = 'Cargando…') => html`<div class="cargando">${t}</div>`;
 let recargar = () => {};
 // Lista de productos en memoria: los formularios se abren al instante.
@@ -77,7 +87,7 @@ async function vResumen(c) {
 
       <section>
         <div class="encabezado-sec"><h2>Por resurtir (${r.stockBajo.length})</h2>${r.stockBajo.length > 6 ? html`<a class="ver-mas" href="#/admin/inventario">Ver todo</a>` : ''}</div>
-        ${r.stockBajo.length === 0 ? vacio('Todo abastecido', 'Nada está por debajo del mínimo.') : r.stockBajo.slice(0, 6).map((p) => html`
+        ${r.stockBajo.length === 0 ? vacio('Todo abastecido', 'Nada está por debajo del mínimo.') : r.stockBajo.slice().sort((a, b) => (a.stock - b.stock) || porNombre(a, b)).slice(0, 6).map((p) => html`
           <div class="fila-admin">
             <div><div class="fila-admin__nombre">${p.nombre}</div><div class="fila-admin__meta">${p.stock === 0 ? 'Agotado' : 'Quedan pocas'} · mínimo ${p.stockMinimo}</div></div>
             <div class="fila-admin__acc"><span class="stock-grande ${p.stock === 0 ? 'stock-grande--cero' : 'stock-grande--bajo'}">${p.stock}</span>
@@ -88,7 +98,7 @@ async function vResumen(c) {
 
       <section>
         <div class="encabezado-sec"><h2>Quién debe (${r.deudores.length})</h2>${r.deudores.length > 6 ? html`<a class="ver-mas" href="#/admin/cobros">Ver todos</a>` : ''}</div>
-        ${r.deudores.length === 0 ? vacio('Nadie debe nada') : r.deudores.slice(0, 6).map((d) => html`
+        ${r.deudores.length === 0 ? vacio('Nadie debe nada') : r.deudores.slice().sort(porDeuda).slice(0, 6).map((d) => html`
           <div class="fila-admin">
             <div><div class="fila-admin__nombre">${d.nombre}</div><div class="fila-admin__meta">${d.correo}</div></div>
             <div class="fila-admin__acc"><strong class="num">${money(d.deuda)}</strong>
@@ -137,9 +147,11 @@ async function vInventario(c) {
     <p class="pie-lista"><button class="link" data-a="conteo">Contar todo el inventario</button></p>`);
   const pintarProductos = () => {
     const q = invFiltro.trim().toLowerCase();
-    const lista = prods.filter((p) => !q || (p.nombre + p.categoria + p.sku).toLowerCase().includes(q))
-      .sort((a, b) => (b.activo - a.activo) || ((a.stock <= a.stockMinimo ? 0 : 1) - (b.stock <= b.stockMinimo ? 0 : 1)) || porNombre(a, b));
-    mount($('#inv-lista', c), lista.length === 0 ? vacio('Sin resultados') : html`${lista.map((p) => {
+    const visibles = prods.filter((p) => !q || (p.nombre + p.categoria + p.sku).toLowerCase().includes(q));
+    const grupos = agrupar(visibles.filter((p) => p.activo).sort(porSeccion));
+    const ocultos = visibles.filter((p) => !p.activo).sort(porSeccion);
+    if (ocultos.length) grupos.push({ cat: 'Ocultos en la tienda', items: ocultos });
+    const fila = (p) => {
       const bajo = p.stock <= p.stockMinimo;
       return html`
         <div class="fila-admin" ${p.activo ? '' : raw('style="opacity:.6"')}>
@@ -154,7 +166,9 @@ async function vInventario(c) {
             ${puede('prod.guardar') ? html`<button class="btn btn--suave btn--chico" data-a="editar" data-sku="${p.sku}">Editar</button>` : ''}
           </div>
         </div>`;
-    })}`);
+    };
+    mount($('#inv-lista', c), grupos.length === 0 ? vacio('Sin resultados') : html`${grupos.map((g) => html`
+      <section class="seccion-admin"><h2 class="seccion-admin__titulo">${g.cat} <small>${g.items.length}</small></h2>${g.items.map(fila)}</section>`)}`);
   };
   pintarProductos();
   $('#inv-q', c).addEventListener('input', (e) => { invFiltro = e.target.value; pintarProductos(); });
@@ -184,7 +198,7 @@ async function abrirEntrada({ sku } = {}) {
   if (!r.ok) { toast(r.error, 'error'); return; }
   const prods = r.productos.filter((p) => p.activo || p.sku === sku).sort(porNombre);
   const reqId = newReqId();
-  const opciones = (sel) => html`<option value="">Elige un producto…</option>${prods.map((p) => html`<option value="${p.sku}" ${p.sku === sel ? raw('selected') : ''}>${p.nombre}</option>`)}`;
+  const opciones = (sel) => html`<option value="">Elige un producto…</option>${opcionesProd(prods, (p) => p.nombre, sel)}`;
   const linea = (sel) => html`
     <div class="linea-entrada" data-linea>
       <div class="campo" style="margin:0"><select aria-label="Producto" data-f="sku">${opciones(sel)}</select></div>
@@ -373,7 +387,7 @@ async function vCobros(c) {
     <div class="dos-col">
       <section>
         <h2>Quién debe</h2>
-        ${r.deudores.length === 0 ? vacio('Nadie debe nada', 'Todo está al corriente.') : r.deudores.map((d) => html`
+        ${r.deudores.length === 0 ? vacio('Nadie debe nada', 'Todo está al corriente.') : r.deudores.slice().sort(porDeuda).map((d) => html`
           <div class="fila-admin">
             <div><div class="fila-admin__nombre">${d.nombre}</div>
               <div class="fila-admin__meta num">${d.pendientes} compras${d.desde ? ' desde ' + d.desde : ''} · límite ${money(d.limite)}</div></div>
@@ -530,7 +544,7 @@ async function abrirVenta({ correo: correoIni } = {}) {
   const reqId = newReqId();
   const linea = () => html`
     <div class="linea-venta" data-linea>
-      <div class="campo" style="margin:0"><select aria-label="Producto" data-f="sku"><option value="">Elige un producto…</option>${prods.map((x) => html`<option value="${x.sku}">${x.nombre} (${x.stock}) · ${money(x.precio)}</option>`)}</select></div>
+      <div class="campo" style="margin:0"><select aria-label="Producto" data-f="sku"><option value="">Elige un producto…</option>${opcionesProd(prods, (x) => x.nombre + ' (' + x.stock + ') · ' + money(x.precio), '')}</select></div>
       <div class="campo" style="margin:0"><input aria-label="Piezas" data-f="cant" type="number" inputmode="numeric" min="1" step="1" value="1"></div>
       <button class="icono-btn" data-quitar aria-label="Quitar línea" type="button">✕</button>
     </div>`;

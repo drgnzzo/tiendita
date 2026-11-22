@@ -27,3 +27,6 @@ Leer ESTADO.md. No editar relevo/PC2.md.
 
 - Hecho: paleta A+C en tienda y panel, verificada en escritorio y móvil.
 - Pendiente: publicar con TIENDITA.bat y revisar con capturas reales.
+
+- Hecho: Auditoría (corte de inventario) + optimización móvil del panel.
+- Pendiente: TIENDITA.bat, probar corte real en el celular, revisar hojas nuevas en el Sheet.

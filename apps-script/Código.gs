@@ -539,7 +539,11 @@ const API_RUTAS = {
   'usr.resetPin':   (u, p) => apiUsrResetPin(u, p),
   'venta.admin':    (u, p) => apiVentaAdmin(u, p),
   'reporte.mes':    (u, p) => apiReporteMes(p),
-  'reporte.enviar': (u, p) => apiReporteEnviar(u)
+  'reporte.enviar': (u, p) => apiReporteEnviar(u),
+  'corte.cerrar':   (u, p) => apiCorteCerrar(u, p),
+  'corte.lista':    (u, p) => apiCorteLista(),
+  'corte.detalle':  (u, p) => apiCorteDetalle(p),
+  'corte.asignar':  (u, p) => apiCorteAsignar(u, p)
 };
 
 // Acciones que la tienda de siempre llama solo con el correo del cliente.
@@ -2675,3 +2679,177 @@ function menuPrepararConteo() {
 }
 function menuAplicarConteo() { _resumenHoja('Conteo', procesarConteoHoja()); }
 
+
+
+// ============================================================
+// §15  CORTE DE INVENTARIO (auditoria real)
+//   Se cuenta todo, el sistema queda con lo contado y se guarda
+//   la foto de "habia vs hay" en dos hojas. Lo que falto se puede
+//   cobrar a una persona o absorber la tienda.
+// ============================================================
+
+const CORTE_RES = 'Cortes_Inventario';
+const CORTE_DET = 'Corte_Detalle';
+const CORTE_RES_H = ['ID_Corte', 'Fecha', 'Hecho_Por', 'Revisados', 'Con_Diferencia', 'Faltante_Piezas',
+                     'Faltante_Costo', 'Sobrante_Piezas', 'Sobrante_Costo', 'Notas'];
+const CORTE_DET_H = ['ID_Corte', 'Fecha', 'SKU', 'Producto', 'Categoria', 'Sistema', 'Real', 'Diferencia',
+                     'Costo_Unit', 'Precio_Unit', 'Valor_Diferencia', 'Cant_Cobrada', 'Cant_Absorbida',
+                     'Pendiente', 'Cobrado_A'];
+
+function _mapaEnc(fila) {
+  const m = {};
+  fila.forEach((h, i) => { m[String(h)] = i; });
+  return m;
+}
+
+// conteos: [{sku, real}]. Deja el stock igual a lo contado y guarda la diferencia.
+function apiCorteCerrar(u, p) {
+  const conteos = p.conteos;
+  if (!Array.isArray(conteos) || conteos.length === 0) return { ok: false, error: 'No hay conteos para el corte.' };
+  if (conteos.length > 400) return { ok: false, error: 'Demasiados productos en un solo corte.' };
+  const notas = _texto(p.notas, 200);
+  return _idempotente(p.reqId, () => _conCandado(() => {
+    const limpios = conteos.map(c => ({ sku: String(c.sku), real: _entero(c.real, 0, 100000, 'El conteo de ' + c.sku) }));
+    const vistos = {};
+    limpios.forEach(c => { if (vistos[c.sku]) throw new Error('Producto repetido en el corte: ' + c.sku); vistos[c.sku] = 1; });
+
+    const idCorte = _generarId('K');
+    const ahora = new Date();
+    const filas = [];
+    let faltPz = 0, faltCosto = 0, sobPz = 0, sobCosto = 0, difs = 0;
+    const diferencias = [];
+    limpios.forEach(c => {
+      const prod = obtenerProducto(c.sku);
+      if (!prod) throw new Error('Producto no existe: ' + c.sku);
+      const diff = c.real - prod.stock;
+      if (diff !== 0) {
+        _moverStock(c.sku, diff, 'CORTE', { usuario: u.correo, notas: 'Corte ' + idCorte + ' (había ' + prod.stock + ')' });
+        difs++;
+        if (diff < 0) { faltPz += -diff; faltCosto += -diff * prod.costo; } else { sobPz += diff; sobCosto += diff * prod.costo; }
+        diferencias.push({ sku: prod.sku, producto: prod.nombre, sistema: prod.stock, real: c.real, diff: diff });
+      }
+      filas.push([idCorte, ahora, prod.sku, prod.nombre, prod.categoria, prod.stock, c.real, diff,
+                  prod.costo, prod.precio, _round2(diff * prod.costo), 0, 0, diff < 0 ? -diff : 0, '']);
+    });
+
+    const sDet = _asegurarHoja(CORTE_DET, CORTE_DET_H);
+    escrAsegurarFilas_(sDet, filas.length);
+    sDet.getRange(sDet.getLastRow() + 1, 1, filas.length, CORTE_DET_H.length).setValues(filas);
+    const sRes = _asegurarHoja(CORTE_RES, CORTE_RES_H);
+    sRes.appendRow([idCorte, ahora, u.correo, limpios.length, difs, faltPz, _round2(faltCosto),
+                    sobPz, _round2(sobCosto), _seguroCelda(notas)]);
+    _log('CORTE_INV', u.correo, 'Corte ' + idCorte + ': ' + difs + ' diferencias de ' + limpios.length,
+         JSON.stringify({ faltPz: faltPz, sobPz: sobPz }));
+    return { ok: true, id: idCorte, revisados: limpios.length, conDiferencia: difs,
+             faltantePiezas: faltPz, faltanteCosto: _round2(faltCosto),
+             sobrantePiezas: sobPz, sobranteCosto: _round2(sobCosto), diferencias: diferencias,
+             mensaje: difs === 0 ? 'Corte guardado. Todo coincidía.' : 'Corte guardado. El inventario quedó igual a lo que contaste.' };
+  }));
+}
+
+function apiCorteLista() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sRes = ss.getSheetByName(CORTE_RES);
+  if (!sRes) return { ok: true, cortes: [] };
+  const res = sRes.getDataRange().getValues();
+  const H = _mapaEnc(res[0] || []);
+  const pend = {};
+  const sDet = ss.getSheetByName(CORTE_DET);
+  if (sDet) {
+    const det = sDet.getDataRange().getValues();
+    const D = _mapaEnc(det[0] || []);
+    for (let i = 1; i < det.length; i++) {
+      const pz = Number(det[i][D.Pendiente]) || 0;
+      if (pz <= 0) continue;
+      const id = String(det[i][D.ID_Corte]);
+      if (!pend[id]) pend[id] = { pz: 0, valor: 0 };
+      pend[id].pz += pz;
+      pend[id].valor += pz * (Number(det[i][D.Precio_Unit]) || 0);
+    }
+  }
+  const cortes = [];
+  for (let i = res.length - 1; i >= 1 && cortes.length < 15; i--) {
+    const id = String(res[i][H.ID_Corte]);
+    const pp = pend[id] || { pz: 0, valor: 0 };
+    cortes.push({
+      id: id, fecha: res[i][H.Fecha] instanceof Date ? _fechaLargaMx(res[i][H.Fecha]) : String(res[i][H.Fecha]),
+      por: String(res[i][H.Hecho_Por] || ''), revisados: Number(res[i][H.Revisados]) || 0,
+      conDiferencia: Number(res[i][H.Con_Diferencia]) || 0,
+      faltantePiezas: Number(res[i][H.Faltante_Piezas]) || 0, faltanteCosto: _round2(res[i][H.Faltante_Costo]),
+      sobrantePiezas: Number(res[i][H.Sobrante_Piezas]) || 0, sobranteCosto: _round2(res[i][H.Sobrante_Costo]),
+      notas: String(res[i][H.Notas] || ''), pendientePiezas: pp.pz, pendienteValor: _round2(pp.valor)
+    });
+  }
+  return { ok: true, cortes: cortes };
+}
+
+function apiCorteDetalle(p) {
+  const id = _texto(p.id, 60);
+  const sDet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CORTE_DET);
+  if (!sDet) return { ok: true, filas: [] };
+  const det = sDet.getDataRange().getValues();
+  const D = _mapaEnc(det[0] || []);
+  const filas = [];
+  for (let i = 1; i < det.length; i++) {
+    if (String(det[i][D.ID_Corte]) !== id) continue;
+    const diff = Number(det[i][D.Diferencia]) || 0;
+    if (diff === 0) continue;
+    filas.push({
+      sku: String(det[i][D.SKU]), producto: String(det[i][D.Producto]), categoria: String(det[i][D.Categoria] || ''),
+      sistema: Number(det[i][D.Sistema]) || 0, real: Number(det[i][D.Real]) || 0, diff: diff,
+      costo: _round2(det[i][D.Costo_Unit]), precio: _round2(det[i][D.Precio_Unit]),
+      cobrada: Number(det[i][D.Cant_Cobrada]) || 0, absorbida: Number(det[i][D.Cant_Absorbida]) || 0,
+      pendiente: Number(det[i][D.Pendiente]) || 0, cobradoA: String(det[i][D.Cobrado_A] || '')
+    });
+  }
+  return { ok: true, filas: filas };
+}
+
+// Reparte lo que falto: cobrarlo a una persona (queda en su deuda) o que lo absorba la tienda.
+function apiCorteAsignar(u, p) {
+  const modo = p.modo === 'absorber' ? 'absorber' : 'cobrar';
+  const cant = _entero(p.cantidad, 1, 10000, 'La cantidad');
+  const idCorte = _texto(p.idCorte, 60);
+  const sku = String(p.sku || '');
+  let cli = null;
+  if (modo === 'cobrar') {
+    cli = obtenerUsuario(_texto(p.correo, 120).toLowerCase());
+    if (!cli || !cli.activo) return { ok: false, error: 'No encontré a esa persona o está desactivada.' };
+  }
+  return _idempotente(p.reqId, () => _conCandado(() => {
+    const sDet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CORTE_DET);
+    if (!sDet) throw new Error('No hay cortes guardados.');
+    const det = sDet.getDataRange().getValues();
+    const D = _mapaEnc(det[0] || []);
+    let fila = -1;
+    for (let i = 1; i < det.length; i++) {
+      if (String(det[i][D.ID_Corte]) === idCorte && String(det[i][D.SKU]) === sku) { fila = i; break; }
+    }
+    if (fila < 0) throw new Error('No encontré ese producto en el corte.');
+    const r = det[fila];
+    const pendiente = Number(r[D.Pendiente]) || 0;
+    if (cant > pendiente) throw new Error('Solo quedan ' + pendiente + ' por resolver de ' + r[D.Producto] + '.');
+    const set = (col, val) => sDet.getRange(fila + 1, D[col] + 1).setValue(val);
+    set('Pendiente', pendiente - cant);
+    let monto = 0;
+    if (modo === 'absorber') {
+      set('Cant_Absorbida', (Number(r[D.Cant_Absorbida]) || 0) + cant);
+    } else {
+      const precio = Number(r[D.Precio_Unit]) || 0;
+      monto = _round2(precio * cant);
+      const sVentas = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.HOJAS.VENTAS);
+      escrAsegurarFilas_(sVentas, 1);
+      sVentas.getRange(sVentas.getLastRow() + 1, 1, 1, 10).setValues([[
+        _generarId('F'), new Date(), cli.correo, String(r[D.SKU]), 'Faltante del corte: ' + r[D.Producto],
+        cant, precio, monto, '', 'Pendiente'
+      ]]);
+      actualizarDeuda(cli.correo, monto);
+      set('Cant_Cobrada', (Number(r[D.Cant_Cobrada]) || 0) + cant);
+      const previo = String(r[D.Cobrado_A] || '');
+      set('Cobrado_A', _seguroCelda((previo ? previo + '; ' : '') + (cli.nombre || cli.correo) + ' ×' + cant));
+    }
+    _log('CORTE_ASIGNA', u.correo, idCorte + ' ' + r[D.Producto] + ' ×' + cant + ' → ' + (cli ? cli.correo : 'tienda'));
+    return { ok: true, monto: monto, pendiente: pendiente - cant,
+             mensaje: modo === 'absorber' ? 'Queda como pérdida de la tienda.' : 'Se sumaron ' + _money(monto) + ' a la deuda de ' + (cli.nombre || cli.correo) + '.' };
+  }));
+}
