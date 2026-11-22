@@ -12,7 +12,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbzGiUz2A5Wy2tUBQcnUBrst
 window.api = {
 
   async ping()                                    { return this._get({ action: 'ping' }); },
-  async login(email)                              { return this._get({ action: 'login', email: email }); },
+  async login(email, pin)                         { return this._get({ action: 'login', email: email, pin: pin }); },
   async catalogo()                                { return this._get({ action: 'catalogo' }); },
   async buscar(q)                                 { return this._get({ action: 'buscar', q: q }); },
   async perfil(email)                             { return this._get({ action: 'perfil', email: email }); },

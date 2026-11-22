@@ -36,6 +36,12 @@
         spellcheck="false"
         autocapitalize="off">
 
+      <div id="claveCaja" hidden>
+        <div style="height:14px"></div>
+        <label for="clave" class="label">Contraseña</label>
+        <input id="clave" type="password" class="input" autocomplete="current-password">
+      </div>
+
       <div style="height:14px"></div>
 
       <button id="btnLogin" class="btn btn--rojo btn--big btn--full">
@@ -57,6 +63,8 @@
     const input    = document.getElementById('email');
     const btn      = document.getElementById('btnLogin');
     const errorBox = document.getElementById('errorBox');
+    const claveCaja  = document.getElementById('claveCaja');
+    const claveInput = document.getElementById('clave');
 
     function showError(msg) {
       errorBox.textContent = msg;
@@ -79,9 +87,24 @@
       const originalText = btn.textContent;
       btn.textContent = 'Entrando...';
 
-      const res = await api.login(email);
+      const clave = claveInput.value;
+      const res = await api.login(email, clave || undefined);
 
-      if (res.ok) {
+      if (!res.ok && res.code === 'NEEDS_PIN') {
+        // Correo de administración: pide la contraseña en la misma pantalla.
+        claveCaja.hidden = false;
+        claveInput.focus();
+        btn.disabled = false;
+        btn.textContent = originalText;
+        return;
+      }
+      if (res.ok && res.usuario && res.usuario.rol === 'admin' && res.token) {
+        // Admin: entra al panel de administración.
+        try {
+          localStorage.setItem('tiendita.sesion.v2', JSON.stringify({ token: res.token, usuario: res.usuario, permisos: res.permisos || [] }));
+        } catch (_) {}
+        window.location.href = './admin/';
+      } else if (res.ok) {
         tiendita.setSession(res.usuario);
         window.location.href = './catalogo.html';
       } else {
@@ -93,6 +116,7 @@
 
     btn.addEventListener('click', intentarLogin);
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') intentarLogin(); });
+    claveInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') intentarLogin(); });
     input.addEventListener('input', clearError);
     input.focus();
   </script>
