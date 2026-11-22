@@ -55,7 +55,7 @@ async function vResumen(c) {
     <div class="caja">
       <div><strong class="num">${money(r.ventasHoy)}</strong><span>Ventas de hoy · ${r.unidadesHoy} piezas</span></div>
       <div><strong class="num">${money(r.ventasSemana)}</strong><span>Últimos 7 días</span></div>
-      <div><strong class="num">${money(r.deudaTotal)}</strong><span>Por cobrar</span></div>
+      <div class="destacada"><strong class="num">${money(r.deudaTotal)}</strong><span>Por cobrar</span></div>
       <div><strong class="num">${money(r.valorInventarioCosto)}</strong><span>Mercancía en la tienda (a costo)</span></div>
     </div>
 
@@ -72,23 +72,23 @@ async function vResumen(c) {
         <div class="barras" role="img" aria-label="Ventas por día">
           ${r.dias.map((d) => html`<div><b class="num">${d.monto ? moneyShort(d.monto) : ''}</b><i style="height:${Math.round((d.monto / max) * 84)}px"></i><span>${d.etiqueta}</span></div>`)}
         </div>
-        <p class="suave num" style="margin-top:12px">Ganancia estimada de 30 días: <strong>${money(r.ganancia30)}</strong> sobre ${money(r.ventas30)} vendidos.</p>
+        <p class="suave num">Ganancia estimada de 30 días: <strong>${money(r.ganancia30)}</strong> sobre ${money(r.ventas30)} vendidos.</p>
       </section>
 
       <section>
-        <h2>Por resurtir (${r.stockBajo.length})</h2>
-        ${r.stockBajo.length === 0 ? vacio('Todo abastecido', 'Nada está por debajo del mínimo.') : r.stockBajo.slice(0, 12).map((p) => html`
+        <div class="encabezado-sec"><h2>Por resurtir (${r.stockBajo.length})</h2>${r.stockBajo.length > 6 ? html`<a class="ver-mas" href="#/admin/inventario">Ver todo</a>` : ''}</div>
+        ${r.stockBajo.length === 0 ? vacio('Todo abastecido', 'Nada está por debajo del mínimo.') : r.stockBajo.slice(0, 6).map((p) => html`
           <div class="fila-admin">
             <div><div class="fila-admin__nombre">${p.nombre}</div><div class="fila-admin__meta">${p.stock === 0 ? 'Agotado' : 'Quedan pocas'} · mínimo ${p.stockMinimo}</div></div>
             <div class="fila-admin__acc"><span class="stock-grande ${p.stock === 0 ? 'stock-grande--cero' : 'stock-grande--bajo'}">${p.stock}</span>
               <button class="btn btn--suave btn--chico" data-a="entrada" data-sku="${p.sku}">+ Sumar</button></div>
           </div>`)}
-        ${r.stockBajo.length > 12 ? html`<p class="suave" style="margin-top:8px">Y ${r.stockBajo.length - 12} más en Inventario.</p>` : ''}
+        
       </section>
 
       <section>
-        <h2>Quién debe (${r.deudores.length})</h2>
-        ${r.deudores.length === 0 ? vacio('Nadie debe nada') : r.deudores.slice(0, 10).map((d) => html`
+        <div class="encabezado-sec"><h2>Quién debe (${r.deudores.length})</h2>${r.deudores.length > 6 ? html`<a class="ver-mas" href="#/admin/cobros">Ver todos</a>` : ''}</div>
+        ${r.deudores.length === 0 ? vacio('Nadie debe nada') : r.deudores.slice(0, 6).map((d) => html`
           <div class="fila-admin">
             <div><div class="fila-admin__nombre">${d.nombre}</div><div class="fila-admin__meta">${d.correo}</div></div>
             <div class="fila-admin__acc"><strong class="num">${money(d.deuda)}</strong>
@@ -98,7 +98,7 @@ async function vResumen(c) {
 
       <section>
         <h2>Lo que piden</h2>
-        ${r.sugerencias.length === 0 ? vacio('Sin mensajes todavía') : r.sugerencias.map((s) => html`
+        ${r.sugerencias.length === 0 ? vacio('Sin mensajes todavía') : r.sugerencias.slice(0, 5).map((s) => html`
           <div class="renglon">
             <div>${s.mensaje}<br><small>${s.correo} · ${s.fecha}</small></div>
             <span class="sello ${s.tipo === 'queja' ? 'sello--rojo' : ''}">${s.tipo}</span>
@@ -363,8 +363,8 @@ async function vCobros(c) {
   const r = await api('cobros.lista');
   if (!r.ok) { mount(c, errorCaja(r.error)); return; }
   mount(c, html`
-    <div class="caja" style="grid-template-columns:1fr">
-      <div style="border-bottom:0"><strong class="num">${money(r.total)}</strong><span>Por cobrar a ${r.deudores.length} personas</span></div>
+    <div class="caja">
+      <div class="destacada"><strong class="num">${money(r.total)}</strong><span>Por cobrar a ${r.deudores.length} personas</span></div>
     </div>
     <div class="acciones-barra">
       ${puede('venta.admin') ? html`<button class="btn btn--rojo" data-a="venta">Anotar venta a un cliente</button>` : ''}
@@ -378,6 +378,7 @@ async function vCobros(c) {
             <div><div class="fila-admin__nombre">${d.nombre}</div>
               <div class="fila-admin__meta num">${d.pendientes} compras${d.desde ? ' desde ' + d.desde : ''} · límite ${money(d.limite)}</div></div>
             <div class="fila-admin__acc"><strong class="num">${money(d.deuda)}</strong>
+              <button class="btn btn--suave btn--chico" data-a="venta-a" data-correo="${d.correo}">+ Anotar</button>
               <button class="btn btn--rojo btn--chico" data-a="cobrar" data-correo="${d.correo}" data-nombre="${d.nombre}" data-deuda="${d.deuda}">Cobrar</button></div>
           </div>`)}
       </section>
@@ -390,6 +391,7 @@ async function vCobros(c) {
     </div>`);
   on(c, 'click', '[data-a="cobrar"]', (b) => abrirCobro(b.dataset));
   on(c, 'click', '[data-a="venta"]', () => abrirVenta());
+  on(c, 'click', '[data-a="venta-a"]', (b) => abrirVenta({ correo: b.dataset.correo }));
   on(c, 'click', '[data-a="corte"]', async (b) => {
     const ok = await confirmar({ titulo: 'Generar corte', mensaje: 'Esto guarda una foto de lo que debe cada persona hoy. No cambia las deudas. ¿Continuar?', si: 'Generar corte' });
     if (!ok) return;
@@ -520,7 +522,7 @@ function formProducto(p, cats, alGuardar) {
 }
 
 // ---- anotar lo que se llevó un cliente ----
-async function abrirVenta() {
+async function abrirVenta({ correo: correoIni } = {}) {
   const [ri, ru] = await Promise.all([listaProds(), puede('usr.lista') ? api('usr.lista') : Promise.resolve({ ok: false })]);
   if (!ri.ok) { toast(ri.error, 'error'); return; }
   const prods = ri.productos.filter((x) => x.activo && x.stock > 0).sort(porNombre);
@@ -536,18 +538,28 @@ async function abrirVenta() {
     titulo: 'Anotar venta a un cliente', ancho: 'media',
     cuerpo: html`
       <form id="form-venta" novalidate>
-        <p class="suave" style="margin:0 0 12px">Para cuando alguien se llevó algo y no lo registró. Baja el inventario y suma a su deuda.</p>
+        <p class="suave" style="margin:0 0 12px">Para cuando alguien se llevó algo y se le olvidó registrarlo. Baja el inventario y suma a su deuda.</p>
         <div class="error-form" id="venta-error" role="alert"></div>
         <div class="campo"><label for="vta-cli">¿Quién se lo llevó?</label>
-          ${clientes.length ? html`<select id="vta-cli"><option value="">Elige a la persona…</option>${clientes.map((x) => html`<option value="${x.correo}">${x.nombre} · debe ${money(x.deuda)}</option>`)}</select>`
+          ${clientes.length ? html`<select id="vta-cli"><option value="">Elige a la persona…</option>${clientes.map((x) => html`<option value="${x.correo}" ${x.correo === correoIni ? raw('selected') : ''}>${x.nombre} · debe ${money(x.deuda)}</option>`)}</select>`
                             : html`<input id="vta-cli" type="email" placeholder="correo@ejemplo.com">`}</div>
         <div id="vta-lineas">${linea()}</div>
         <div class="acciones-barra" style="margin:8px 0"><button class="btn btn--suave btn--chico" type="button" id="vta-mas">+ Agregar otro producto</button></div>
+        <div class="total-fila"><span>Se suma a su deuda</span><span class="num" id="vta-total">$0.00</span></div>
         <div class="acciones"><button class="btn btn--suave" type="button" data-cerrar>Cancelar</button><button class="btn btn--rojo" type="submit">Anotar venta</button></div>
       </form>`
   });
+  const totalVenta = () => {
+    let t = 0;
+    $$('[data-linea]', h.el).forEach((l) => {
+      const x = prods.find((q) => q.sku === $('[data-f="sku"]', l).value);
+      if (x) t += x.precio * (Number($('[data-f="cant"]', l).value) || 0);
+    });
+    $('#vta-total', h.el).textContent = money(t);
+  };
+  h.el.addEventListener('input', totalVenta); h.el.addEventListener('change', totalVenta);
   $('#vta-mas', h.el).addEventListener('click', () => $('#vta-lineas', h.el).insertAdjacentHTML('beforeend', linea().s));
-  on(h.el, 'click', '[data-quitar]', (b) => { if ($$('[data-linea]', h.el).length > 1) b.closest('[data-linea]').remove(); });
+  on(h.el, 'click', '[data-quitar]', (b) => { if ($$('[data-linea]', h.el).length > 1) { b.closest('[data-linea]').remove(); totalVenta(); } });
   $('#form-venta', h.el).addEventListener('submit', async (e) => {
     e.preventDefault();
     const caja = $('#venta-error', h.el); caja.textContent = '';
@@ -583,17 +595,17 @@ async function vReportes(c) {
   const dif = r.ventasMesAnterior > 0 ? Math.round(((r.ventas - r.ventasMesAnterior) / r.ventasMesAnterior) * 100) : null;
   mount(c, html`
     <div class="acciones-barra">
-      <div class="campo" style="margin:0"><label for="rep-mes" class="solo-lector">Mes</label>
+      <div class="campo" style="margin:0;max-width:260px"><label for="rep-mes" class="solo-lector">Mes</label>
         <select id="rep-mes">${r.meses.map((m) => html`<option value="${m}" ${m === r.mes ? raw('selected') : ''}>${nombreMes(m)}</option>`)}</select></div>
     </div>
     <div class="caja">
       <div><strong class="num">${money(r.ventas)}</strong><span>Vendido en ${nombreMes(r.mes)}${dif === null ? '' : ' · ' + (dif >= 0 ? '+' : '') + dif + '% vs. mes anterior'}</span></div>
-      <div><strong class="num">${money(r.ganancia)}</strong><span>Ganancia estimada · ${r.margen}% de margen</span></div>
+      <div class="destacada"><strong class="num">${money(r.ganancia)}</strong><span>Ganancia estimada · ${r.margen}% de margen</span></div>
       <div><strong class="num">${money(r.cobrado)}</strong><span>Cobrado en el mes</span></div>
       <div><strong class="num">${money(r.porCobrarHoy)}</strong><span>Por cobrar hoy</span></div>
     </div>
-    <p class="suave num" style="margin-top:10px">${r.piezas} piezas en ${r.tickets} compras. ${r.nota}</p>
-    <section style="margin-top:22px">
+    <p class="suave num" style="margin:-8px 0 24px">${r.piezas} piezas en ${r.tickets} compras. ${r.nota}</p>
+    <section class="bloque" style="margin-bottom:32px">
       <h2>Ventas por día</h2>
       <div class="barras barras--mes" role="img" aria-label="Ventas por día del mes">
         ${r.porDia.map((m, i) => html`<div title="Día ${i + 1}: ${money(m)}"><i style="height:${Math.round((m / max) * 100)}px"></i><span>${(i + 1) % 5 === 0 || i === 0 ? i + 1 : ''}</span></div>`)}
@@ -611,18 +623,18 @@ async function vReportes(c) {
           <div class="renglon"><div>${x.nombre}<br><small>${x.piezas} piezas</small></div><div class="num"><strong>${money(x.monto)}</strong></div></div>`)}
       </section>
     </div>
-    <section style="margin-top:26px">
-      <div class="acciones-barra" style="justify-content:space-between">
-        <h2 style="margin:0">Compras al proveedor</h2>
+    <section class="bloque" style="margin-bottom:32px">
+      <div class="encabezado-sec">
+        <h2>Compras al proveedor</h2>
         <button class="btn btn--rojo btn--chico" id="rep-compra">Registrar compra</button>
       </div>
-      <div class="caja" style="margin-top:10px">
+      <div class="caja" style="margin-bottom:8px">
         <div><strong class="num">${money(r.compras.gastado)}</strong><span>Gastado en compras</span></div>
         <div><strong class="num">${r.compras.piezas}</strong><span>Piezas que entraron</span></div>
-        <div><strong class="num">${money(r.ventas - r.compras.gastado)}</strong><span>Vendido menos comprado</span></div>
+        <div class="destacada"><strong class="num">${money(r.ventas - r.compras.gastado)}</strong><span>Vendido menos comprado</span></div>
       </div>
       ${r.compras.detalle.length === 0 ? vacio('Sin compras en este mes. Usa Registrar compra para sumar piezas a tus productos.') : html`
-        <div class="dos-col" style="margin-top:14px">
+        <div class="dos-col" style="margin:8px 0 0">
           <section>
             <h2>Por proveedor</h2>
             ${r.compras.porProveedor.map((x) => html`<div class="renglon"><div>${x.proveedor}</div><div class="num"><strong>${money(x.total)}</strong></div></div>`)}
@@ -643,10 +655,10 @@ async function vReportes(c) {
         <section>
           <h2>Qué conviene comprar</h2>
           ${!k.ok ? errorCaja(k.error) : k.lista.length === 0 ? vacio('Nada urgente por comprar') : html`
-            <p class="suave" style="margin-bottom:8px">Alcanza para unas 2 semanas de venta.</p>
+            <p class="suave">Alcanza para unas 2 semanas de venta.</p>
             ${k.lista.map((x) => html`<div class="renglon"><div>${x.nombre}<br><small class="num">hay ${x.stock} · se vende ${x.vendidoSemana} por semana</small></div><div class="num"><strong>Comprar ${x.sugerido}</strong><br><small>≈ ${money(x.costoEstimado)}</small></div></div>`)}
             <div class="total-fila"><span>Estimado</span><span class="num">${money(k.total)}</span></div>
-            <button class="btn btn--suave" id="copiar-lista">Copiar lista para WhatsApp</button>`}
+            <button class="btn btn--rojo" id="copiar-lista">Copiar lista para WhatsApp</button>`}
         </section>
         <section>
           <h2>Últimos movimientos</h2>

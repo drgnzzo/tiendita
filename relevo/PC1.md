@@ -22,3 +22,4 @@ Leer ESTADO.md. No editar relevo/PC2.md.
 - Hecho: tema suave (fondos no blancos, paleta reducida, jerarquía de botones). Pendiente: publicar con TIENDITA.bat (5d7fb32 + este commit) y revisar con capturas.
 - Hecho: catálogo con espaciado nuevo e iconos por nombre; soporta Imagen_URL (se llena desde Editar producto > Enlace de la foto).
 - Hecho: panel homologado con la tienda; botón Panel visible en catálogo/perfil para admin. Pendiente: publicar con TIENDITA.bat y revisar vistas Productos/Cobros/Reportes en vivo.
+- Hecho: rediseño limpio del panel y "+ Anotar" por cliente. Pendiente: publicar con TIENDITA.bat y revisar en vivo.
