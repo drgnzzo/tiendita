@@ -79,7 +79,7 @@ async function vResumen(c) {
         <h2>Por resurtir (${r.stockBajo.length})</h2>
         ${r.stockBajo.length === 0 ? vacio('Todo abastecido', 'Nada está por debajo del mínimo.') : r.stockBajo.slice(0, 12).map((p) => html`
           <div class="fila-admin">
-            <div><div class="fila-admin__nombre">${p.nombre}</div><div class="fila-admin__meta">mínimo ${p.stockMinimo}</div></div>
+            <div><div class="fila-admin__nombre">${p.nombre}</div><div class="fila-admin__meta">${p.stock === 0 ? 'Agotado' : 'Quedan pocas'} · mínimo ${p.stockMinimo}</div></div>
             <div class="fila-admin__acc"><span class="stock-grande ${p.stock === 0 ? 'stock-grande--cero' : 'stock-grande--bajo'}">${p.stock}</span>
               <button class="btn btn--suave btn--chico" data-a="entrada" data-sku="${p.sku}">+ Sumar</button></div>
           </div>`)}
@@ -145,7 +145,7 @@ async function vInventario(c) {
         <div class="fila-admin" ${p.activo ? '' : raw('style="opacity:.6"')}>
           <span class="stock-grande ${p.stock === 0 ? 'stock-grande--cero' : bajo ? 'stock-grande--bajo' : ''}" aria-label="Hay ${p.stock}">${p.stock}</span>
           <div class="fila-admin__texto">
-            <div class="fila-admin__nombre">${p.nombre} ${p.activo ? '' : html`<span class="sello">Oculto</span>`}</div>
+            <div class="fila-admin__nombre">${p.nombre} ${p.activo ? '' : html`<span class="sello">Oculto</span>`} ${p.stock === 0 ? html`<span class="sello sello--rojo">Agotado</span>` : bajo ? html`<span class="sello">Quedan pocas</span>` : ''}</div>
             <div class="fila-admin__meta num">${p.categoria} · precio ${money(p.precio)} · costo ${money(p.costo)} · vendió ${p.vendido30} en 30 días</div>
           </div>
           <div class="fila-admin__acc">

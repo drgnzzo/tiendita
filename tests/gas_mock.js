@@ -8,6 +8,8 @@ function makeEnv(seed) {
       getDataRange() { const w = Math.max(...this.rows.map(r => r.length), 1);
         return { getValues: () => this.rows.map(r => { const c = r.slice(); while (c.length < w) c.push(''); return c; }) }; },
       getLastRow() { return this.rows.length; },
+      getMaxRows() { return this.rows.length + 1000; },
+      insertRowsAfter() {},
       appendRow(r) { this.rows.push(r.slice()); },
       getRange(r, c, nr = 1, nc = 1) { const self = this; return {
         setValue(v) { while (self.rows.length < r) self.rows.push([]); const row = self.rows[r-1]; while (row.length < c) row.push(''); row[c-1] = v; },

@@ -545,6 +545,12 @@ const API_RUTAS = {
 // Acciones que la tienda de siempre llama solo con el correo del cliente.
 const LEGACY_CLIENTE = { catalogo: 1, buscar: 1, perfil: 1, historial: 1, comprar: 1, sugerir: 1, bot: 1 };
 
+// Antes de escribir al final de una hoja: que existan filas libres suficientes.
+function escrAsegurarFilas_(hoja, n) {
+  const faltan = hoja.getLastRow() + n - hoja.getMaxRows();
+  if (faltan > 0) hoja.insertRowsAfter(hoja.getMaxRows(), faltan);
+}
+
 function doGet(e)  { return _handleRequest(e, 'GET'); }
 function doPost(e) { return _handleRequest(e, 'POST'); }
 
@@ -1036,6 +1042,7 @@ function registrarCompra(correo, items) {
       const change = _moverStock(r.sku, -r.cantidad, 'VENTA', { usuario: correo, notas: idVenta });
       if (change) cambiosStock.push(change);
     }
+    escrAsegurarFilas_(sVentas, filas.length);
     sVentas.getRange(sVentas.getLastRow() + 1, 1, filas.length, filas[0].length).setValues(filas);
 
     actualizarDeuda(correo, total);
@@ -2439,7 +2446,7 @@ function configuracionInicialV2() {
       filas.push([_generarId('M') + i, new Date(), String(prods[i][0]), String(prods[i][1]), 'INICIAL',
                   stock, '', '', CONFIG.ADMIN_EMAIL, 'Stock al activar v2 (hacer conteo físico)', stock]);
     }
-    if (filas.length) sMov.getRange(sMov.getLastRow() + 1, 1, filas.length, MOV_HEADERS.length).setValues(filas);
+    if (filas.length) { escrAsegurarFilas_(sMov, filas.length); sMov.getRange(sMov.getLastRow() + 1, 1, filas.length, MOV_HEADERS.length).setValues(filas); }
   }
 
   // PINs temporales

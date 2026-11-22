@@ -523,3 +523,22 @@ section > h2, .dos-col h2 { background: var(--rosa-suave); color: var(--vino); p
   .cabecera .nav a { color: #6A4A53; }
   .cabecera .nav a[aria-current="page"] { background: none; color: var(--rojo-d); }
 }
+
+/* ===== Ajustes de la revisión con las skills (Tidwell, Johnson, Lupton, Müller-Brockmann) ===== */
+/* Letra mínima legible (≥ 13 px) y títulos de sección sin tipografía de exhibición dentro de la interfaz */
+.barras, .barras > div, .barras b, .barras span { font-size: .82rem; }
+.sello { font-size: .8rem; padding: 3px 10px; }
+.caja span { font-size: .92rem; }
+.fila-admin__meta, .renglon small { font-size: .9rem; }
+section > h2, .dos-col h2, .hoja__barra h2 { font-family: var(--fuente); font-weight: 800; letter-spacing: 0; }
+/* Retícula: una unidad de 8 px; márgenes y canalones iguales en todas las pantallas */
+.pagina, .cabecera__in { padding-left: clamp(16px, 3vw, 48px); padding-right: clamp(16px, 3vw, 48px); }
+.dos-col { column-gap: 32px; }
+.dos-col > section, section + section { margin-bottom: 32px; }
+.fila-admin, .renglon { margin-bottom: 8px; }
+#inv-lista { column-gap: 32px; }
+.titulo { padding: 16px 24px; margin: 8px 0 24px; }
+.caja { margin-bottom: 8px; }
+.acciones-barra { margin: 16px 0 24px; }
+/* Estado del stock: la insignia lleva además la palabra (Agotado / Quedan pocas) */
+.sello--rojo { background: #FFD6E0; color: #8A0F17; }
