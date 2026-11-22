@@ -2,12 +2,16 @@ import { api, newReqId } from './api.js';
 import { S, puede } from './state.js';
 import { html, raw, mount, on, $, $$, reiniciarRaiz, toast, ocupado, abrirHoja, confirmar, money, moneyShort, campo, errorCaja, vacio, copiarTexto, esc } from './ui.js';
 
+const TITULOS = {
+  resumen: ['Resumen', 'cómo va la tiendita'], inventario: ['Productos', 'lo que hay en el estante'], cobros: ['Cobros', 'quién debe y cuánto'],
+  reportes: ['Reportes', 'el mes en números'], usuarios: ['Usuarios', 'quién entra a la tiendita']
+};
 const SUBS = [
   { id: 'resumen', nombre: 'Resumen', permiso: 'admin.resumen' },
   { id: 'inventario', nombre: 'Productos', permiso: 'inv.lista' },
   { id: 'cobros', nombre: 'Cobros', permiso: 'cobros.lista' },
   { id: 'reportes', nombre: 'Reportes', permiso: 'reporte.mes' },
-    { id: 'usuarios', nombre: 'Usuarios', permiso: 'usr.lista' }
+    { id: 'usuarios', nombre: 'Usuarios', permiso: 'usr.lista', oculta: true }
 ];
 const porNombre = (a, b) => a.nombre.localeCompare(b.nombre, 'es');
 const cargando = (t = 'Cargando…') => html`<div class="cargando">${t}</div>`;
@@ -27,10 +31,11 @@ export async function renderAdmin(root, sub) {
   const subs = SUBS.filter((s) => puede(s.permiso));
   if (!subs.find((s) => s.id === sub)) sub = subs[0].id;
   mount(root, html`
-    <h1 class="solo-lector">Panel</h1>
-    <nav class="subnav" aria-label="Panel">
-      ${subs.map((s) => html`<a href="#/admin/${s.id}" ${s.id === sub ? raw('aria-current="page"') : ''}>${s.nombre}</a>`)}
+  <nav class="subnav" aria-label="Panel">
+      ${subs.filter((s) => !s.oculta).map((s) => html`<a href="#/admin/${s.id}" ${s.id === sub || (sub === 'productos' && s.id === 'inventario') ? raw('aria-current="page"') : ''}>${s.nombre}</a>`)}
+      ${subs.find((s) => s.id === 'usuarios') ? html`<a class="subnav__aparte" href="#/admin/usuarios" ${sub === 'usuarios' ? raw('aria-current="page"') : ''}>Usuarios</a>` : ''}
     </nav>
+    <div class="titulo"><h1>${(TITULOS[sub] || TITULOS.resumen)[0]}</h1><span>${(TITULOS[sub] || TITULOS.resumen)[1]}</span></div>
     <div id="admin-cuerpo"></div>`);
   const cuerpo = $('#admin-cuerpo', root);
   const vistas = { resumen: vResumen, inventario: vInventario, productos: vInventario, cobros: vCobros, reportes: vReportes, usuarios: vUsuarios };
@@ -113,7 +118,6 @@ async function vResumen(c) {
 
 // ====================== INVENTARIO ======================
 
-let invTab = 'productos';
 let invFiltro = '';
 
 async function vInventario(c) {
@@ -124,91 +128,41 @@ async function vInventario(c) {
   cacheProds = prods;
   const cats = Array.from(new Set(prods.map((p) => p.categoria).filter(Boolean))).sort();
   mount(c, html`
-    <div class="acciones-barra">
+    <div class="barra-productos">
+      <input id="inv-q" type="search" placeholder="Buscar producto…" aria-label="Buscar producto" value="${invFiltro}" autocomplete="off">
       <button class="btn btn--rojo" data-a="entrada">Registrar compra</button>
       ${puede('prod.guardar') ? html`<button class="btn btn--suave" data-a="nuevo-prod">Nuevo producto</button>` : ''}
-      <button class="btn btn--suave" data-a="conteo">Contar todo</button>
     </div>
-    <div class="chips" id="inv-tabs">
-      <button class="chip" data-tab="productos" aria-pressed="${invTab === 'productos'}">Productos</button>
-      <button class="chip" data-tab="compras" aria-pressed="${invTab === 'compras'}">Lista de compras</button>
-      <button class="chip" data-tab="movimientos" aria-pressed="${invTab === 'movimientos'}">Movimientos</button>
-    </div>
-    <div id="inv-cuerpo"></div>`);
-
-  const cuerpo = $('#inv-cuerpo', c);
+    <div id="inv-lista"></div>
+    <p class="pie-lista"><button class="link" data-a="conteo">Contar todo el inventario</button></p>`);
   const pintarProductos = () => {
     const q = invFiltro.trim().toLowerCase();
     const lista = prods.filter((p) => !q || (p.nombre + p.categoria + p.sku).toLowerCase().includes(q))
       .sort((a, b) => (b.activo - a.activo) || ((a.stock <= a.stockMinimo ? 0 : 1) - (b.stock <= b.stockMinimo ? 0 : 1)) || porNombre(a, b));
     mount($('#inv-lista', c), lista.length === 0 ? vacio('Sin resultados') : html`${lista.map((p) => {
       const bajo = p.stock <= p.stockMinimo;
-      const margen = p.precio > 0 ? Math.round(((p.precio - p.costo) / p.precio) * 100) : 0;
       return html`
-        <div class="fila-admin fila-admin--apilada" ${p.activo ? '' : raw('style="opacity:.55"')}>
-          <div>
-            <div class="fila-admin__nombre">${p.nombre} ${p.activo ? '' : html`<span class="sello">Inactivo</span>`}</div>
-            <div class="fila-admin__meta num">${p.categoria} · costo ${money(p.costo)} · precio ${money(p.precio)} · margen ${margen}% · vendió ${p.vendido30} en 30 días · mínimo ${p.stockMinimo}</div>
+        <div class="fila-admin" ${p.activo ? '' : raw('style="opacity:.6"')}>
+          <span class="stock-grande ${p.stock === 0 ? 'stock-grande--cero' : bajo ? 'stock-grande--bajo' : ''}" aria-label="Hay ${p.stock}">${p.stock}</span>
+          <div class="fila-admin__texto">
+            <div class="fila-admin__nombre">${p.nombre} ${p.activo ? '' : html`<span class="sello">Oculto</span>`}</div>
+            <div class="fila-admin__meta num">${p.categoria} · precio ${money(p.precio)} · costo ${money(p.costo)} · vendió ${p.vendido30} en 30 días</div>
           </div>
           <div class="fila-admin__acc">
-            <span class="stock-grande ${p.stock === 0 ? 'stock-grande--cero' : bajo ? 'stock-grande--bajo' : ''}" aria-label="Stock ${p.stock}">${p.stock}</span>
             <button class="btn btn--suave btn--chico" data-a="entrada" data-sku="${p.sku}">+ Sumar</button>
-            <button class="btn btn--suave btn--chico" data-a="ajuste" data-sku="${p.sku}">Quitar / ajustar</button>
+            <button class="btn btn--suave btn--chico" data-a="ajuste" data-sku="${p.sku}">Quitar</button>
             ${puede('prod.guardar') ? html`<button class="btn btn--suave btn--chico" data-a="editar" data-sku="${p.sku}">Editar</button>` : ''}
           </div>
         </div>`;
     })}`);
   };
-
-  const pintarTab = async () => {
-    $$('#inv-tabs .chip', c).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tab === invTab)));
-    if (invTab === 'productos') {
-      mount(cuerpo, html`
-        <label class="solo-lector" for="inv-q">Buscar</label>
-        <input id="inv-q" type="search" placeholder="Buscar producto…" value="${invFiltro}" autocomplete="off" style="margin-bottom:8px">
-        <div id="inv-lista"></div>`);
-      pintarProductos();
-      $('#inv-q', c).addEventListener('input', (e) => { invFiltro = e.target.value; pintarProductos(); });
-    } else if (invTab === 'compras') {
-      mount(cuerpo, cargando());
-      const k = await api('inv.compras');
-      if (!k.ok) { mount(cuerpo, errorCaja(k.error)); return; }
-      mount(cuerpo, k.lista.length === 0 ? vacio('Nada urgente por comprar', 'Cuando algo baje del mínimo o se venda rápido, aparece aquí.') : html`
-        <p class="suave" style="margin-bottom:6px">Alcanza para unas 2 semanas de venta, según lo que se vendió en 30 días.</p>
-        ${k.lista.map((x) => html`
-          <div class="fila-admin">
-            <div><div class="fila-admin__nombre">${x.nombre}</div>
-              <div class="fila-admin__meta num">hay ${x.stock} · se vende ${x.vendidoSemana} por semana${x.dias != null ? ' · alcanza ' + x.dias + ' días' : ''}</div></div>
-            <div class="fila-admin__acc"><strong class="num">Comprar ${x.sugerido}</strong><span class="suave num">≈ ${money(x.costoEstimado)}</span></div>
-          </div>`)}
-        <div class="total-fila"><span>Estimado</span><span class="num">${money(k.total)}</span></div>
-        <button class="btn btn--tinta" id="copiar-lista">Copiar lista para WhatsApp</button>`);
-      const btn = $('#copiar-lista', c);
-      if (btn) btn.addEventListener('click', async () => {
-        const texto = 'Lista de compras Tiendita:\n' + k.lista.map((x) => '• ' + x.nombre + ': ' + x.sugerido).join('\n');
-        try { await copiarTexto(texto); toast('Lista copiada.'); } catch (_) { toast('No se pudo copiar. Selecciona y copia a mano.', 'error'); }
-      });
-    } else {
-      mount(cuerpo, cargando());
-      const m = await api('inv.movimientos', { limite: 150 });
-      if (!m.ok) { mount(cuerpo, errorCaja(m.error)); return; }
-      mount(cuerpo, listaMovimientos(m.movimientos));
-    }
-  };
-
-  on(c, 'click', '[data-tab]', (b) => { invTab = b.dataset.tab; pintarTab(); });
+  pintarProductos();
+  $('#inv-q', c).addEventListener('input', (e) => { invFiltro = e.target.value; pintarProductos(); });
   on(c, 'click', '[data-a="entrada"]', (b) => abrirEntrada({ sku: b.dataset.sku }));
   on(c, 'click', '[data-a="ajuste"]', (b) => abrirAjuste(prods.find((p) => p.sku === b.dataset.sku)));
   on(c, 'click', '[data-a="editar"]', (b) => formProducto(prods.find((p) => p.sku === b.dataset.sku), cats));
   on(c, 'click', '[data-a="conteo"]', () => abrirConteo(prods.filter((p) => p.activo)));
   on(c, 'click', '[data-a="nuevo-prod"]', () => nuevoProducto());
-  on(c, 'click', '[data-a="historial"]', async (b) => {
-    const p = prods.find((x) => x.sku === b.dataset.sku);
-    const h = abrirHoja({ titulo: 'Historial · ' + p.nombre, ancho: 'ancha', cuerpo: cargando() });
-    const m = await api('inv.movimientos', { sku: p.sku, limite: 100 });
-    mount(h.cuerpo, m.ok ? listaMovimientos(m.movimientos) : errorCaja(m.error));
-  });
-  await pintarTab();
 }
 
 function listaMovimientos(movs) {
@@ -679,8 +633,32 @@ async function vReportes(c) {
               <div class="renglon"><div>${g.fecha} · ${g.proveedor}<br><small>${g.lineas.map((l) => l.piezas + ' × ' + l.producto).join(', ')}</small></div><div class="num"><strong>${money(g.total)}</strong></div></div>`)}
           </section>
         </div>`}
-    </section>`);
+    </section>
+    <div id="rep-extra"></div>`);
   $('#rep-compra', c).addEventListener('click', () => abrirEntrada({}));
+  Promise.all([api('inv.compras'), api('inv.movimientos', { limite: 30 })]).then(([k, m]) => {
+    const extra = $('#rep-extra', c); if (!extra) return;
+    mount(extra, html`
+      <div class="dos-col">
+        <section>
+          <h2>Qué conviene comprar</h2>
+          ${!k.ok ? errorCaja(k.error) : k.lista.length === 0 ? vacio('Nada urgente por comprar') : html`
+            <p class="suave" style="margin-bottom:8px">Alcanza para unas 2 semanas de venta.</p>
+            ${k.lista.map((x) => html`<div class="renglon"><div>${x.nombre}<br><small class="num">hay ${x.stock} · se vende ${x.vendidoSemana} por semana</small></div><div class="num"><strong>Comprar ${x.sugerido}</strong><br><small>≈ ${money(x.costoEstimado)}</small></div></div>`)}
+            <div class="total-fila"><span>Estimado</span><span class="num">${money(k.total)}</span></div>
+            <button class="btn btn--suave" id="copiar-lista">Copiar lista para WhatsApp</button>`}
+        </section>
+        <section>
+          <h2>Últimos movimientos</h2>
+          ${!m.ok ? errorCaja(m.error) : listaMovimientos(m.movimientos)}
+        </section>
+      </div>`);
+    const btn = $('#copiar-lista', c);
+    if (btn && k.ok) btn.addEventListener('click', async () => {
+      const texto = 'Lista de compras Tiendita:\n' + k.lista.map((x) => '• ' + x.nombre + ': ' + x.sugerido).join('\n');
+      try { await copiarTexto(texto); toast('Lista copiada.'); } catch (_) { toast('No se pudo copiar. Selecciona y copia a mano.', 'error'); }
+    });
+  });
   $('#rep-mes', c).addEventListener('change', (e) => { repMes = e.target.value; vReportes(c); });
 }
 

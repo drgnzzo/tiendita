@@ -394,3 +394,132 @@ input:focus, select:focus, textarea:focus { border-color: var(--rojo); box-shado
 /* Cabecera igual que la Tiendita de siempre */
 .cabecera .btn--suave { background: #fff; color: var(--rojo-d); border-color: #fff; }
 .nav a { white-space: nowrap; }
+
+/* ===== Más rosa, como la Tiendita de siempre, y tamaño proporcional en pantallas grandes ===== */
+@media (min-width: 1900px) { html { zoom: 1.25; } }
+@media (min-width: 2400px) { html { zoom: 1.5; } }
+
+h2 { color: var(--vino); }
+.subnav a[aria-current="page"], .chip[aria-pressed="true"] { background: var(--grad-hero); color: #fff; border-color: transparent; box-shadow: var(--shadow-red, 0 6px 16px rgba(230,32,39,.2)); }
+.subnav a, .chip { border-color: var(--rosa-light, #FFB3C1); }
+.subnav { border-bottom-color: var(--rosa); }
+
+/* Tarjetas rosadas en vez de líneas sueltas */
+.caja { background: linear-gradient(180deg, #fff 0%, #FFF6F8 100%); border-color: var(--rosa-light, #FFB3C1); box-shadow: 0 6px 18px rgba(255,107,157,.12); }
+.caja > div { border-color: var(--rosa); }
+.caja strong { color: var(--rojo-d); }
+.fila-admin, .renglon {
+  background: #fff; border: 1.5px solid var(--rosa); border-radius: 16px; padding: 12px 16px; margin-bottom: 10px;
+  box-shadow: 0 2px 8px rgba(255,107,157,.08);
+}
+#prod-lista, #inv-lista { grid-template-columns: repeat(auto-fill, minmax(560px, 1fr)); column-gap: 16px; }
+@media (max-width: 719px) { #prod-lista, #inv-lista { grid-template-columns: 1fr; } }
+.stock-grande { display: inline-grid; place-items: center; min-width: 46px; height: 46px; padding: 0 8px; border-radius: 14px; background: var(--rosa-claro); font-size: 1.4rem; }
+.stock-grande--cero { background: #FFD6E0; }
+.stock-grande--bajo { background: #FFF1C2; color: #7A4B00; }
+.fila-admin__nombre { color: var(--vino); }
+.btn--suave { border-color: var(--rosa-light, #FFB3C1); }
+.btn--suave:hover { background: var(--rosa); }
+.barras i { background: var(--grad-hero); }
+.hoja { border-radius: 22px; }
+.hoja__barra { border-bottom-color: var(--rosa); }
+.hoja__barra h2 { color: var(--vino); }
+.total-fila { color: var(--vino); }
+
+/* ===== Ronda editorial: jerarquía, alineación y más rosa ===== */
+body { background: linear-gradient(180deg, #FFE3EB 0%, #FFD0DD 100%) fixed; }
+.pagina { padding-top: 8px; }
+/* Título de cada pantalla: grande, con letra de mano al lado */
+.titulo { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin: 6px 0 18px; }
+.titulo h1 { font-size: clamp(1.9rem, 3vw, 2.6rem); color: var(--vino); line-height: 1; }
+.titulo span { font-family: var(--fuente-script); font-weight: 700; font-size: 1.7rem; color: var(--rojo-d); }
+/* Menú: una sola fila, pocas opciones; Usuarios a la derecha */
+.subnav { border-bottom: 0; margin-bottom: 4px; padding: 14px 0 6px; overflow: visible; flex-wrap: wrap; }
+.subnav a { background: rgba(255,255,255,.75); border: 1.5px solid #FF9DB8; color: var(--vino); }
+.subnav__aparte { margin-left: auto; background: transparent !important; border-color: transparent !important; text-decoration: underline !important; text-underline-offset: 4px; color: var(--rojo-d) !important; }
+.subnav .subnav__aparte[aria-current="page"] { background: var(--grad-hero) !important; color: #fff !important; text-decoration: none !important; }
+/* Barra de herramientas de Productos: buscador a la izquierda, acciones a la derecha, todo a la misma altura */
+.barra-productos { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+.barra-productos input { flex: 1 1 280px; min-height: 48px; border-radius: 999px; padding: 0 20px; }
+.barra-productos .btn { min-height: 48px; }
+.pie-lista { margin: 18px 0 0; text-align: center; }
+/* Filas: número, nombre, acciones — tres columnas alineadas */
+.fila-admin { grid-template-columns: 56px 1fr auto; gap: 14px; align-items: center; background: #fff; border-color: #FFB3C1; }
+.fila-admin .stock-grande { justify-self: center; }
+.fila-admin__acc { flex-wrap: nowrap; }
+.fila-admin__texto { min-width: 0; }
+.fila-admin__nombre { font-size: 1.02rem; }
+.fila-admin__meta { margin-top: 2px; }
+/* Filas del Resumen (sin número a la izquierda) */
+.dos-col .fila-admin { grid-template-columns: 1fr auto; }
+#inv-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(620px, 1fr)); gap: 0 18px; }
+@media (max-width: 719px) {
+  #inv-lista { grid-template-columns: 1fr; }
+  .fila-admin { grid-template-columns: 48px 1fr; }
+  .fila-admin .fila-admin__acc { grid-column: 1 / -1; justify-content: flex-start; }
+  .titulo span { font-size: 1.4rem; }
+}
+.caja, .fila-admin, .renglon { border-color: #FFB3C1; }
+.cabecera { box-shadow: 0 4px 14px rgba(230,32,39,.25); }
+
+/* ===== Contraste de tienda: bloques sólidos rosa, rojo y vino ===== */
+:root { --vino: #6B0F2A; --rojo: #E62027; --rojo-d: #B0181E; --rosa-fuerte: #FF6B9D; --rosa-suave: #FFD6E0; --fondo: #FFE9EF; --texto: #2B0D12; }
+body { background: var(--fondo); color: var(--texto); }
+/* Cabecera sólida */
+.cabecera { background: var(--rojo-d); border-bottom: 0; box-shadow: 0 3px 0 var(--vino); }
+.cabecera .marca, .cabecera .yo { color: #fff; }
+.cabecera .nav a { color: #FFE0E8; font-weight: 700; }
+.cabecera .nav a[aria-current="page"] { background: #fff; color: var(--rojo-d); }
+.cabecera .btn--suave { background: #fff; color: var(--rojo-d); border: 0; }
+/* Pestañas: pastillas rosas; la actual, roja sólida */
+.subnav a { background: var(--rosa-suave); border: 0; color: var(--vino); font-weight: 800; }
+.subnav a:hover { background: #FFC2D3; }
+.subnav a[aria-current="page"] { background: var(--rojo); color: #fff; box-shadow: none; }
+.subnav__aparte { background: transparent !important; color: var(--vino) !important; }
+.subnav .subnav__aparte[aria-current="page"] { background: var(--vino) !important; color: #fff !important; }
+/* Título de pantalla */
+.titulo { padding: 18px 22px; background: var(--vino); border-radius: 18px; margin: 8px 0 20px; }
+.titulo h1 { color: #fff; }
+.titulo span { color: #FFB3C9; }
+/* Cifras: bloques de color como en una tienda */
+.caja { background: none; border: 0; box-shadow: none; gap: 12px; overflow: visible; grid-template-columns: repeat(2, 1fr); }
+@media (min-width: 780px) { .caja { grid-template-columns: repeat(4, 1fr); } }
+.caja > div { border: 0; border-radius: 18px; padding: 18px 20px; background: #fff; }
+.caja > div:nth-child(1) { background: var(--rojo); color: #fff; }
+.caja > div:nth-child(2) { background: var(--vino); color: #fff; }
+.caja > div:nth-child(3) { background: var(--rosa-fuerte); color: var(--vino); }
+.caja > div:nth-child(4) { background: #fff; color: var(--texto); border: 2px solid var(--rosa-fuerte); }
+.caja strong { color: inherit; font-size: 1.9rem; }
+.caja span { color: inherit; opacity: .92; font-weight: 700; }
+/* Secciones: título con barra de color */
+section > h2, .dos-col h2 { background: var(--rosa-suave); color: var(--vino); padding: 10px 16px; border-radius: 12px; border-left: 8px solid var(--rojo); margin-bottom: 12px; font-size: 1.15rem; }
+/* Filas y tarjetas: blancas, borde rosa firme */
+.fila-admin, .renglon { background: #fff; border: 2px solid #FFB3C9; box-shadow: none; }
+.fila-admin__nombre, .renglon strong { color: var(--texto); font-weight: 800; }
+.fila-admin__meta, .renglon small { color: #6A4A53; }
+/* Existencia: círculo de color sólido */
+.stock-grande { background: var(--vino); color: #fff; border-radius: 14px; min-width: 52px; height: 52px; }
+.stock-grande--bajo { background: #FFC83D; color: #3A2500; }
+.stock-grande--cero { background: var(--rojo); color: #fff; }
+/* Botones */
+.btn--rojo { background: var(--rojo); color: #fff; }
+.btn--rojo:hover:not(:disabled) { background: var(--rojo-d); filter: none; }
+.btn--suave { background: var(--rosa-suave); color: var(--vino); border: 0; font-weight: 800; }
+.btn--suave:hover { background: #FFC2D3; }
+.link { color: var(--rojo-d); }
+.barra-productos input { border: 2px solid var(--rosa-fuerte); }
+/* Gráfica */
+.barras i { background: var(--rojo); }
+.barras b { color: var(--vino); }
+/* Ventanas */
+.hoja { background: #fff; }
+.hoja__barra { background: var(--vino); border: 0; margin: 0 0 16px; padding: 16px 22px; }
+.hoja__barra h2 { color: #fff; background: none; border: 0; padding: 0; }
+.hoja__barra .icono-btn { color: #fff; }
+.hoja__barra .icono-btn:hover { background: rgba(255,255,255,.18); }
+.total-fila { color: var(--vino); }
+/* Menú de abajo en celular: letras oscuras sobre blanco */
+@media (max-width: 779px) {
+  .cabecera .nav a { color: #6A4A53; }
+  .cabecera .nav a[aria-current="page"] { background: none; color: var(--rojo-d); }
+}

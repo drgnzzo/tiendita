@@ -50,3 +50,4 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - Panel (/admin/): ya no tiene Tienda ni Cuenta propias; enlaza a catalogo.html y perfil.html originales. Un solo login (index.html). Pestañas: Resumen, Productos (inventario + editar), Cobros, Reportes, Usuarios.
 - Formularios abren al instante (lista de productos en memoria). Panel a todo el ancho.
 - La oscuridad que se veía venía de la extensión Dark Reader del navegador de Samantha (fondo #181a1b). Se agregó `<meta name="darkreader-lock">` en todas las páginas; si aún se ve oscuro, desactivar Dark Reader para drgnzzo.github.io.
+- Panel rediseñado con contraste de tienda (bloques sólidos rosa/rojo/vino, títulos grandes). Pestañas: Resumen, Productos, Cobros, Reportes (+ Usuarios aparte). Lista de compras y movimientos pasaron a Reportes. Sin chips de filtro.
