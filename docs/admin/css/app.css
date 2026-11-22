@@ -305,3 +305,19 @@ details.ayuda p { margin: 4px 0 8px; }
 @media (max-width: 639px) {
   .acciones-barra .btn { height: auto; min-height: 44px; padding: 8px 10px; white-space: normal; line-height: 1.2; text-align: center; }
 }
+
+/* ---------- Auditoría móvil: toques de 44px y nada cortado ---------- */
+@media (max-width: 639px) {
+  .btn--chico, .salir { min-height: 44px; }
+  .mas-btn { min-width: 48px; }
+  .subnav a, .subnav .subnav__aparte, .subnav .subnav__aparte[aria-current="page"] { min-height: 44px; }
+  details.ayuda summary { min-height: 44px; }
+  .icono-btn { min-width: 44px; min-height: 44px; }
+  .btn { white-space: normal; line-height: 1.15; }
+  .barra-productos .btn { padding: 8px 10px; font-size: 14px; height: auto; }
+  .fila-admin__acc { gap: 6px; }
+}
+@media (max-width: 1024px) {
+  .btn--chico, .salir { min-height: 44px; }
+  details.ayuda summary { min-height: 44px; }
+}

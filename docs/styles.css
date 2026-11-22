@@ -1349,3 +1349,15 @@ body::before { background: radial-gradient(40vmax 40vmax at 12% 8%, rgba(255,95,
 .product:hover { box-shadow: 0 14px 34px rgba(228,0,124,.35); }
 .product__icon--rojo { background: linear-gradient(135deg, #E4007C 0%, #5B1624 100%); }
 .pill--blanca { background: #FFFBF5; color: #5B1624; border-color: #FFFBF5; }
+
+/* ---------- Auditoría móvil: toques de 44px, letra legible, nada cortado ---------- */
+@media (max-width: 639px) {
+  .app-header__name { font-size: clamp(18px, 5.4vw, 22px); }
+  .app-header__actions { gap: 6px; }
+  .pill { min-height: 44px; }
+  .search-bar input { font-size: 16px; }
+  #cartCount, .stat__label, .debt__label { font-size: 12px; }
+  .perfil__hero, .perfil__hero * { overflow-wrap: anywhere; }
+  .bot-fab { right: auto; left: 12px; }
+}
+@media (max-width: 380px) { .app-header__heart { display: none; } }
