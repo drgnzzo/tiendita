@@ -24,3 +24,9 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - Usuario especial admin@tiendita.com con contraseña (mín. 8). Se pone en el Sheet: TIENDITA > Usuarios > Contraseña del admin web. Solo se guarda el hash.
 - En la web, los demás (incluidos Victor y Samantha) siguen entrando solo con correo y cuentan como clientes.
 - Pendiente: revisar el panel admin en el navegador con la URL real.
+
+## Auditoría (2026-11-22)
+- La tienda de los clientes es la de siempre (docs/: index, catalogo, perfil). El panel nuevo vive en docs/admin/ y se entra desde el mismo login con admin@tiendita.com.
+- Probado con navegador simulado en móvil 390, tablet 820 y escritorio 1280: login, catálogo, compra, perfil, admin y sus 5 pestañas. Sin desbordes ni errores.
+- Corregido: el catálogo público ya no muestra el costo; el logo pesaba 983 KB y ahora se usa el de 62 KB; se quitaron los archivos viejos duplicados de la raíz y el `_headers` de Cloudflare.
+- Conocido: el perfil se pide solo con el correo (como siempre). Falta probar en vivo con Apps Script real.
