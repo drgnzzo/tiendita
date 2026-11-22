@@ -19,3 +19,8 @@
 
 ## No probado
 Apps Script real (menús, listas desplegables, Session), GitHub Pages.
+
+## Admin web (2026-11-21)
+- Usuario especial admin@tiendita.com con contraseña (mín. 8). Se pone en el Sheet: TIENDITA > Usuarios > Contraseña del admin web. Solo se guarda el hash.
+- En la web, los demás (incluidos Victor y Samantha) siguen entrando solo con correo y cuentan como clientes.
+- Pendiente: revisar el panel admin en el navegador con la URL real.

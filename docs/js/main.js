@@ -34,7 +34,7 @@ function mostrarLogin(mensaje = '') {
       <form class="login__caja" id="form-login" autocomplete="on" novalidate>
         <div class="error-form" id="login-error" role="alert">${mensaje}</div>
         ${campo({ id: 'email', etiqueta: 'Tu correo', tipo: 'email', attrs: 'autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false" required' })}
-        <div id="pin-caja" hidden>${campo({ id: 'pin', etiqueta: 'Tu PIN', tipo: 'password', attrs: 'autocomplete="current-password" inputmode="numeric" pattern="[0-9]*" maxlength="8"' })}</div>
+        <div id="pin-caja" hidden>${campo({ id: 'pin', etiqueta: 'Contraseña', tipo: 'password', attrs: 'autocomplete="current-password"' })}</div>
         <button class="btn btn--rojo btn--ancho" type="submit">Entrar</button>
         <p class="login__ayuda" id="login-ayuda">Escribe tu correo para entrar.</p>
       </form>
@@ -51,7 +51,7 @@ function mostrarLogin(mensaje = '') {
     const r = await ocupado(btn, 'Entrando…', () => api('login', { email, pin }));
     if (!r.ok && r.code === 'NEEDS_PIN') {
       $('#pin-caja').hidden = false; $('#pin').focus();
-      $('#login-ayuda').textContent = 'Este correo es de administración: escribe tu PIN. Si no lo tienes, pídeselo a Victor.';
+      $('#login-ayuda').textContent = 'Este usuario es de administración: escribe la contraseña.';
       return;
     }
     if (!r.ok) { caja.textContent = r.error; if (!$('#pin-caja').hidden) { $('#pin').value = ''; $('#pin').focus(); } return; }

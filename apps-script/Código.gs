@@ -249,6 +249,7 @@ function onOpen() {
       .addItem('🧰 Preparar las hojas de trabajo', 'menuPrepararHojasTrabajo'))
     .addSubMenu(ui.createMenu('👥 Usuarios')
       .addItem('➕ Agregar usuario', 'menuAgregarUsuario')
+      .addItem('🔑 Contraseña del admin web', 'menuClaveAdminWeb')
       .addItem('🔑 Reiniciar PIN de alguien', 'menuReiniciarPin')
       .addItem('🚫 Desactivar usuario', 'menuDesactivarUsuario')
       .addItem('💸 Liquidar deuda de usuario', 'menuLiquidarDeuda'))
@@ -486,6 +487,9 @@ function menuInfoSistema() {
 var WEB_SOLO_TIENDA = true;
 
 const ROLES = { ADMIN: 'admin', OPERADOR: 'operador', CLIENTE: 'cliente' };
+// Usuario especial para administrar desde la web. Entra con contraseña (se pone desde el menu del Sheet).
+const ADMIN_WEB = 'admin@tiendita.com';
+function _esAdminWeb(u) { return !!u && String(u.correo).toLowerCase() === ADMIN_WEB; }
 
 // Permisos por rol. '*' = todo. El operador ayuda con inventario y cobros
 // pero no cambia precios, usuarios ni roles.
@@ -559,7 +563,7 @@ function _handleRequest(e, method) {
       return _jsonResponse({ ok: false, error: 'Tu sesión expiró. Entra de nuevo.', code: 'AUTH' });
     }
     // En modo tienda, desde la web todos cuentan como clientes.
-    if (WEB_SOLO_TIENDA) usuario = Object.assign({}, usuario, { rol: ROLES.CLIENTE });
+    if (WEB_SOLO_TIENDA && !_esAdminWeb(usuario)) usuario = Object.assign({}, usuario, { rol: ROLES.CLIENTE });
     const ruta = API_RUTAS[action];
     if (!ruta) {
       return _jsonResponse({ ok: false, error: 'Acción no reconocida: ' + action, code: 'UNKNOWN_ACTION' });
@@ -1591,6 +1595,17 @@ function apiLogin(email, pin) {
   }
   const u = obtenerUsuario(correo);
   // Modo tienda: todos entran solo con su correo, y desde la web cuentan como clientes.
+  if (WEB_SOLO_TIENDA && correo === ADMIN_WEB) {
+    if (!pin) return { ok: false, error: 'Escribe la contraseña.', code: 'NEEDS_PIN' };
+    if (!u || !u.activo || u.rol !== ROLES.ADMIN || !u.pinHash || !_pinCorrecto(u, pin)) {
+      _sumarFallo(correo);
+      _log('LOGIN_FALLO', correo, 'Intento fallido (admin web)');
+      return { ok: false, error: 'Correo o contraseña incorrectos.', code: 'BAD_LOGIN' };
+    }
+    CacheService.getScriptCache().remove('fail:' + correo);
+    _log('LOGIN', correo, 'Inicio de sesion (admin web)');
+    return { ok: true, token: _crearToken(u), usuario: _usuarioPublico(u), permisos: _permisosDe(u.rol), debeCambiarPin: false };
+  }
   if (WEB_SOLO_TIENDA) {
     if (!u || !u.activo) {
       return { ok: false, error: 'Ese correo no está registrado o está desactivado. Pídele a Samantha que te dé de alta.', code: 'BAD_LOGIN' };
@@ -2314,6 +2329,42 @@ function configuracionInicialV2() {
     '<table cellpadding="6" border="1" style="border-collapse:collapse">' + filasHtml + '</table></div>')
     .setWidth(640).setHeight(480);
   ui.showModalDialog(html, 'PINs temporales');
+}
+
+// Pone (o cambia) la contrasena del admin de la web. Crea el usuario si no existe.
+// La contrasena nunca se guarda en claro ni en el codigo: solo su hash en la hoja Usuarios.
+function _ponerClaveAdminWeb(clave) {
+  clave = String(clave || '');
+  if (clave.length < 8) throw new Error('La contraseña debe tener al menos 8 caracteres.');
+  return _conCandado(() => {
+    const s = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.HOJAS.USUARIOS);
+    let u = obtenerUsuario(ADMIN_WEB);
+    if (!u) {
+      s.appendRow([ADMIN_WEB, 'Admin web', 0, 0, '', true, new Date(), ROLES.ADMIN, '', false]);
+      _invalidarCache();
+      u = obtenerUsuario(ADMIN_WEB);
+    }
+    s.getRange(u.fila, 6).setValue(true);
+    s.getRange(u.fila, 8).setValue(ROLES.ADMIN);
+    s.getRange(u.fila, SEG.COL_PIN).setValue(_crearPinGuardado(clave));
+    s.getRange(u.fila, SEG.COL_DEBE_CAMBIAR).setValue(false);
+    CacheService.getScriptCache().remove('fail:' + ADMIN_WEB);
+    _invalidarCache();
+    _log('ADMIN_WEB_CLAVE', CONFIG.ADMIN_EMAIL, 'Contraseña del admin web puesta o cambiada');
+    return true;
+  });
+}
+
+function menuClaveAdminWeb() {
+  const ui = SpreadsheetApp.getUi();
+  const r = ui.prompt('Contraseña del admin web',
+    'Usuario: ' + ADMIN_WEB + '\n\nEscribe la contraseña nueva (mínimo 8 caracteres). Se cierran las sesiones abiertas del admin.',
+    ui.ButtonSet.OK_CANCEL);
+  if (r.getSelectedButton() !== ui.Button.OK) return;
+  try {
+    _ponerClaveAdminWeb(r.getResponseText().trim());
+    ui.alert('✅ Listo. Entra a la web con ' + ADMIN_WEB + ' y esa contraseña.');
+  } catch (e) { ui.alert('❌ ' + e.message); }
 }
 
 // Atajo para dar un PIN nuevo a una persona desde la hoja.

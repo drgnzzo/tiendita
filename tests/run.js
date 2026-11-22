@@ -146,6 +146,18 @@ t('correo no registrado no entra', () => assert.strictEqual(call('login', { emai
 t('usuario desactivado no entra', () => assert.strictEqual(call('login', { email: 'jasso@gmail.com' }).ok, false));
 t('cliente también entra sin PIN', () => { et = call('login', { email: 'eric@gmail.com' }); assert.ok(et.ok); });
 
+t('admin web: sin contraseña pide contraseña', () => assert.strictEqual(call('login', { email: 'admin@tiendita.com' }).code, 'NEEDS_PIN'));
+t('admin web: contraseña corta se rechaza', () => assert.throws(() => ctx._ponerClaveAdminWeb('corta')));
+let aw;
+t('admin web: con contraseña buena entra como admin', () => {
+  ctx._ponerClaveAdminWeb('clave-larga-1');
+  assert.strictEqual(call('login', { email: 'admin@tiendita.com', pin: 'mala-clave' }).ok, false);
+  aw = call('login', { email: 'admin@tiendita.com', pin: 'clave-larga-1' });
+  assert.ok(aw.ok && aw.usuario.rol === 'admin', JSON.stringify(aw)); });
+t('admin web: puede ver inventario y usuarios', () => { assert.ok(call('inv.lista', { token: aw.token }).ok); assert.ok(call('usr.lista', { token: aw.token }).ok); });
+t('admin web: cambiar la contraseña cierra su sesión', () => { ctx._ponerClaveAdminWeb('otra-clave-22'); assert.strictEqual(call('inv.lista', { token: aw.token }).code, 'AUTH'); });
+t('admin web: 5 fallos bloquean', () => { for (let i = 0; i < 5; i++) call('login', { email: 'admin@tiendita.com', pin: 'x' + i });
+  assert.strictEqual(call('login', { email: 'admin@tiendita.com', pin: 'otra-clave-22' }).code, 'LOCKED'); });
 const prods = () => ctx.listarProductos();
 const P0 = prods()[0];
 const stockDe = (sku) => { ctx.obtenerProducto; return run(`(_invalidarCache(), obtenerProducto(${JSON.stringify(sku)}).stock)`); };
