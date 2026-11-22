@@ -275,3 +275,33 @@ input[type="checkbox"] { width: 22px; min-height: 22px; accent-color: var(--rojo
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ===== Colores y letras de la Tiendita de siempre: rosa, degradado rojo y vino ===== */
+:root {
+  --tinta: #1A1A1A;
+  --papel: #FFFAFB;
+  --rosa: #FFD6E0;
+  --rosa-claro: #FFF1F4;
+  --vino: #6B0F2A;
+  --grad-hero: linear-gradient(135deg, #FF6B9D 0%, #E62027 100%);
+  --fuente: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --fuente-display: 'Archivo Black', 'Anton', system-ui, sans-serif;
+  --fuente-script: 'Caveat', cursive;
+}
+body { background: linear-gradient(180deg, #FFFAFB 0%, #FFF1F4 100%) fixed; }
+h1, h2, .marca, .login__nombre { font-family: var(--fuente-display); font-weight: 400; letter-spacing: 0; }
+.login { background: var(--grad-hero); min-height: 100dvh; align-content: center; padding-top: 28px; }
+.toldo { display: none; }
+.login__nombre { color: #fff; font-variation-settings: normal; text-shadow: 0 2px 0 rgba(107, 15, 42, .35); }
+.login__lema { font-family: var(--fuente-script); font-weight: 700; font-size: 1.7rem; color: #fff; }
+.login__marca img { border: 4px solid #fff; box-shadow: 0 8px 24px rgba(107, 15, 42, .35); }
+.login__caja { border: 0; box-shadow: 0 12px 32px rgba(107, 15, 42, .35); }
+.cabecera { background: var(--grad-hero); border-bottom: 3px solid var(--tinta); color: #fff; }
+.cabecera .marca, .cabecera .yo { color: #fff; }
+.btn--rojo { background: var(--grad-hero); }
+.btn--rojo:hover:not(:disabled) { background: var(--grad-hero); filter: brightness(.93); }
+.nav a[aria-current="page"] { color: var(--rojo); }
+@media (min-width: 780px) {
+  .cabecera .nav a { color: #fff; }
+  .cabecera .nav a[aria-current="page"] { background: #fff; color: var(--rojo-d); }
+}

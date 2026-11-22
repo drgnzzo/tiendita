@@ -1,6 +1,6 @@
 // Service worker: deja la app abrir sin internet (solo la pantalla; los datos siempre vienen del servidor).
 // Cambia VERSION cada vez que subas cambios importantes.
-const VERSION = 'tiendita-v2-1';
+const VERSION = 'tiendita-v2-2';
 const BASE = ['./', './index.html', './manifest.json', './css/app.css?v=1',
   './js/main.js?v=1', './js/api.js', './js/config.js', './js/state.js', './js/ui.js',
   './js/views-tienda.js', './js/views-admin.js', './img/logo-192.png', './img/logo-512.png'];
