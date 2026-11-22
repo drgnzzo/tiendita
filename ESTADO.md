@@ -60,3 +60,7 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - Panel = mismo estilo que la tienda (header degradado, chips, tarjetas con borde negro, botones en pastilla, Archivo Black/Caveat/Inter). Menú "Panel" ahora aparece también en catálogo y perfil para admin (app.js). app.css v11, main.js v6, app.js v13, sw v21.
 - Panel: CSS reescrito desde cero (una sola hoja, contenedor 1200px centrado, retícula de 8px, filas/tarjetas/botones/ventanas uniformes, celular con menú abajo). Resumen limita listas a 6 con "Ver todo". Cobros: botón "+ Anotar" por cliente (abrirVenta con cliente preseleccionado y total en vivo). app.css v12, views-admin v6.
 - Orden único: productos por sección (Sopas→Snacks→Dulces→Helados→Bebidas→otras A-Z) y de la A a la Z; personas A-Z; deudas de mayor a menor; movimientos/pagos recientes primero. Catálogo sin botones de filtro (secciones con título y conteo). Panel en modo más oscuro (malva/vino); tarjetas hermanas a la misma altura; efectos sutiles (aurora, destellos, brillo en cabecera/botones, hover con luz). styles.css v15, app.css v13, views-admin v7, sw v22.
+
+## Paleta "Dulcería de noche" (A + C)
+- Tienda: crema + rosa mexicano + ciruela (styles.css v16). Panel admin: oscuro ciruela con rosa/menta/mango (app.css v14).
+- Contraste revisado (texto >= 4.5, bordes >= 3.3). Correos largos en móvil ya no se encimen.
