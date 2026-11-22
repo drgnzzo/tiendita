@@ -174,6 +174,17 @@ t('admin web: producto nuevo sin piezas queda en 0 y piezas absurdas se rechazan
   const r = call('prod.guardar', { token: w.token, nombre: 'Chicles Trident', precio: 10, activo: true });
   assert.ok(r.ok && /sin piezas/i.test(r.mensaje), JSON.stringify(r));
   assert.strictEqual(call('prod.guardar', { token: w.token, nombre: 'Otro', precio: 10, stockInicial: 99999 }).ok, false); });
+t('reporte del mes: compras al proveedor suman las entradas y las piezas llegan a los productos', () => {
+  const w = call('login', { email: 'admin@tiendita.com', pin: 'clave-larga-1' });
+  const pr = call('inv.lista', { token: w.token }).productos[0];
+  const antes = pr.stock;
+  const e = call('inv.entrada', { token: w.token, lineas: [{ sku: pr.sku, piezas: 10, costoUnit: 5 }], proveedor: 'OXXO', reqId: 'rep-1' });
+  assert.ok(e.ok, JSON.stringify(e));
+  assert.strictEqual(call('inv.lista', { token: w.token }).productos.find(x => x.sku === pr.sku).stock, antes + 10);
+  const r = call('reporte.mes', { token: w.token });
+  assert.ok(r.compras.gastado >= 50 && r.compras.piezas >= 10, JSON.stringify(r.compras).slice(0, 300));
+  assert.ok(r.compras.porProveedor.some(x => x.proveedor === 'OXXO' && x.total >= 50));
+  assert.ok(r.compras.detalle.some(d => d.proveedor === 'OXXO' && d.lineas.some(l => l.piezas === 10))); });
 t('admin web: anota una venta a un cliente y sube su deuda', () => {
   const w = call('login', { email: 'admin@tiendita.com', pin: 'clave-larga-1' });
   const antes = call('perfil', { email: 'eric@gmail.com' }).usuario.deudaAcumulada;

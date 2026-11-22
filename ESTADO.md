@@ -39,3 +39,8 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - El catálogo de clientes no muestra lo agotado ni el costo.
 - _config.bat: TND_AUTO_DEPLOY=1 (el BAT actualiza la implementación; la cuenta de clasp es a.r.c.caos y ya está autorizada). Si la URL da 403, el BAT lo avisa.
 - Falta: deshacer una venta por error, exportar el reporte, foto de producto desde el panel.
+
+## Existencia y compras (panel admin)
+- Productos e Inventario: botones "+ Sumar" (registrar compra) y "Quitar / ajustar" (quitar, agregar o dejar en número exacto; funciona con stock 0).
+- Reportes: sección "Compras al proveedor" (gastado, piezas, por proveedor, cada compra, vendido menos comprado). Registrar compra suma las piezas al producto.
+- Pendiente: correr TIENDITA.bat para publicar; probar en Chrome con datos reales.

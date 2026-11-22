@@ -141,8 +141,8 @@ async function vInventario(c) {
           </div>
           <div class="fila-admin__acc">
             <span class="stock-grande ${p.stock === 0 ? 'stock-grande--cero' : bajo ? 'stock-grande--bajo' : ''}" aria-label="Stock ${p.stock}">${p.stock}</span>
-            <button class="btn btn--suave btn--chico" data-a="entrada" data-sku="${p.sku}">Entrada</button>
-            <button class="btn btn--suave btn--chico" data-a="ajuste" data-sku="${p.sku}">Ajustar</button>
+            <button class="btn btn--suave btn--chico" data-a="entrada" data-sku="${p.sku}">+ Sumar</button>
+            <button class="btn btn--suave btn--chico" data-a="ajuste" data-sku="${p.sku}">Quitar / ajustar</button>
             <button class="btn btn--suave btn--chico" data-a="historial" data-sku="${p.sku}">Historial</button>
           </div>
         </div>`;
@@ -293,35 +293,55 @@ const MOTIVOS = ['Se caducó', 'Se cayó o se dañó', 'Lo regalé', 'Lo consum�
 function abrirAjuste(p) {
   const reqId = newReqId();
   const h = abrirHoja({
-    titulo: 'Ajustar · ' + p.nombre, ancho: 'chica',
+    titulo: 'Existencia · ' + p.nombre, ancho: 'media',
     cuerpo: html`
       <form id="form-ajuste" novalidate>
-        <p class="texto">Hay <strong class="num">${p.stock}</strong> en el sistema.</p>
+        <p class="texto">Ahora hay <strong class="num">${p.stock}</strong> en el sistema.</p>
         <div class="error-form" id="ajuste-error" role="alert"></div>
+        <div class="campo"><label for="aj-modo">¿Qué quieres hacer?</label>
+          <select id="aj-modo">
+            <option value="quitar">Quitar piezas (se caducó, se cayó, lo regalé…)</option>
+            <option value="agregar">Agregar piezas (sin registrar una compra)</option>
+            <option value="exacto">Dejar la existencia en un número exacto (conteo)</option>
+          </select></div>
         <div class="fila-campos">
-          <div class="campo"><label for="aj-signo">¿Qué pasó?</label>
-            <select id="aj-signo"><option value="-1">Salieron piezas</option><option value="1">Sobraron piezas</option></select></div>
-          <div class="campo"><label for="aj-n">¿Cuántas?</label><input id="aj-n" type="number" inputmode="numeric" min="1" step="1"></div>
+          <div class="campo"><label for="aj-n" id="aj-n-et">¿Cuántas piezas quitas?</label><input id="aj-n" type="number" inputmode="numeric" min="0" step="1"></div>
+          <div class="campo" id="aj-motivo-caja"><label for="aj-motivo">Motivo</label>
+            <select id="aj-motivo">${MOTIVOS.map((m) => html`<option>${m}</option>`)}<option value="otro">Otro…</option></select></div>
         </div>
-        <div class="campo"><label for="aj-motivo">Motivo</label>
-          <select id="aj-motivo">${MOTIVOS.map((m) => html`<option>${m}</option>`)}<option value="otro">Otro…</option></select></div>
         <div class="campo oculto" id="aj-otro-caja"><label for="aj-otro">Escribe el motivo</label><input id="aj-otro" maxlength="100"></div>
-        <div class="acciones"><button class="btn btn--rojo" type="submit">Guardar ajuste</button></div>
+        <p class="suave" id="aj-resultado" style="margin:0 0 12px"></p>
+        <div class="acciones"><button class="btn btn--suave" type="button" data-cerrar>Cancelar</button><button class="btn btn--rojo" type="submit">Guardar</button></div>
       </form>`
   });
-  $('#aj-motivo', h.el).addEventListener('change', (e) => $('#aj-otro-caja', h.el).classList.toggle('oculto', e.target.value !== 'otro'));
+  const modo = () => $('#aj-modo', h.el).value;
+  const refrescar = () => {
+    const m = modo(), n = Number($('#aj-n', h.el).value) || 0;
+    $('#aj-n-et', h.el).textContent = m === 'quitar' ? '¿Cuántas piezas quitas?' : m === 'agregar' ? '¿Cuántas piezas agregas?' : '¿Cuántas hay en realidad?';
+    $('#aj-motivo-caja', h.el).classList.toggle('oculto', m === 'exacto');
+    $('#aj-otro-caja', h.el).classList.toggle('oculto', m === 'exacto' || $('#aj-motivo', h.el).value !== 'otro');
+    const despues = m === 'quitar' ? p.stock - n : m === 'agregar' ? p.stock + n : n;
+    $('#aj-resultado', h.el).textContent = $('#aj-n', h.el).value === '' ? '' : 'Quedarían ' + despues + ' en existencia.';
+  };
+  h.el.addEventListener('input', refrescar); h.el.addEventListener('change', refrescar); refrescar();
   $('#form-ajuste', h.el).addEventListener('submit', async (e) => {
     e.preventDefault();
-    const caja = $('#ajuste-error', h.el);
-    const n = Number($('#aj-n', h.el).value);
-    if (!(n >= 1) || Math.floor(n) !== n) { caja.textContent = 'Pon cuántas piezas son.'; return; }
-    const sel = $('#aj-motivo', h.el).value;
-    const motivo = sel === 'otro' ? $('#aj-otro', h.el).value.trim() : sel;
-    if (motivo.length < 3) { caja.textContent = 'Escribe el motivo.'; return; }
+    const caja = $('#ajuste-error', h.el); caja.textContent = '';
+    const m = modo(), n = Number($('#aj-n', h.el).value);
+    if ($('#aj-n', h.el).value === '' || !(n >= 0) || Math.floor(n) !== n || (m !== 'exacto' && n < 1)) { caja.textContent = 'Pon cuántas piezas son.'; return; }
+    if (m === 'quitar' && n > p.stock) { caja.textContent = 'Solo hay ' + p.stock + ' en el sistema; no puedes quitar más.'; return; }
     const btn = e.submitter || $('button[type=submit]', h.el);
-    const res = await ocupado(btn, 'Guardando…', () => api('inv.ajuste', { sku: p.sku, delta: Number($('#aj-signo', h.el).value) * n, motivo, reqId }));
+    let res;
+    if (m === 'exacto') {
+      res = await ocupado(btn, 'Guardando…', () => api('inv.conteo', { conteos: [{ sku: p.sku, real: n }], reqId }));
+    } else {
+      const sel = $('#aj-motivo', h.el).value;
+      const motivo = sel === 'otro' ? $('#aj-otro', h.el).value.trim() : (m === 'agregar' && sel === MOTIVOS[0] ? 'Corrección de conteo' : sel);
+      if (motivo.length < 3) { caja.textContent = 'Escribe el motivo.'; return; }
+      res = await ocupado(btn, 'Guardando…', () => api('inv.ajuste', { sku: p.sku, delta: (m === 'quitar' ? -1 : 1) * n, motivo, reqId }));
+    }
     if (!res.ok) { caja.textContent = res.error; return; }
-    h.cerrar(); toast(res.mensaje); recargar();
+    h.cerrar(); toast(res.mensaje || 'Existencia guardada.'); recargar();
   });
 }
 
@@ -462,6 +482,8 @@ async function vProductos(c) {
         <div><div class="fila-admin__nombre">${p.nombre} ${p.activo ? '' : html`<span class="sello">Oculto en la tienda</span>`}</div>
           <div class="fila-admin__meta num">${p.categoria} · ${p.stock} en existencia · costo ${money(p.costo)} · ${p.sku}</div></div>
         <div class="fila-admin__acc"><strong class="num">${money(p.precio)}</strong>
+          <button class="btn btn--suave btn--chico" data-a="entrada" data-sku="${p.sku}">+ Sumar</button>
+          <button class="btn btn--suave btn--chico" data-a="ajuste" data-sku="${p.sku}">Quitar / ajustar</button>
           <button class="btn btn--suave btn--chico" data-a="editar" data-sku="${p.sku}">Editar</button></div>
       </div>`)}`);
   };
@@ -469,6 +491,8 @@ async function vProductos(c) {
   $('#prod-buscar', c).addEventListener('input', (e) => { prodFiltro = e.target.value; pintar(); });
   on(c, 'click', '[data-a="nuevo"]', () => formProducto(null, cats));
   on(c, 'click', '[data-a="editar"]', (b) => formProducto(prods.find((p) => p.sku === b.dataset.sku), cats));
+  on(c, 'click', '[data-a="entrada"]', (b) => abrirEntrada({ sku: b.dataset.sku }));
+  on(c, 'click', '[data-a="ajuste"]', (b) => abrirAjuste(prods.find((p) => p.sku === b.dataset.sku)));
 }
 
 // Abre el formulario de producto nuevo con las categorías que ya existen.
@@ -497,7 +521,7 @@ function formProducto(p, cats, alGuardar) {
           ${campo({ id: 'pr-min', etiqueta: 'Avisar cuando queden', tipo: 'number', valor: p.stockMinimo, attrs: 'inputmode="numeric" min="0" step="1"' })}
         </div>
         ${nuevo ? campo({ id: 'pr-stock', etiqueta: 'Piezas que tienes ahora', tipo: 'number', valor: '', ayuda: 'Quedan registradas como una entrada. Si todavía no llega, déjalo vacío y registra una compra después.', attrs: 'inputmode="numeric" min="0" step="1" placeholder="0"' })
-                : html`<p class="suave" style="margin:0 0 12px">Existencia actual: <strong>${p.stock}</strong>. Para cambiarla usa <em>Registrar compra</em> o <em>Ajustar</em> en Inventario.</p>`}
+                : html`<p class="suave" style="margin:0 0 12px">Existencia actual: <strong>${p.stock}</strong>. Para subirla o bajarla usa <em>+ Sumar</em> o <em>Quitar / ajustar</em> en la lista.</p>`}
         <div class="fila-campos">
           ${campo({ id: 'pr-codigo', etiqueta: 'Código de barras (opcional)', valor: p.codigoBarras, attrs: 'inputmode="numeric" maxlength="40"' })}
           ${campo({ id: 'pr-img', etiqueta: 'Enlace de la foto (opcional)', tipo: 'url', valor: p.imagenUrl, attrs: 'maxlength="300" placeholder="https://…"' })}
@@ -620,7 +644,31 @@ async function vReportes(c) {
         ${r.topClientes.length === 0 ? vacio('Sin ventas en este mes') : r.topClientes.map((x) => html`
           <div class="renglon"><div>${x.nombre}<br><small>${x.piezas} piezas</small></div><div class="num"><strong>${money(x.monto)}</strong></div></div>`)}
       </section>
-    </div>`);
+    </div>
+    <section style="margin-top:26px">
+      <div class="acciones-barra" style="justify-content:space-between">
+        <h2 style="margin:0">Compras al proveedor</h2>
+        <button class="btn btn--rojo btn--chico" id="rep-compra">Registrar compra</button>
+      </div>
+      <div class="caja" style="margin-top:10px">
+        <div><strong class="num">${money(r.compras.gastado)}</strong><span>Gastado en compras</span></div>
+        <div><strong class="num">${r.compras.piezas}</strong><span>Piezas que entraron</span></div>
+        <div><strong class="num">${money(r.ventas - r.compras.gastado)}</strong><span>Vendido menos comprado</span></div>
+      </div>
+      ${r.compras.detalle.length === 0 ? vacio('Sin compras en este mes. Usa Registrar compra para sumar piezas a tus productos.') : html`
+        <div class="dos-col" style="margin-top:14px">
+          <section>
+            <h2>Por proveedor</h2>
+            ${r.compras.porProveedor.map((x) => html`<div class="renglon"><div>${x.proveedor}</div><div class="num"><strong>${money(x.total)}</strong></div></div>`)}
+          </section>
+          <section>
+            <h2>Cada compra</h2>
+            ${r.compras.detalle.map((g) => html`
+              <div class="renglon"><div>${g.fecha} · ${g.proveedor}<br><small>${g.lineas.map((l) => l.piezas + ' × ' + l.producto).join(', ')}</small></div><div class="num"><strong>${money(g.total)}</strong></div></div>`)}
+          </section>
+        </div>`}
+    </section>`);
+  $('#rep-compra', c).addEventListener('click', () => abrirEntrada({}));
   $('#rep-mes', c).addEventListener('change', (e) => { repMes = e.target.value; vReportes(c); });
 }
 

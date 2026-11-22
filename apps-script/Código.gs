@@ -2193,6 +2193,31 @@ function apiReporteMes(p) {
       if (pg[i][1] instanceof Date && _fechaIsoMx(pg[i][1]).slice(0, 7) === mes) cobrado += Number(pg[i][3]) || 0;
     }
   } catch (e) {}
+  // Compras al proveedor del mes (entradas del libro de movimientos)
+  const compras = { gastado: 0, piezas: 0, porProveedor: [], detalle: [] };
+  try {
+    const mv = _memoSS(CONFIG.HOJAS.MOVIMIENTOS);
+    const grupos = {}, prov = {};
+    for (let i = 1; i < mv.length; i++) {
+      if (String(mv[i][4]) !== 'ENTRADA' || !(mv[i][1] instanceof Date)) continue;
+      const iso = _fechaIsoMx(mv[i][1]);
+      meses[iso.slice(0, 7)] = true;
+      if (iso.slice(0, 7) !== mes) continue;
+      const cant = Number(mv[i][5]) || 0, cu = Number(mv[i][6]) || 0;
+      const pv = String(mv[i][7] || '').trim() || 'Sin proveedor';
+      const total = cant * cu;
+      compras.gastado += total; compras.piezas += cant;
+      prov[pv] = (prov[pv] || 0) + total;
+      const k = iso + '|' + pv;
+      (grupos[k] = grupos[k] || { fecha: iso.slice(8, 10) + '/' + iso.slice(5, 7), iso: iso, proveedor: pv, total: 0, lineas: [] });
+      grupos[k].total += total;
+      grupos[k].lineas.push({ producto: String(mv[i][3]), piezas: cant, costoUnit: _round2(cu) });
+    }
+    compras.gastado = _round2(compras.gastado);
+    compras.porProveedor = Object.keys(prov).map(k => ({ proveedor: k, total: _round2(prov[k]) })).sort((a, b) => b.total - a.total);
+    compras.detalle = Object.keys(grupos).map(k => grupos[k]).sort((a, b) => (a.iso < b.iso ? 1 : -1)).slice(0, 40)
+      .map(g => ({ fecha: g.fecha, proveedor: g.proveedor, total: _round2(g.total), lineas: g.lineas }));
+  } catch (e) {}
   meses[hoyIso.slice(0, 7)] = true;
   const top = (o) => Object.keys(o).map(k => o[k]).sort((a, b) => b.monto - a.monto).slice(0, 8)
     .map(x => Object.assign({}, x, { monto: _round2(x.monto) }));
@@ -2202,7 +2227,7 @@ function apiReporteMes(p) {
     ganancia: _round2(monto - costo), margen: monto > 0 ? Math.round(((monto - costo) / monto) * 100) : 0,
     ventasMesAnterior: _round2(montoAnterior), cobrado: _round2(cobrado),
     porCobrarHoy: _round2(listarUsuarios().reduce((t, x) => t + (x.deuda || 0), 0)),
-    porDia: porDia.map(_round2), topProductos: top(prod), topClientes: top(cli),
+    porDia: porDia.map(_round2), topProductos: top(prod), topClientes: top(cli), compras: compras,
     nota: 'La ganancia usa el costo actual de cada producto, por eso es estimada.'
   };
 }

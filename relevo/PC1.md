@@ -13,3 +13,6 @@
 
 ## Como continuar
 Leer ESTADO.md. No editar relevo/PC2.md.
+
+- Hecho: existencia (+ Sumar / Quitar / ajustar) en Productos e Inventario; reporte de compras en Reportes. 89 pruebas ok.
+- Pendiente: la usuaria corre TIENDITA.bat; revisar con Claude en Chrome (su preferido para pruebas en vivo).
