@@ -638,3 +638,95 @@ input::placeholder { color: #7D5B65; }
   .cabecera .nav a { color: var(--ink-2); }
   .cabecera .nav a[aria-current="page"] { background: none; color: var(--primary); }
 }
+
+/* =====================================================================
+   MISMO ESTILO QUE LA TIENDA (versión final: sin disonancia)
+   Header degradado rosa→rojo, fondos suaves, bordes negros, botones en pastilla,
+   Archivo Black / Caveat / Inter. Todo lo anterior queda reemplazado por esto.
+   ===================================================================== */
+:root {
+  --t-hero: linear-gradient(135deg, #FF6B9D 0%, #E62027 100%);
+  --t-rosa: linear-gradient(135deg, #FFB3C1 0%, #FF6B9D 100%);
+  --t-fondo: linear-gradient(180deg, #F7E4E9 0%, #F1D3DC 100%);
+  --t-card: linear-gradient(180deg, #FDF3F5 0%, #F9E8ED 100%);
+  --t-negro: #1A1A1A; --t-vino: #6B0F2A; --t-rojo: #E62027; --t-rosa-t: #4B1528;
+  --fuente: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --display: 'Archivo Black', 'Anton', system-ui, sans-serif;
+  --script: 'Caveat', cursive;
+}
+html { background: #F1D3DC; }
+body { background: var(--t-fondo); background-attachment: fixed; color: var(--t-negro); font-family: var(--fuente); }
+h1, h2, h3 { letter-spacing: 0; }
+
+/* Cabecera igual a la de la tienda */
+.cabecera { background: var(--t-hero); border-bottom: 3px solid var(--t-negro); box-shadow: 0 8px 24px rgba(230,32,39,.20); position: sticky; top: 0; z-index: 20; }
+.cabecera__in { padding: 12px clamp(16px, 3vw, 56px); gap: 12px; }
+.marca { color: #fff; gap: 8px; letter-spacing: 0; }
+.marca img { width: 40px; height: 40px; }
+.marca__n { font-family: var(--display); font-size: 22px; letter-spacing: 2px; color: #fff; font-weight: 400; }
+.marca__c { color: #FFD6E0; font-size: 22px; line-height: 1; }
+.cabecera .nav { margin-left: auto; margin-right: 12px; gap: 4px; display: flex; position: static; background: none; border: 0; box-shadow: none; padding: 0; height: auto; width: auto; }
+.cabecera .nav a { display: inline-flex; flex-direction: row; padding: 8px 14px; border-radius: 999px; border: 2px solid transparent; font-size: 13px; font-weight: 600; color: #fff; background: transparent; min-height: 0; gap: 0; }
+.cabecera .nav a:hover { background: rgba(255,255,255,.15); }
+.cabecera .nav a[aria-current="page"] { background: #FDF3F5; color: var(--t-vino); border-color: #FDF3F5; }
+.cabecera .nav .ico { display: none; }
+.cabecera__der { margin-left: 0; gap: 8px; }
+.cabecera .yo { background: #FDF3F5; color: var(--t-vino); border: 2px solid #FDF3F5; border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: 500; }
+.salir { background: var(--t-negro); color: #fff; border: 2px solid var(--t-negro); border-radius: 999px; padding: 5px 14px; font: 600 12px var(--fuente); cursor: pointer; min-height: 32px; }
+
+/* Menú de abajo en celular: igual al de la tienda */
+@media (max-width: 639px) {
+  .cabecera .nav { position: fixed; left: 0; right: 0; bottom: 0; margin: 0; background: #FDF3F5; border-top: 3px solid var(--t-negro); padding: 8px 8px calc(env(safe-area-inset-bottom, 0px) + 8px); display: flex; justify-content: space-around; gap: 8px; z-index: 30; }
+  .cabecera .nav a { flex: 1; flex-direction: column; text-align: center; color: var(--t-negro); font-size: 12px; font-weight: 500; padding: 8px; border-radius: 14px; border: 0; }
+  .cabecera .nav a[aria-current="page"] { background: var(--t-hero); color: #fff; }
+  .cabecera .nav .ico { display: block; font-size: 22px; margin-bottom: 2px; }
+  .cabecera .yo { display: none; }
+}
+
+/* Título como el del catálogo */
+.titulo { display: flex; align-items: baseline; gap: 8px; margin: 8px 0 16px; }
+.titulo h1 { font-family: var(--display); font-size: 26px; letter-spacing: 1px; color: var(--t-negro); font-weight: 400; }
+.titulo span { font-family: var(--script); font-size: 24px; color: #FF6B9D; }
+
+/* Pestañas = chips del catálogo */
+.subnav a { background: #FDF3F5; color: var(--t-negro); border: 2px solid var(--t-negro); border-radius: 999px; padding: 7px 16px; font-size: 13px; font-weight: 600; min-height: 0; }
+.subnav a:hover { background: #F4DCE3; }
+.subnav a[aria-current="page"] { background: var(--t-negro); color: #fff; }
+.subnav .subnav__aparte, .subnav .subnav__aparte[aria-current="page"] { background: none !important; border: 0; color: var(--t-vino) !important; text-decoration: underline; }
+
+/* Tarjetas: borde negro + degradado, como las de producto */
+.caja > div, .caja > div:nth-child(n), .fila-admin, .renglon, .hoja, .barra-productos { background: var(--t-card); border: 2px solid var(--t-negro); border-radius: 14px; color: var(--t-negro); }
+.caja > div:nth-child(3) { background: var(--t-hero); color: #fff; border-color: var(--t-negro); }
+.caja strong { font-family: var(--display); font-weight: 400; color: var(--t-rojo); }
+.caja > div:nth-child(3) strong, .caja > div:nth-child(3) span { color: #fff; }
+section > h2, .dos-col h2 { font-family: var(--display); font-weight: 400; font-size: 18px; letter-spacing: .5px; color: var(--t-negro); border-left: 0; padding: 0; background: none; }
+.fila-admin__nombre, .renglon strong { color: var(--t-negro); }
+
+/* Existencia */
+.stock-grande { background: var(--t-rosa); color: var(--t-rosa-t); border: 2px solid var(--t-negro); font-family: var(--display); font-weight: 400; }
+.stock-grande--bajo { background: #FCD34D; color: #92400E; }
+.stock-grande--cero { background: var(--t-hero); color: #fff; }
+.sello { background: #FFD6E0; color: var(--t-vino); border: 2px solid var(--t-negro); }
+.sello--rojo { background: var(--t-rojo); color: #fff; }
+
+/* Botones: 1) degradado rojo  2) degradado rosa  3) enlace */
+.btn { border: 2px solid var(--t-negro); border-radius: 999px; font-weight: 600; box-shadow: none; }
+.btn--rojo { background: var(--t-hero); color: #fff; }
+.btn--rojo:hover:not(:disabled) { background: var(--t-hero); box-shadow: 0 8px 24px rgba(230,32,39,.2); transform: translateY(-2px); }
+.btn--suave { background: var(--t-rosa); color: var(--t-rosa-t); border: 2px solid var(--t-negro); }
+.btn--suave:hover { background: var(--t-rosa); box-shadow: 0 6px 18px rgba(255,107,157,.25); transform: translateY(-2px); }
+.btn--tinta, .btn--peligro { background: var(--t-negro); color: #fff; }
+.chip { background: #FDF3F5; color: var(--t-negro); border: 2px solid var(--t-negro); }
+.chip[aria-pressed="true"] { background: var(--t-negro); color: #fff; }
+.link { color: var(--t-vino); }
+
+/* Campos y ventanas */
+input, select, textarea { background: #FDF3F5; border: 2px solid var(--t-negro); border-radius: 14px; color: var(--t-negro); font-family: var(--fuente); }
+input:focus, select:focus, textarea:focus { background: #F4DCE3; border-color: var(--t-negro); box-shadow: 0 0 0 4px #FFD6E0; }
+.barra-productos input { border: 2px solid var(--t-negro); border-radius: 999px; }
+.hoja__barra { background: var(--t-hero); border-bottom: 3px solid var(--t-negro); }
+.hoja__barra h2 { color: #fff; font-family: var(--display); font-weight: 400; }
+.barras i { background: var(--t-hero); }
+.toast { background: var(--t-negro); border: 2px solid var(--t-negro); }
+.error-form { background: #FEF2F2; color: #7A0F17; border: 2px solid var(--t-rojo); }
+.aviso { background: #FCD34D; color: #92400E; border: 2px solid var(--t-negro); }

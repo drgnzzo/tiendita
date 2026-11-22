@@ -167,4 +167,17 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => tiendita.initNetwork());
+document.addEventListener('DOMContentLoaded', () => {
+  tiendita.initNetwork();
+  // Admin: muestra "Panel" en el menú de la tienda (arriba y abajo en celular).
+  try {
+    const u = tiendita.getSession();
+    if (!u || u.rol !== 'admin') return;
+    const viejo = document.getElementById('adminLink');
+    if (viejo) viejo.remove();
+    const nav = document.querySelector('.app-header__nav');
+    if (nav) nav.insertAdjacentHTML('beforeend', '<a href="./admin/" class="app-header__tab">Panel</a>');
+    const bn = document.querySelector('.app-bottomnav');
+    if (bn) bn.insertAdjacentHTML('beforeend', '<a href="./admin/" class="app-bottomnav__item"><span class="app-bottomnav__ico">📊</span>Panel</a>');
+  } catch (_) {}
+});

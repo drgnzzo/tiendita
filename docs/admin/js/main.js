@@ -71,18 +71,18 @@ function rutaActual() {
 function armarMarco() {
   const enlaces = html`
     <nav class="nav" aria-label="Principal">
-      <a href="../catalogo.html">${raw(ICONOS.tienda)}<span>Catálogo</span></a>
-      <a href="../perfil.html">${raw(ICONOS.cuenta)}<span>Mi cuenta</span></a>
-      <a href="#/admin/resumen" aria-current="page">${raw(ICONOS.panel)}<span>Panel</span></a>
+      <a href="../catalogo.html"><span class="ico">🛒</span><span>Catálogo</span></a>
+      <a href="../perfil.html"><span class="ico">👤</span><span>Mi cuenta</span></a>
+      <a href="#/admin/resumen" aria-current="page"><span class="ico">📊</span><span>Panel</span></a>
     </nav>`;
   mount(app, html`
     <header class="cabecera">
       <div class="cabecera__in">
-        <a class="marca" href="#/admin/resumen"><img src="./img/logo-192.png" alt="" width="40" height="40"><span>Tiendita</span></a>
+        <a class="marca" href="../catalogo.html"><img src="./img/logo-192.png" alt="" width="40" height="40"><span class="marca__n">TIENDITA</span><span class="marca__c">♥</span></a>
         ${enlaces}
         <div class="cabecera__der">
           <span class="yo">${S.usuario.nombre}</span>
-          <button class="btn btn--suave btn--chico" data-act="salir">Salir</button>
+          <button class="salir" data-act="salir">Salir</button>
         </div>
       </div>
     </header>

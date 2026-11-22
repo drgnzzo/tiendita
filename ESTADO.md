@@ -57,3 +57,4 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - Sin blanco puro: fondo #F4E1E6, tarjetas #FBEFF2; tienda original con tokens suaves (--blanco #FDF3F5). Un solo rojo (#C8151D) para acción principal, vino #5E0F24 para estructura.
 - Botones en 3 niveles: rojo sólido / fondo rosa + vino / enlace. Bordes de campo 4.2:1. Cachés: app.css v10, styles.css v13, sw v19.
 - Catálogo: tarjetas con más aire (112px icono, separador, nombre en 2 líneas fijo); icono por nombre del producto (coca→🥤, mazapán→🥜, sopa→🍜…) y foto si la columna Imagen_URL trae enlace https. styles.css v14, sw v20.
+- Panel = mismo estilo que la tienda (header degradado, chips, tarjetas con borde negro, botones en pastilla, Archivo Black/Caveat/Inter). Menú "Panel" ahora aparece también en catálogo y perfil para admin (app.js). app.css v11, main.js v6, app.js v13, sw v21.
