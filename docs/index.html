@@ -2,6 +2,7 @@
 <html lang="es-MX">
 <head>
   <meta charset="UTF-8">
+  <meta name="color-scheme" content="only light">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#E62027">
   <meta name="description" content="Tiendita - acceso para empleados">
@@ -9,7 +10,7 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" type="image/png" href="./logo-192.png">
   <link rel="apple-touch-icon" href="./logo-180.png">
-  <link rel="stylesheet" href="./styles.css?v=11">
+  <link rel="stylesheet" href="./styles.css?v=12">
 </head>
 <body>
 
@@ -55,8 +56,8 @@
 
   </div>
 
-  <script src="./api.js?v=11"></script>
-  <script src="./app.js?v=11"></script>
+  <script src="./api.js?v=12"></script>
+  <script src="./app.js?v=12"></script>
   <script>
     tiendita.redirectIfLogged();
 
@@ -103,6 +104,7 @@
         try {
           localStorage.setItem('tiendita.sesion.v2', JSON.stringify({ token: res.token, usuario: res.usuario, permisos: res.permisos || [] }));
         } catch (_) {}
+        try { tiendita.setSession(res.usuario); } catch (_) {}
         window.location.href = './admin/';
       } else if (res.ok) {
         tiendita.setSession(res.usuario);

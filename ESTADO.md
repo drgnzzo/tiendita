@@ -44,3 +44,8 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - Productos e Inventario: botones "+ Sumar" (registrar compra) y "Quitar / ajustar" (quitar, agregar o dejar en número exacto; funciona con stock 0).
 - Reportes: sección "Compras al proveedor" (gastado, piezas, por proveedor, cada compra, vendido menos comprado). Registrar compra suma las piezas al producto.
 - Pendiente: correr TIENDITA.bat para publicar; probar en Chrome con datos reales.
+
+## Regreso a la Tiendita de siempre (22/11)
+- Todas las páginas fuerzan tema claro (`color-scheme: only light`): el navegador de Samantha las oscurecía y se veían rojo oscuro.
+- Panel (/admin/): ya no tiene Tienda ni Cuenta propias; enlaza a catalogo.html y perfil.html originales. Un solo login (index.html). Pestañas: Resumen, Productos (inventario + editar), Cobros, Reportes, Usuarios.
+- Formularios abren al instante (lista de productos en memoria). Panel a todo el ancho.

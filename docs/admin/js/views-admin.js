@@ -4,15 +4,23 @@ import { html, raw, mount, on, $, $$, reiniciarRaiz, toast, ocupado, abrirHoja, 
 
 const SUBS = [
   { id: 'resumen', nombre: 'Resumen', permiso: 'admin.resumen' },
-  { id: 'inventario', nombre: 'Inventario', permiso: 'inv.lista' },
+  { id: 'inventario', nombre: 'Productos', permiso: 'inv.lista' },
   { id: 'cobros', nombre: 'Cobros', permiso: 'cobros.lista' },
   { id: 'reportes', nombre: 'Reportes', permiso: 'reporte.mes' },
-  { id: 'productos', nombre: 'Productos', permiso: 'prod.guardar' },
-  { id: 'usuarios', nombre: 'Usuarios', permiso: 'usr.lista' }
+    { id: 'usuarios', nombre: 'Usuarios', permiso: 'usr.lista' }
 ];
 const porNombre = (a, b) => a.nombre.localeCompare(b.nombre, 'es');
 const cargando = (t = 'Cargando…') => html`<div class="cargando">${t}</div>`;
 let recargar = () => {};
+// Lista de productos en memoria: los formularios se abren al instante.
+let cacheProds = null;
+async function listaProds() {
+  if (cacheProds) return { ok: true, productos: cacheProds };
+  const r = await api('inv.lista');
+  if (r.ok) cacheProds = r.productos;
+  return r;
+}
+function precargar() { listaProds().catch(() => {}); }
 
 export async function renderAdmin(root, sub) {
   root = reiniciarRaiz(root);
@@ -25,8 +33,9 @@ export async function renderAdmin(root, sub) {
     </nav>
     <div id="admin-cuerpo"></div>`);
   const cuerpo = $('#admin-cuerpo', root);
-  const vistas = { resumen: vResumen, inventario: vInventario, cobros: vCobros, reportes: vReportes, productos: vProductos, usuarios: vUsuarios };
-  recargar = () => renderAdmin($('#vista'), sub);
+  const vistas = { resumen: vResumen, inventario: vInventario, productos: vInventario, cobros: vCobros, reportes: vReportes, usuarios: vUsuarios };
+  recargar = () => { cacheProds = null; precargar(); return renderAdmin($('#vista'), sub); };
+  precargar();
   await vistas[sub](cuerpo);
 }
 
@@ -67,7 +76,7 @@ async function vResumen(c) {
           <div class="fila-admin">
             <div><div class="fila-admin__nombre">${p.nombre}</div><div class="fila-admin__meta">mínimo ${p.stockMinimo}</div></div>
             <div class="fila-admin__acc"><span class="stock-grande ${p.stock === 0 ? 'stock-grande--cero' : 'stock-grande--bajo'}">${p.stock}</span>
-              <button class="btn btn--suave btn--chico" data-a="entrada" data-sku="${p.sku}">Entrada</button></div>
+              <button class="btn btn--suave btn--chico" data-a="entrada" data-sku="${p.sku}">+ Sumar</button></div>
           </div>`)}
         ${r.stockBajo.length > 12 ? html`<p class="suave" style="margin-top:8px">Y ${r.stockBajo.length - 12} más en Inventario.</p>` : ''}
       </section>
@@ -112,6 +121,8 @@ async function vInventario(c) {
   const r = await api('inv.lista');
   if (!r.ok) { mount(c, errorCaja(r.error)); return; }
   const prods = r.productos;
+  cacheProds = prods;
+  const cats = Array.from(new Set(prods.map((p) => p.categoria).filter(Boolean))).sort();
   mount(c, html`
     <div class="acciones-barra">
       <button class="btn btn--rojo" data-a="entrada">Registrar compra</button>
@@ -143,7 +154,7 @@ async function vInventario(c) {
             <span class="stock-grande ${p.stock === 0 ? 'stock-grande--cero' : bajo ? 'stock-grande--bajo' : ''}" aria-label="Stock ${p.stock}">${p.stock}</span>
             <button class="btn btn--suave btn--chico" data-a="entrada" data-sku="${p.sku}">+ Sumar</button>
             <button class="btn btn--suave btn--chico" data-a="ajuste" data-sku="${p.sku}">Quitar / ajustar</button>
-            <button class="btn btn--suave btn--chico" data-a="historial" data-sku="${p.sku}">Historial</button>
+            ${puede('prod.guardar') ? html`<button class="btn btn--suave btn--chico" data-a="editar" data-sku="${p.sku}">Editar</button>` : ''}
           </div>
         </div>`;
     })}`);
@@ -188,6 +199,7 @@ async function vInventario(c) {
   on(c, 'click', '[data-tab]', (b) => { invTab = b.dataset.tab; pintarTab(); });
   on(c, 'click', '[data-a="entrada"]', (b) => abrirEntrada({ sku: b.dataset.sku }));
   on(c, 'click', '[data-a="ajuste"]', (b) => abrirAjuste(prods.find((p) => p.sku === b.dataset.sku)));
+  on(c, 'click', '[data-a="editar"]', (b) => formProducto(prods.find((p) => p.sku === b.dataset.sku), cats));
   on(c, 'click', '[data-a="conteo"]', () => abrirConteo(prods.filter((p) => p.activo)));
   on(c, 'click', '[data-a="nuevo-prod"]', () => nuevoProducto());
   on(c, 'click', '[data-a="historial"]', async (b) => {
@@ -214,7 +226,7 @@ function listaMovimientos(movs) {
 const PROVEEDORES = ['ZORRO ABARROTERO', 'OXXO', "SAM'S CLUB", 'Costco', 'Walmart'];
 
 async function abrirEntrada({ sku } = {}) {
-  const r = await api('inv.lista');
+  const r = await listaProds();
   if (!r.ok) { toast(r.error, 'error'); return; }
   const prods = r.productos.filter((p) => p.activo || p.sku === sku).sort(porNombre);
   const reqId = newReqId();
@@ -497,7 +509,7 @@ async function vProductos(c) {
 
 // Abre el formulario de producto nuevo con las categorías que ya existen.
 async function nuevoProducto() {
-  const r = await api('inv.lista');
+  const r = await listaProds();
   const cats = r.ok ? Array.from(new Set(r.productos.map((p) => p.categoria).filter(Boolean))).sort() : [];
   formProducto(null, cats);
 }
@@ -555,7 +567,7 @@ function formProducto(p, cats, alGuardar) {
 
 // ---- anotar lo que se llevó un cliente ----
 async function abrirVenta() {
-  const [ri, ru] = await Promise.all([api('inv.lista'), puede('usr.lista') ? api('usr.lista') : Promise.resolve({ ok: false })]);
+  const [ri, ru] = await Promise.all([listaProds(), puede('usr.lista') ? api('usr.lista') : Promise.resolve({ ok: false })]);
   if (!ri.ok) { toast(ri.error, 'error'); return; }
   const prods = ri.productos.filter((x) => x.activo && x.stock > 0).sort(porNombre);
   const clientes = ru.ok ? ru.usuarios.filter((x) => x.activo).sort(porNombre) : [];

@@ -1,8 +1,7 @@
 import { api, setToken, setAuthHandler, newReqId } from './api.js';
 import { S, cargarSesion, iniciarSesion, cerrarSesion, guardarSesion, puede, esStaff } from './state.js';
 import { html, raw, mount, on, $, toast, ocupado, abrirHoja, campo } from './ui.js';
-import { renderTienda, renderCuenta, actualizarBarra, abrirCarrito } from './views-tienda.js';
-import { renderAdmin } from './views-admin.js';
+import { renderAdmin } from './views-admin.js?v=3';
 
 const app = document.getElementById('app');
 
@@ -21,44 +20,7 @@ setAuthHandler((mensaje) => {
   mostrarLogin(mensaje || 'Tu sesión expiró. Entra de nuevo.');
 });
 
-function mostrarLogin(mensaje = '') {
-  location.hash = '';
-  mount(app, html`
-    <main class="login">
-      <div class="toldo" aria-hidden="true"></div>
-      <div class="login__marca">
-        <img src="./img/logo-512.png" alt="Tiendita" width="132" height="132">
-        <div class="login__nombre">Tiendita</div>
-        <p class="login__lema">llévatelo, paga en quincena</p>
-      </div>
-      <form class="login__caja" id="form-login" autocomplete="on" novalidate>
-        <div class="error-form" id="login-error" role="alert">${mensaje}</div>
-        ${campo({ id: 'email', etiqueta: 'Tu correo', tipo: 'email', attrs: 'autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false" required' })}
-        <div id="pin-caja" hidden>${campo({ id: 'pin', etiqueta: 'Contraseña', tipo: 'password', attrs: 'autocomplete="current-password"' })}</div>
-        <button class="btn btn--rojo btn--ancho" type="submit">Entrar</button>
-        <p class="login__ayuda" id="login-ayuda">Escribe tu correo para entrar.</p>
-      </form>
-    </main>`);
-  $('#email').focus();
-  $('#form-login').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = e.submitter || $('#form-login button[type=submit]');
-    const email = $('#email').value.trim();
-    const pin = $('#pin').value.trim();
-    const caja = $('#login-error');
-    if (!email.includes('@')) { caja.textContent = 'Escribe tu correo.'; return; }
-    caja.textContent = '';
-    const r = await ocupado(btn, 'Entrando…', () => api('login', { email, pin }));
-    if (!r.ok && r.code === 'NEEDS_PIN') {
-      $('#pin-caja').hidden = false; $('#pin').focus();
-      $('#login-ayuda').textContent = 'Este usuario es de administración: escribe la contraseña.';
-      return;
-    }
-    if (!r.ok) { caja.textContent = r.error; if (!$('#pin-caja').hidden) { $('#pin').value = ''; $('#pin').focus(); } return; }
-    iniciarSesion(r); setToken(S.token);
-    if (r.debeCambiarPin) pedirCambioPin(pin, true); else entrar();
-  });
-}
+function mostrarLogin() { location.replace('../index.html'); }
 
 function pedirCambioPin(pinActual, obligatorio) {
   const h = abrirHoja({
@@ -95,7 +57,7 @@ function entrar() {
   setToken(S.token);
   vistaActual = '';
   if (!location.hash || location.hash === '#') {
-    location.hash = esStaff() ? '#/admin/resumen' : '#/tienda'; // el cambio de hash dibuja la pantalla
+    location.hash = '#/admin/resumen'; // el cambio de hash dibuja la pantalla
   } else {
     dibujar();
   }
@@ -106,18 +68,17 @@ function rutaActual() {
   return { vista: partes[0] || 'tienda', sub: partes[1] || '' };
 }
 
-function armarMarco(vista) {
-  const staff = esStaff();
+function armarMarco() {
   const enlaces = html`
     <nav class="nav" aria-label="Principal">
-      <a href="#/tienda" ${vista === 'tienda' ? raw('aria-current="page"') : ''}>${raw(ICONOS.tienda)}<span>Tienda</span></a>
-      <a href="#/cuenta" ${vista === 'cuenta' ? raw('aria-current="page"') : ''}>${raw(ICONOS.cuenta)}<span>Mi cuenta</span></a>
-      ${staff ? html`<a href="#/admin/resumen" ${vista === 'admin' ? raw('aria-current="page"') : ''}>${raw(ICONOS.panel)}<span>Panel</span></a>` : ''}
+      <a href="../catalogo.html">${raw(ICONOS.tienda)}<span>Catálogo</span></a>
+      <a href="../perfil.html">${raw(ICONOS.cuenta)}<span>Mi cuenta</span></a>
+      <a href="#/admin/resumen" aria-current="page">${raw(ICONOS.panel)}<span>Panel</span></a>
     </nav>`;
   mount(app, html`
     <header class="cabecera">
       <div class="cabecera__in">
-        <a class="marca" href="#/tienda"><img src="./img/logo-192.png" alt="" width="40" height="40"><span>Tiendita</span></a>
+        <a class="marca" href="#/admin/resumen"><img src="./img/logo-192.png" alt="" width="40" height="40"><span>Tiendita</span></a>
         ${enlaces}
         <div class="cabecera__der">
           <span class="yo">${S.usuario.nombre}</span>
@@ -125,27 +86,21 @@ function armarMarco(vista) {
         </div>
       </div>
     </header>
-    <main class="pagina" id="vista" tabindex="-1"></main>
-    <div id="barra-carrito"></div>`);
+    <main class="pagina" id="vista" tabindex="-1"></main>`);
 }
 
 async function dibujar() {
   if (!S.token) return mostrarLogin();
-  const { vista, sub } = rutaActual();
-  if (vista === 'admin' && !esStaff()) { location.hash = '#/tienda'; return; }
-  if (!$('#vista') || vistaActual !== vista) { armarMarco(vista); vistaActual = vista; }
-  const root = $('#vista');
+  if (!esStaff()) { location.replace('../catalogo.html'); return; }
+  const { sub } = rutaActual();
+  if (!$('#vista')) armarMarco();
   window.scrollTo(0, 0);
-  if (vista === 'cuenta') await renderCuenta(root, { cambiarPin: () => pedirCambioPin('', false) });
-  else if (vista === 'admin') await renderAdmin(root, sub || 'resumen');
-  else await renderTienda(root);
-  if (vista !== 'tienda') actualizarBarra(false);
+  await renderAdmin($('#vista'), sub || 'resumen');
 }
 
 window.addEventListener('hashchange', () => { if (S.token) dibujar(); });
-on(document, 'click', '[data-act="salir"]', () => { cerrarSesion(); setToken(null); vistaActual = ''; mostrarLogin(); });
+on(document, 'click', '[data-act="salir"]', () => { cerrarSesion(); setToken(null); try { sessionStorage.removeItem('tiendita_session'); } catch (_) {} mostrarLogin(); });
 on(document, 'click', '[data-act="reintentar"]', () => dibujar());
-on(document, 'click', '[data-act="abrir-carrito"]', () => abrirCarrito());
 
 // ---------- arranque ----------
 if (cargarSesion()) { setToken(S.token); entrar(); } else mostrarLogin();

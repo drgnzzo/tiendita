@@ -1260,3 +1260,6 @@ a { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   * { transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; }
 }
+
+/* Siempre tema claro: evita que el navegador oscurezca la Tiendita */
+:root { color-scheme: only light; }
