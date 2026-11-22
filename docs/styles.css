@@ -1263,3 +1263,12 @@ a { color: inherit; }
 
 /* Siempre tema claro: evita que el navegador oscurezca la Tiendita */
 :root { color-scheme: only light; }
+
+/* ===== Fondos suaves: menos brillo en pantallas grandes y en celular ===== */
+:root {
+  --blanco:     #FDF3F5;
+  --crema:      #F7E4E9;
+  --rosa-cream: #F4DCE3;
+  --grad-bg:    linear-gradient(180deg, #F7E4E9 0%, #F1D3DC 100%);
+  --grad-card:  linear-gradient(180deg, #FDF3F5 0%, #F9E8ED 100%);
+}

@@ -542,3 +542,99 @@ section > h2, .dos-col h2, .hoja__barra h2 { font-family: var(--fuente); font-we
 .acciones-barra { margin: 16px 0 24px; }
 /* Estado del stock: la insignia lleva además la palabra (Agotado / Quedan pocas) */
 .sello--rojo { background: #FFD6E0; color: #8A0F17; }
+
+/* =====================================================================
+   TEMA SUAVE (versión final)
+   Un solo rojo para lo principal, vino para la estructura, y rosas apagados
+   para fondos. Sin blanco puro: cansa la vista en monitores grandes.
+   Jerarquía: 1) rojo sólido = acción principal · 2) fondo rosa + vino = acción
+   secundaria · 3) texto subrayado = acción discreta.
+   ===================================================================== */
+:root {
+  --ink: #2B0D12; --ink-2: #5E3A44;
+  --bg: #F4E1E6;      /* fondo de la página */
+  --surf: #FBEFF2;    /* tarjetas, filas, ventanas */
+  --surf-2: #F3D9E0;  /* botones secundarios, pestañas */
+  --line: #DDB1BE;
+  --primary: #C8151D; --primary-d: #A30F17;
+  --deep: #5E0F24;
+}
+body { background: var(--bg); color: var(--ink); }
+.suave, .fila-admin__meta, .renglon small, .caja span { color: var(--ink-2); }
+
+/* Cabecera: vino oscuro, descansa la vista */
+.cabecera { background: var(--deep); box-shadow: none; border-bottom: 3px solid var(--primary); }
+.cabecera .marca, .cabecera .yo { color: #FBEFF2; }
+.cabecera .nav a { color: #F3D9E0; }
+.cabecera .nav a[aria-current="page"] { background: var(--surf); color: var(--deep); }
+.cabecera .btn--suave { background: var(--surf-2); color: var(--deep); border: 0; }
+
+/* Título: texto en vino, sin bloque pesado */
+.titulo { background: none; padding: 0; margin: 8px 0 20px; border-radius: 0; }
+.titulo h1 { color: var(--deep); }
+.titulo span { color: var(--primary); }
+
+/* Pestañas */
+.subnav a { background: var(--surf-2); color: var(--deep); border: 0; }
+.subnav a:hover { background: #ECC6D0; }
+.subnav a[aria-current="page"] { background: var(--deep); color: #FBEFF2; }
+.subnav__aparte { background: none !important; color: var(--deep) !important; }
+.subnav .subnav__aparte[aria-current="page"] { background: var(--deep) !important; color: #FBEFF2 !important; text-decoration: none !important; }
+
+/* Cifras: tarjetas neutras; solo "Por cobrar" lleva el rojo */
+.caja > div, .caja > div:nth-child(n) { background: var(--surf); color: var(--ink); border: 2px solid var(--line); }
+.caja > div:nth-child(3) { background: var(--primary); color: #fff; border-color: var(--primary); }
+.caja strong { color: var(--deep); }
+.caja > div:nth-child(3) strong, .caja > div:nth-child(3) span { color: #fff; }
+
+/* Secciones: título simple con barra roja */
+section > h2, .dos-col h2 { background: none; border-left: 5px solid var(--primary); padding: 2px 0 2px 12px; border-radius: 0; color: var(--deep); }
+
+/* Filas y tarjetas */
+.fila-admin, .renglon { background: var(--surf); border: 2px solid var(--line); }
+.fila-admin__nombre, .renglon strong { color: var(--ink); }
+.fila-admin__nombre { font-weight: 700; }
+
+/* Existencia: neutro; bajo y agotado llevan rojo y palabra */
+.stock-grande { background: var(--surf-2); color: var(--deep); border: 2px solid var(--line); }
+.stock-grande--bajo { background: #F3C7CD; color: #7A0F17; border-color: #E2A0A9; }
+.stock-grande--cero { background: var(--primary); color: #fff; border-color: var(--primary); }
+.sello { background: var(--surf-2); color: var(--deep); }
+.sello--rojo { background: #F3C7CD; color: #7A0F17; }
+.sello--ok { background: #D9E8DE; color: #1F5B3C; }
+
+/* Botones: 3 niveles */
+.btn--rojo { background: var(--primary); color: #fff; }
+.btn--rojo:hover:not(:disabled) { background: var(--primary-d); }
+.btn--suave { background: var(--surf-2); color: var(--deep); border: 1.5px solid var(--line); font-weight: 700; }
+.btn--suave:hover { background: #ECC6D0; }
+.link { color: var(--deep); }
+.chip { background: var(--surf-2); color: var(--deep); border: 0; }
+.chip[aria-pressed="true"] { background: var(--deep); color: #FBEFF2; box-shadow: none; }
+
+/* Campos */
+input, select, textarea { background: var(--surf); color: var(--ink); border: 2px solid #9A6573; }
+.barra-productos input { border: 2px solid #9A6573; background: var(--surf); }
+input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(200,21,29,.2); }
+input::placeholder { color: #7D5B65; }
+.campo label { color: var(--ink); }
+
+/* Ventanas */
+.hoja { background: var(--surf); box-shadow: 0 18px 50px rgba(43,13,18,.4); }
+.hoja__barra { background: var(--deep); }
+.hoja__barra h2 { color: #FBEFF2; }
+.total-fila { color: var(--deep); border-top-color: var(--line); }
+.error-form { background: #F3C7CD; color: #5A0A12; }
+.aviso { background: #F2E2BD; color: #4A3200; }
+
+/* Gráfica y avisos */
+.barras i { background: var(--primary); }
+.barras b { color: var(--deep); }
+.toast { background: var(--ink); }
+.toast--error { background: var(--primary-d); }
+/* Menú de abajo en celular */
+@media (max-width: 779px) {
+  .nav { background: var(--surf); border-top: 2px solid var(--line); }
+  .cabecera .nav a { color: var(--ink-2); }
+  .cabecera .nav a[aria-current="page"] { background: none; color: var(--primary); }
+}

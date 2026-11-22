@@ -52,3 +52,7 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - La oscuridad que se veía venía de la extensión Dark Reader del navegador de Samantha (fondo #181a1b). Se agregó `<meta name="darkreader-lock">` en todas las páginas; si aún se ve oscuro, desactivar Dark Reader para drgnzzo.github.io.
 - Panel rediseñado con contraste de tienda (bloques sólidos rosa/rojo/vino, títulos grandes). Pestañas: Resumen, Productos, Cobros, Reportes (+ Usuarios aparte). Lista de compras y movimientos pasaron a Reportes. Sin chips de filtro.
 - Revisión con las skills de diseño (Tidwell, Johnson, Lupton, Müller-Brockmann, Pickering): estado del stock con palabra (Agotado / Quedan pocas), letra mínima 13 px, retícula de 8 px, títulos de sección sin fuente de exhibición. Auditoría estática de Apps Script: se corrigió escritura al final de Ventas y Movimientos sin asegurar filas (escrAsegurarFilas_). Pendiente de purgar (no se borró): _mismoDiaMx, inicializarBD, crearHojasAnalisis.
+
+## Tema suave (contraste de fondos)
+- Sin blanco puro: fondo #F4E1E6, tarjetas #FBEFF2; tienda original con tokens suaves (--blanco #FDF3F5). Un solo rojo (#C8151D) para acción principal, vino #5E0F24 para estructura.
+- Botones en 3 niveles: rojo sólido / fondo rosa + vino / enlace. Bordes de campo 4.2:1. Cachés: app.css v10, styles.css v13, sw v19.
