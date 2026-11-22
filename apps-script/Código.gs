@@ -561,6 +561,10 @@ function _handleRequest(e, method) {
       return _jsonResponse(apiLogin(params.email, params.pin));
     }
 
+    // El catalogo se puede ver sin entrar (como siempre).
+    if (WEB_SOLO_TIENDA && !params.token && (action === 'catalogo' || action === 'buscar')) {
+      return _jsonResponse(API_RUTAS[action](null, params));
+    }
     let usuario = _usuarioDeToken(params.token);
     // Tienda de siempre: los clientes mandan su correo (sin token) en estas acciones.
     if (!usuario && WEB_SOLO_TIENDA && !params.token && LEGACY_CLIENTE[action]) {
