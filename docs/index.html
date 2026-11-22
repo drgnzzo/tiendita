@@ -4,21 +4,98 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#E62027">
-  <meta name="description" content="Tiendita: llévatelo y paga en quincena.">
-  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Tiendita - acceso para empleados">
   <title>Tiendita</title>
   <link rel="manifest" href="./manifest.json">
-  <link rel="icon" type="image/png" href="./img/logo-192.png">
-  <link rel="apple-touch-icon" href="./img/logo-180.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Caveat:wght@500;700&family=Inter:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="./css/app.css?v=1">
+  <link rel="icon" type="image/png" href="./logo.png">
+  <link rel="apple-touch-icon" href="./logo.png">
+  <link rel="stylesheet" href="./styles.css?v=9">
 </head>
 <body>
-  <div id="app" aria-live="polite"></div>
-  <div id="toasts" role="status" aria-live="polite"></div>
-  <noscript><p style="padding:24px">Necesitas activar JavaScript para usar la Tiendita.</p></noscript>
-  <script type="module" src="./js/main.js?v=1"></script>
+
+  <div class="login">
+
+    <div class="login__brand">
+      <img src="./logo.png" alt="" class="login__logo">
+      <div class="login__name">TIENDITA</div>
+      <div class="login__tagline">llévatelo, paga en quincena</div>
+    </div>
+
+    <div class="card login__card">
+
+      <div id="errorBox" class="login__error"></div>
+
+      <label for="email" class="label">Tu correo</label>
+      <input
+        id="email"
+        type="email"
+        class="input"
+        placeholder="tu.correo@gmail.com"
+        autocomplete="email"
+        inputmode="email"
+        spellcheck="false"
+        autocapitalize="off">
+
+      <div style="height:14px"></div>
+
+      <button id="btnLogin" class="btn btn--rojo btn--big btn--full">
+        Entrar
+      </button>
+
+      <p class="login__hint">
+        Si todavía no tienes acceso, pide al admin que te dé de alta 💕
+      </p>
+    </div>
+
+  </div>
+
+  <script src="./api.js?v=9"></script>
+  <script src="./app.js?v=9"></script>
+  <script>
+    tiendita.redirectIfLogged();
+
+    const input    = document.getElementById('email');
+    const btn      = document.getElementById('btnLogin');
+    const errorBox = document.getElementById('errorBox');
+
+    function showError(msg) {
+      errorBox.textContent = msg;
+      errorBox.classList.add('is-visible');
+      input.classList.add('input--error');
+    }
+    function clearError() {
+      errorBox.classList.remove('is-visible');
+      input.classList.remove('input--error');
+    }
+
+    async function intentarLogin() {
+      const email = input.value.trim().toLowerCase();
+      if (!email || !email.includes('@') || !email.includes('.')) {
+        showError('Pon un correo válido.');
+        return;
+      }
+      clearError();
+      btn.disabled = true;
+      const originalText = btn.textContent;
+      btn.textContent = 'Entrando...';
+
+      const res = await api.login(email);
+
+      if (res.ok) {
+        tiendita.setSession(res.usuario);
+        window.location.href = './catalogo.html';
+      } else {
+        showError(res.error || 'No se pudo iniciar sesión.');
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    }
+
+    btn.addEventListener('click', intentarLogin);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') intentarLogin(); });
+    input.addEventListener('input', clearError);
+    input.focus();
+  </script>
+
 </body>
 </html>

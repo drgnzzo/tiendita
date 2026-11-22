@@ -540,6 +540,9 @@ const API_RUTAS = {
   'reporte.enviar': (u, p) => apiReporteEnviar(u)
 };
 
+// Acciones que la tienda de siempre llama solo con el correo del cliente.
+const LEGACY_CLIENTE = { catalogo: 1, buscar: 1, perfil: 1, historial: 1, comprar: 1, sugerir: 1, bot: 1 };
+
 function doGet(e)  { return _handleRequest(e, 'GET'); }
 function doPost(e) { return _handleRequest(e, 'POST'); }
 
@@ -559,6 +562,11 @@ function _handleRequest(e, method) {
     }
 
     let usuario = _usuarioDeToken(params.token);
+    // Tienda de siempre: los clientes mandan su correo (sin token) en estas acciones.
+    if (!usuario && WEB_SOLO_TIENDA && !params.token && LEGACY_CLIENTE[action]) {
+      const c = params.email ? obtenerUsuario(params.email) : null;
+      if (c && c.activo) usuario = Object.assign({}, c, { rol: ROLES.CLIENTE });
+    }
     if (!usuario) {
       return _jsonResponse({ ok: false, error: 'Tu sesión expiró. Entra de nuevo.', code: 'AUTH' });
     }
@@ -1540,7 +1548,10 @@ function _usuarioPublico(u) {
     rol: u.rol,
     deuda: u.deudaAcumulada,
     limite: u.limiteCredito,
-    disponible: _round2(Math.max(0, u.limiteCredito - u.deudaAcumulada))
+    disponible: _round2(Math.max(0, u.limiteCredito - u.deudaAcumulada)),
+    // nombres de la tienda de siempre (la interfaz de los clientes los usa)
+    deudaAcumulada: u.deudaAcumulada,
+    limiteCredito: u.limiteCredito
   };
 }
 

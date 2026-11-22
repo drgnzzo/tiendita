@@ -146,6 +146,18 @@ t('correo no registrado no entra', () => assert.strictEqual(call('login', { emai
 t('usuario desactivado no entra', () => assert.strictEqual(call('login', { email: 'jasso@gmail.com' }).ok, false));
 t('cliente también entra sin PIN', () => { et = call('login', { email: 'eric@gmail.com' }); assert.ok(et.ok); });
 
+t('tienda de siempre: catálogo y perfil solo con correo', () => {
+  assert.ok(call('catalogo', { email: 'eric@gmail.com' }).ok);
+  const pf = call('perfil', { email: 'eric@gmail.com' });
+  assert.ok(pf.ok && pf.usuario.deudaAcumulada !== undefined && pf.usuario.limiteCredito !== undefined, JSON.stringify(pf)); });
+t('tienda de siempre: comprar solo con correo devuelve la deuda nueva', () => {
+  const pr = call('catalogo', { email: 'eric@gmail.com' }).productos.find(x => x.stock > 0);
+  const r = call('comprar', { email: 'eric@gmail.com', items: [{ sku: pr.sku, cantidad: 1 }] });
+  assert.ok(r.ok && r.deudaNueva !== undefined, JSON.stringify(r)); });
+t('tienda de siempre: correo desconocido no pasa y nadie entra a admin sin token', () => {
+  assert.strictEqual(call('perfil', { email: 'nadie@x.com' }).code, 'AUTH');
+  assert.strictEqual(call('inv.lista', { email: 'victor.walmart.04@gmail.com' }).code, 'AUTH');
+  assert.strictEqual(call('usr.lista', { email: 'victor.walmart.04@gmail.com' }).code, 'AUTH'); });
 t('admin web: sin contraseña pide contraseña', () => assert.strictEqual(call('login', { email: 'admin@tiendita.com' }).code, 'NEEDS_PIN'));
 t('admin web: contraseña corta se rechaza', () => assert.throws(() => ctx._ponerClaveAdminWeb('corta')));
 let aw;

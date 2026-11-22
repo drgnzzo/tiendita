@@ -148,7 +148,4 @@ on(document, 'click', '[data-act="reintentar"]', () => dibujar());
 on(document, 'click', '[data-act="abrir-carrito"]', () => abrirCarrito());
 
 // ---------- arranque ----------
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
-}
 if (cargarSesion()) { setToken(S.token); entrar(); } else mostrarLogin();
