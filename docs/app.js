@@ -178,6 +178,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const nav = document.querySelector('.app-header__nav');
     if (nav) nav.insertAdjacentHTML('beforeend', '<a href="./admin/" class="app-header__tab">Panel</a>');
     const bn = document.querySelector('.app-bottomnav');
-    if (bn) bn.insertAdjacentHTML('beforeend', '<a href="./admin/" class="app-bottomnav__item"><span class="app-bottomnav__ico">📊</span>Panel</a>');
+    if (bn) bn.insertAdjacentHTML('beforeend', '<a href="./admin/" class="app-bottomnav__item"><span class="app-bottomnav__ico"><svg class="ico-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg></span>Panel</a>');
   } catch (_) {}
 });

@@ -1,7 +1,7 @@
 import { api, setToken, setAuthHandler, newReqId } from './api.js';
 import { S, cargarSesion, iniciarSesion, cerrarSesion, guardarSesion, puede, esStaff } from './state.js';
 import { html, raw, mount, on, $, toast, ocupado, abrirHoja, campo } from './ui.js';
-import { renderAdmin } from './views-admin.js?v=9';
+import { renderAdmin } from './views-admin.js?v=10';
 
 const app = document.getElementById('app');
 
@@ -71,14 +71,14 @@ function rutaActual() {
 function armarMarco() {
   const enlaces = html`
     <nav class="nav" aria-label="Principal">
-      <a href="../catalogo.html"><span class="ico">🛒</span><span>Catálogo</span></a>
-      <a href="../perfil.html"><span class="ico">👤</span><span>Mi cuenta</span></a>
-      <a href="#/admin/resumen" aria-current="page"><span class="ico">📊</span><span>Panel</span></a>
+      <a href="../catalogo.html"><span class="ico"><svg class="ico-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.6 12.4a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 7H6"/></svg></span><span>Catálogo</span></a>
+      <a href="../perfil.html"><span class="ico"><svg class="ico-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></span><span>Mi cuenta</span></a>
+      <a href="#/admin/resumen" aria-current="page"><span class="ico"><svg class="ico-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg></span><span>Panel</span></a>
     </nav>`;
   mount(app, html`
     <header class="cabecera">
       <div class="cabecera__in">
-        <a class="marca" href="../catalogo.html"><img src="./img/logo-192.png?v=2" alt="" width="40" height="40"><span class="marca__n">TIENDITA</span><span class="marca__c">♥</span></a>
+        <a class="marca" href="../catalogo.html"><img src="./img/logo-192.png?v=2" alt="" width="40" height="40"><span class="marca__n">TIENDITA</span></a>
         ${enlaces}
         <div class="cabecera__der">
           <span class="yo">${S.usuario.nombre}</span>

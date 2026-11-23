@@ -95,3 +95,9 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - Panel Perla suavizado (menos magenta, fondo calido casi neutro, acentos cuarzo rosa/vino). sw v33.
 
 - Catalogo escritorio: categorias en columnas, productos en fila compacta (sin scroll). Sin foto real: no se muestra icono ni emoji (solo nombre, stock, precio). sw v34.
+
+## Reglas de orden aplicadas (22-nov)
+- Gramatica: un nombre por cosa. "Corte" = cobros de la quincena; "Auditoria" = conteo de inventario. Saludo neutro ("Hola"), sin emojis ni corazones (iconos SVG en menus y asistente).
+- Logica: Mi cuenta pone la deuda como protagonista; "Registrar compra" ya no se repite en Reportes (vive en Resumen y Productos).
+- Retorica: subtitulos en letra normal y gris, no cursiva. SW v36.
+- Pendiente (siguiente bloque): escala de 5 tamaños de letra, Reportes en secciones/pestanas, revisar Resumen vs Cobros (atajos duplicados).

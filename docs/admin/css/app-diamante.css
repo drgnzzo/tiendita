@@ -366,3 +366,8 @@ input:focus, select:focus, textarea:focus { background: #252B32; border-color: #
 .caja > div:hover, .fila-admin:hover, .renglon:hover { box-shadow: 0 10px 26px rgba(0,0,0,.35); }
 .stock-grande { background: #DFE7F1; color: #1E2F46; border-color: #9EB5D2; }
 .marca__c { color: #B8CEEB; }
+
+/* ===== Orden y sobriedad: subtítulos sin letra cursiva ===== */
+.titulo span { font: 500 15px var(--fuente); color: var(--texto-2); }
+.nav .ico { line-height: 0; }
+.nav .ico .ico-svg { margin: 0 auto 2px; }

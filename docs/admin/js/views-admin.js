@@ -4,7 +4,7 @@ import { html, raw, mount, on, $, $$, reiniciarRaiz, toast, ocupado, abrirHoja, 
 
 const TITULOS = {
   resumen: ['Resumen', 'cómo va la tiendita'], inventario: ['Productos', 'lo que hay en el estante'], cobros: ['Cobros', 'quién debe y cuánto'],
-  reportes: ['Reportes', 'el mes en números'], corte: ['Auditoría', 'contar todo y hacer un corte'], usuarios: ['Usuarios', 'quién entra a la tiendita']
+  reportes: ['Reportes', 'el mes en números'], corte: ['Auditoría', 'contar lo que hay y compararlo con el sistema'], usuarios: ['Usuarios', 'quién entra a la tiendita']
 };
 const SUBS = [
   { id: 'resumen', nombre: 'Resumen', permiso: 'admin.resumen' },
@@ -148,7 +148,7 @@ async function vInventario(c) {
       ${puede('prod.guardar') ? html`<button class="btn btn--suave" data-a="nuevo-prod">Nuevo producto</button>` : ''}
     </div>
     <div id="inv-lista"></div>
-    <p class="pie-lista"><a class="link" href="#/admin/corte">Hacer un corte de inventario</a></p>`);
+    <p class="pie-lista"><a class="link" href="#/admin/corte">Hacer una auditoría de inventario</a></p>`);
   const pintarProductos = () => {
     const q = invFiltro.trim().toLowerCase();
     const visibles = prods.filter((p) => !q || (p.nombre + p.categoria + p.sku).toLowerCase().includes(q));
@@ -643,14 +643,13 @@ async function vReportes(c) {
     <section class="bloque" style="margin-bottom:32px">
       <div class="encabezado-sec">
         <h2>Compras al proveedor</h2>
-        <button class="btn btn--rojo btn--chico" id="rep-compra">Registrar compra</button>
       </div>
       <div class="caja" style="margin-bottom:8px">
         <div><strong class="num">${money(r.compras.gastado)}</strong><span>Gastado en compras</span></div>
         <div><strong class="num">${r.compras.piezas}</strong><span>Piezas que entraron</span></div>
         <div class="destacada"><strong class="num">${money(r.ventas - r.compras.gastado)}</strong><span>Vendido menos comprado</span></div>
       </div>
-      ${r.compras.detalle.length === 0 ? vacio('Sin compras en este mes. Usa Registrar compra para sumar piezas a tus productos.') : html`
+      ${r.compras.detalle.length === 0 ? vacio('Sin compras en este mes. Se registran desde Productos.') : html`
         <div class="dos-col" style="margin:8px 0 0">
           <section>
             <h2>Por proveedor</h2>
@@ -664,7 +663,6 @@ async function vReportes(c) {
         </div>`}
     </section>
     <div id="rep-extra"></div>`);
-  $('#rep-compra', c).addEventListener('click', () => abrirEntrada({}));
   Promise.all([api('inv.compras'), api('inv.movimientos', { limite: 30 })]).then(([k, m]) => {
     const extra = $('#rep-extra', c); if (!extra) return;
     mount(extra, html`
@@ -818,7 +816,7 @@ async function vCorte(c) {
   const r = await api('corte.lista');
   if (!r.ok) { mount(c, errorCaja(r.error)); return; }
   mount(c, html`
-    <div class="acciones-barra"><button class="btn btn--rojo" data-a="nuevo-corte">Hacer corte de inventario</button></div>
+    <div class="acciones-barra"><button class="btn btn--rojo" data-a="nuevo-corte">Nueva auditoría</button></div>
     <details class="ayuda"><summary>¿Cómo funciona?</summary>
       <ol class="pasos">
         <li>Cuentas lo que hay de verdad en la tienda y lo escribes aquí.</li>
@@ -826,7 +824,7 @@ async function vCorte(c) {
         <li>En el Sheet se guarda lo que había contra lo que hay (hojas Cortes_Inventario y Corte_Detalle).</li>
         <li>Lo que faltó lo cobras a una persona o lo absorbe la tienda.</li>
       </ol></details>
-    ${r.cortes.length === 0 ? vacio('Aún no hay cortes de inventario', 'Cuando hagas el primero, aquí verás lo que faltó y a quién se le cobró.') : r.cortes.map((k) => html`
+    ${r.cortes.length === 0 ? vacio('Aún no hay auditorías', 'Cuando hagas el primero, aquí verás lo que faltó y a quién se le cobró.') : r.cortes.map((k) => html`
       <div class="fila-admin">
         <div>
           <div class="fila-admin__nombre">${k.fecha} ${k.pendientePiezas > 0 ? html`<span class="sello sello--rojo">Por repartir ${k.pendientePiezas}</span>` : html`<span class="sello sello--ok">Repartido</span>`}</div>
@@ -846,7 +844,7 @@ function abrirCorte(prods) {
   const reqId = newReqId();
   const lista = prods.slice().sort(porSeccion);
   const h = abrirHoja({
-    titulo: 'Corte de inventario', ancho: 'ancha',
+    titulo: 'Nueva auditoría', ancho: 'ancha',
     cuerpo: html`
       <form id="form-corte" novalidate>
         <p class="texto">Escribe cuántas piezas hay de verdad. Lo que dejes vacío no se toca.</p>
@@ -864,7 +862,7 @@ function abrirCorte(prods) {
                 <input id="k-${p.sku}" data-sku="${p.sku}" data-sis="${p.stock}" type="number" inputmode="numeric" min="0" step="1" placeholder="—">
                 <span class="sello" data-dif></span></div>
             </div>`)}`)}
-        <div class="campo"><label for="corte-notas">Nota (opcional)</label><input id="corte-notas" maxlength="200" placeholder="Por ejemplo: corte de fin de mes"></div>
+        <div class="campo"><label for="corte-notas">Nota (opcional)</label><input id="corte-notas" maxlength="200" placeholder="Por ejemplo: auditoría de fin de mes"></div>
         <div class="acciones"><button class="btn btn--suave" type="button" data-cerrar>Cancelar</button><button class="btn btn--rojo" type="submit">Revisar y cerrar</button></div>
       </form>`
   });
@@ -898,10 +896,10 @@ function abrirCorte(prods) {
     const sobra = conteos.filter((x) => x.real > x.sis).reduce((t, x) => t + x.real - x.sis, 0);
     const vacios = lista.length - conteos.length;
     const ok = await confirmar({
-      titulo: 'Cerrar el corte',
+      titulo: 'Cerrar la auditoría',
       mensaje: 'Contaste ' + conteos.length + ' de ' + lista.length + ' productos' + (vacios ? ' (' + vacios + ' sin contar no se tocan)' : '') + '. ' +
         'Faltan ' + falta + ' piezas y sobran ' + sobra + '. El inventario quedará igual a lo que contaste y no se puede deshacer.',
-      si: 'Cerrar corte'
+      si: 'Cerrar auditoría'
     });
     if (!ok) return;
     const btn = e.submitter || $('button[type=submit]', h.el);

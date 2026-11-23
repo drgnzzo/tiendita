@@ -1407,3 +1407,16 @@ body::before { background: radial-gradient(40vmax 40vmax at 12% 8%, rgba(143,166
   .catalogo-secciones .product .btn { min-height: 36px; padding: 6px 18px; font-size: 14px; }
   .catalogo-secciones .product__badge { top: -11px; left: 14px; right: auto; transform: none; }
 }
+
+/* ===== Orden y sobriedad: Mi cuenta con la deuda como protagonista, sin letra cursiva ni adornos ===== */
+.perfil__hero { background: none; color: var(--negro); border: 0; box-shadow: none; padding: 4px 0 8px; margin-bottom: var(--s-3); overflow: visible; }
+.perfil__hero::before, .perfil__hero::after { display: none; }
+.perfil__greet { font-family: var(--fuente-body); font-size: 15px; font-weight: 500; color: var(--gris); margin: 0; }
+.perfil__nombre { color: var(--negro); font-size: 28px; margin: 2px 0 0; }
+.perfil__correo { color: var(--gris); opacity: 1; font-size: 14px; }
+.section-title-script, .catalogo__title-script { font-family: var(--fuente-body); font-size: 15px; font-weight: 500; color: var(--gris); letter-spacing: 0; margin-left: 6px; }
+.star { color: #9CA7B6; }
+.star--on { color: #27889B; }
+.ico-svg { display: block; margin: 0 auto; }
+.app-bottomnav__ico { display: inline-flex; align-items: center; justify-content: center; }
+.bot-fab { display: inline-flex; align-items: center; justify-content: center; }
