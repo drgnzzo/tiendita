@@ -93,3 +93,5 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - Boton Color solo globo (sin texto). Contraste revisado en ambos estilos (script titles, saludo, corazon). sw v32.
 
 - Panel Perla suavizado (menos magenta, fondo calido casi neutro, acentos cuarzo rosa/vino). sw v33.
+
+- Catalogo escritorio: categorias en columnas, productos en fila compacta (sin scroll). Sin foto real: no se muestra icono ni emoji (solo nombre, stock, precio). sw v34.

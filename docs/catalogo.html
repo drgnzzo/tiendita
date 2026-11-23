@@ -244,7 +244,7 @@
         return `
           <div class="product">
             ${badge}
-            <div class="product__icon product__icon--${iconColor}">${arteProducto(p)}</div>
+            ${tieneFoto(p) ? '<div class="product__icon product__icon--' + iconColor + '">' + arteProducto(p) + '</div>' : ''}
             <div class="product__info">
               <div class="product__name">${tiendita.esc(p.nombre)}</div>
               <div class="product__meta ${metaCls}">${metaTxt}</div>
@@ -258,7 +258,7 @@
       };
       elCatalogo.innerHTML = cats.map(cat => {
         const lista = secciones[cat].sort(az);
-        return `<section class="seccion"><h2 class="seccion__titulo"><span>${iconoPorCategoria(cat)}</span> ${tiendita.esc(cat)} <small>${lista.length}</small></h2><div class="catalogo">${lista.map(tarjeta).join('')}</div></section>`;
+        return `<section class="seccion"><h2 class="seccion__titulo">${tiendita.esc(cat)} <small>${lista.length}</small></h2><div class="catalogo">${lista.map(tarjeta).join('')}</div></section>`;
       }).join('');
 
       elCatalogo.querySelectorAll('button[data-sku]').forEach(btn => {
@@ -277,12 +277,11 @@
       });
     }
 
-    // Foto si el producto trae enlace (Imagen_URL); si no, un icono según su nombre.
+    // Solo foto real del producto (Imagen_URL). Sin foto: no se muestra nada (ni emoji ni imagen genérica).
+    function tieneFoto(p) { return !!(p.imagenUrl && /^https:\/\//i.test(p.imagenUrl)); }
     function arteProducto(p) {
-      if (p.imagenUrl && /^https:\/\//i.test(p.imagenUrl)) {
-        return '<img class="product__foto" src="' + tiendita.esc(p.imagenUrl) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(document.createTextNode(\'' + iconoPorNombre(p).replace(/'/g, '') + '\'))">';
-      }
-      return iconoPorNombre(p);
+      if (!tieneFoto(p)) return '';
+      return '<img class="product__foto" src="' + tiendita.esc(p.imagenUrl) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="var c=this.closest(\'.product__icon\');if(c)c.remove()">';
     }
     function iconoPorNombre(p) {
       const n = (p.nombre || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
