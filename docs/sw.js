@@ -3,7 +3,7 @@
  * Tolerante a fallos: si un asset falla, no rompe el install.
  */
 
-const CACHE_VERSION = 'tiendita-v32';
+const CACHE_VERSION = 'tiendita-v33';
 const ASSETS = [
   './',
   './index.html',

@@ -343,3 +343,26 @@ body::before { background: radial-gradient(46vmax 46vmax at 90% 6%, rgba(143,166
 
 /* Contraste: corazón del encabezado y títulos en script */
 .marca__c { color: #fff; }
+
+/* ---------- PERLA SUAVE (panel): menos magenta, fondo cálido casi neutro, acentos cuarzo rosa y vino ---------- */
+:root {
+  --texto: #EFF2F6; --texto-2: #C5CDD7;
+  --borde: #6F7C8C; --borde-2: #9EB5D2;
+  --rojo: #B8CEEB; --rosa: #B8CEEB; --rosa-soft: rgba(184,206,235,.28);
+  --vino: #B8CEEB;
+  --g-hero: linear-gradient(135deg, #577CAC 0%, #304F77 100%);
+  --g-admin: linear-gradient(135deg, #496A95 0%, #1E2F46 100%);
+  --g-rosa: linear-gradient(135deg, #2B3139 0%, #2B3139 100%);
+  --g-fondo: linear-gradient(180deg, #1E232A 0%, #15191F 100%);
+  --g-card: linear-gradient(180deg, #2C323A 0%, #252B32 100%);
+  --campo: #1D2229;
+}
+html { background: #15191F; }
+body::before { background: radial-gradient(46vmax 46vmax at 90% 6%, rgba(143,166,196,.18), transparent 62%), radial-gradient(40vmax 40vmax at 8% 92%, rgba(87,124,172,.14), transparent 60%), radial-gradient(28vmax 28vmax at 60% 40%, rgba(173,219,228,.06), transparent 60%); }
+.sello--rojo { background: #3C5C87; color: #fff; border-color: #9EB5D2; }
+.btn--suave { background: #2C323A; color: #EFF2F6; border-color: #8FA6C4; }
+input:focus, select:focus, textarea:focus { background: #252B32; border-color: #9EB5D2; }
+.error-form { background: #243141; color: #DCEAFC; border-color: #9EB5D2; }
+.caja > div:hover, .fila-admin:hover, .renglon:hover { box-shadow: 0 10px 26px rgba(0,0,0,.35); }
+.stock-grande { background: #DFE7F1; color: #1E2F46; border-color: #9EB5D2; }
+.marca__c { color: #B8CEEB; }

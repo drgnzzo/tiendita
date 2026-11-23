@@ -91,3 +91,5 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - Logo rehecho desde _orig_tmp/logo.png: aro completo y redondo (antes venia recortado). Archivos docs/logo-*.png y docs/admin/img/logo-*.png, refs con ?v=2, sw v31.
 
 - Boton Color solo globo (sin texto). Contraste revisado en ambos estilos (script titles, saludo, corazon). sw v32.
+
+- Panel Perla suavizado (menos magenta, fondo calido casi neutro, acentos cuarzo rosa/vino). sw v33.
