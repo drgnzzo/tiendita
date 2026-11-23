@@ -103,3 +103,5 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - Pendiente (siguiente bloque): escala de 5 tamaños de letra, Reportes en secciones/pestanas, revisar Resumen vs Cobros (atajos duplicados).
 
 - Catalogo sin foto: monograma con iniciales (sin emojis ni imagen generica). SW v37.
+
+- Catalogo sin foto: dibujo de linea por categoria (sopas, snacks, dulces, bebidas, otro) en vez de iniciales. SW v38.

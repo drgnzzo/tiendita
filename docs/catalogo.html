@@ -10,8 +10,8 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" type="image/png" href="./logo-192.png?v=2">
   <link rel="apple-touch-icon" href="./logo-180.png?v=2">
-  <link rel="stylesheet" href="./styles.css?v=24" data-tema-css="perla">
-  <link rel="stylesheet" href="./styles-diamante.css?v=24" data-tema-css="diamante" media="not all">
+  <link rel="stylesheet" href="./styles.css?v=25" data-tema-css="perla">
+  <link rel="stylesheet" href="./styles-diamante.css?v=25" data-tema-css="diamante" media="not all">
   <script src="./tema.js?v=3"></script>
 </head>
 <body>
@@ -277,16 +277,28 @@
     }
 
     // Solo foto real del producto (Imagen_URL). Sin foto: no se muestra nada (ni emoji ni imagen genérica).
-    // Sin foto: monograma (iniciales del producto), sobrio y sin emojis ni imágenes genéricas.
-    function iniciales(nombre) {
-      var w = String(nombre || '').replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 ]/g, ' ').trim().split(/\s+/).filter(Boolean);
-      if (!w.length) return '·';
-      return (w[0].charAt(0) + (w[1] ? w[1].charAt(0) : '')).toUpperCase();
+    // Sin foto: dibujo de línea según la categoría (sin emojis ni imágenes genéricas de internet).
+    var SVG_BASE = '<svg class="ico-prod" viewBox="0 0 48 48" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+    var DIBUJOS = {
+      sopas: '<path d="M5 24h38c0 9-7.5 16-19 16S5 33 5 24z"/><path d="M14 40h20"/><path d="M17 8c-2 2.5 2 4 0 6.500M24 7c-2 2.500 2 4 0 6.500M31 8c-2 2.500 2 4 0 6.500"/><path d="M33 22l8-12"/>',
+      snacks: '<path d="M13 9h22l3 31H10z"/><path d="M13 9c2 2 3.500-2 5.500 0s3.500-2 5.500 0 3.500-2 5.500 0 3-2 4.500-.5"/><circle cx="24" cy="25" r="6"/>',
+      dulces: '<circle cx="24" cy="24" r="8"/><path d="M16.500 20L8 14v20l8.500-6M31.500 20L40 14v20l-8.500-6"/><path d="M21 21c2 2 4 2 6 0"/>',
+      bebidas: '<path d="M20 5h8v8l4.500 6.500V41a3 3 0 0 1-3 3h-15a3 3 0 0 1-3-3V19.500L20 13z"/><path d="M15.500 27h17"/><path d="M15.500 35h17"/>',
+      otro: '<path d="M24 6l16 8v20l-16 8-16-8V14z"/><path d="M8 14l16 8 16-8M24 22v20"/>'
+    };
+    function clave(cat) {
+      var c = String(cat || '').toLowerCase();
+      if (/sopa|caldo|ramen/.test(c)) return 'sopas';
+      if (/snack|botana|papa|galleta/.test(c)) return 'snacks';
+      if (/dulce|chocolate|golosina/.test(c)) return 'dulces';
+      if (/bebida|refresco|jugo|agua|energ/.test(c)) return 'bebidas';
+      return 'otro';
     }
+    function dibujo(p) { return SVG_BASE + DIBUJOS[clave(p.categoria)] + '</svg>'; }
     function tieneFoto(p) { return !!(p.imagenUrl && /^https:\/\//i.test(p.imagenUrl)); }
     function arteProducto(p) {
-      if (!tieneFoto(p)) return tiendita.esc(iniciales(p.nombre));
-      return '<img class="product__foto" data-ini="' + tiendita.esc(iniciales(p.nombre)) + '" src="' + tiendita.esc(p.imagenUrl) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="var c=this.closest(\'.product__icon\');if(c){c.classList.add(\'product__icon--ini\');c.textContent=this.getAttribute(\'data-ini\')}">';
+      if (!tieneFoto(p)) return dibujo(p);
+      return '<img class="product__foto" data-svg="' + tiendita.esc(dibujo(p)) + '" src="' + tiendita.esc(p.imagenUrl) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="var c=this.closest(\'.product__icon\');if(c){c.classList.add(\'product__icon--ini\');c.innerHTML=this.getAttribute(\'data-svg\')}">';
     }
     function iconoPorNombre(p) {
       const n = (p.nombre || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');

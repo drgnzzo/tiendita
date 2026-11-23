@@ -49,3 +49,5 @@ Leer ESTADO.md. No editar relevo/PC2.md.
 
 ## 23-nov (cierre PC1, actualizado)
 - Ultimo cambio: catalogo sin foto muestra monograma (iniciales), SW v37. Resto igual que arriba. Correr TIENDITA.bat en PC2.
+
+- Actualizacion: catalogo sin foto usa dibujos de linea por categoria (SW v38). Correr TIENDITA.bat en PC2.
