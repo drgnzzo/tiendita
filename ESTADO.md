@@ -74,3 +74,7 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 ## Auditoría móvil (cierre de versión)
 - Revisión automática a 360/390/430/768 px: botones de al menos 44px, campos con letra de 16px (sin zoom en iPhone), nada fuera de pantalla, botón del chat movido a la izquierda para no tapar "Llevar".
 - Pendiente para la siguiente versión: probar en celular real, fotos de productos, deshacer venta, recordatorios por WhatsApp, exportar reportes, lo más pedido.
+
+## Revisión tras publicar (22/11 18:38)
+- Hallazgo: el panel publicado no traía la pestaña Auditoría (views-admin.js viejo). Corregido y con versión nueva (views-admin v9, sw v27); hace falta correr TIENDITA.bat otra vez.
+- Sheet sin errores en Logs. Las hojas Cortes_Inventario y Corte_Detalle se crean al hacer el primer corte.

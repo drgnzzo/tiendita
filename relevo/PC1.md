@@ -32,3 +32,5 @@ Leer ESTADO.md. No editar relevo/PC2.md.
 - Pendiente: TIENDITA.bat, probar corte real en el celular, revisar hojas nuevas en el Sheet.
 
 - Hecho: auditoría móvil automática y arreglos. Versión lista para publicar con TIENDITA.bat.
+
+- Revisión tras publicar: se corrigió views-admin.js que no había llegado. Pendiente: correr TIENDITA.bat de nuevo y probar Auditoría en el celular.

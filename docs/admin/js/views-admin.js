@@ -1,16 +1,17 @@
 import { api, newReqId } from './api.js';
 import { S, puede } from './state.js';
-import { html, raw, mount, on, $, $$, reiniciarRaiz, toast, ocupado, abrirHoja, confirmar, money, moneyShort, campo, errorCaja, vacio, copiarTexto, esc } from './ui.js';
+import { html, raw, mount, on, $, $$, reiniciarRaiz, toast, ocupado, abrirHoja, confirmar, money, moneyShort, campo, errorCaja, vacio, copiarTexto, esc, glifo } from './ui.js';
 
 const TITULOS = {
   resumen: ['Resumen', 'cómo va la tiendita'], inventario: ['Productos', 'lo que hay en el estante'], cobros: ['Cobros', 'quién debe y cuánto'],
-  reportes: ['Reportes', 'el mes en números'], usuarios: ['Usuarios', 'quién entra a la tiendita']
+  reportes: ['Reportes', 'el mes en números'], corte: ['Auditoría', 'contar todo y hacer un corte'], usuarios: ['Usuarios', 'quién entra a la tiendita']
 };
 const SUBS = [
   { id: 'resumen', nombre: 'Resumen', permiso: 'admin.resumen' },
   { id: 'inventario', nombre: 'Productos', permiso: 'inv.lista' },
   { id: 'cobros', nombre: 'Cobros', permiso: 'cobros.lista' },
   { id: 'reportes', nombre: 'Reportes', permiso: 'reporte.mes' },
+  { id: 'corte', nombre: 'Auditoría', permiso: 'corte.lista' },
     { id: 'usuarios', nombre: 'Usuarios', permiso: 'usr.lista', oculta: true }
 ];
 // Criterio de orden de todo el panel:
@@ -48,9 +49,12 @@ export async function renderAdmin(root, sub) {
     <div class="titulo"><h1>${(TITULOS[sub] || TITULOS.resumen)[0]}</h1><span>${(TITULOS[sub] || TITULOS.resumen)[1]}</span></div>
     <div id="admin-cuerpo"></div>`);
   const cuerpo = $('#admin-cuerpo', root);
-  const vistas = { resumen: vResumen, inventario: vInventario, productos: vInventario, cobros: vCobros, reportes: vReportes, usuarios: vUsuarios };
+  const vistas = { resumen: vResumen, inventario: vInventario, productos: vInventario, cobros: vCobros, reportes: vReportes, corte: vCorte, usuarios: vUsuarios };
   recargar = () => { cacheProds = null; precargar(); return renderAdmin($('#vista'), sub); };
   precargar();
+  activarPlegado(root, cuerpo);
+  const actual = $('.subnav [aria-current="page"]', root);
+  if (actual && actual.scrollIntoView) actual.scrollIntoView({ inline: 'center', block: 'nearest' });
   await vistas[sub](cuerpo);
 }
 
@@ -144,7 +148,7 @@ async function vInventario(c) {
       ${puede('prod.guardar') ? html`<button class="btn btn--suave" data-a="nuevo-prod">Nuevo producto</button>` : ''}
     </div>
     <div id="inv-lista"></div>
-    <p class="pie-lista"><button class="link" data-a="conteo">Contar todo el inventario</button></p>`);
+    <p class="pie-lista"><a class="link" href="#/admin/corte">Hacer un corte de inventario</a></p>`);
   const pintarProductos = () => {
     const q = invFiltro.trim().toLowerCase();
     const visibles = prods.filter((p) => !q || (p.nombre + p.categoria + p.sku).toLowerCase().includes(q));
@@ -158,7 +162,7 @@ async function vInventario(c) {
           <span class="stock-grande ${p.stock === 0 ? 'stock-grande--cero' : bajo ? 'stock-grande--bajo' : ''}" aria-label="Hay ${p.stock}">${p.stock}</span>
           <div class="fila-admin__texto">
             <div class="fila-admin__nombre">${p.nombre} ${p.activo ? '' : html`<span class="sello">Oculto</span>`} ${p.stock === 0 ? html`<span class="sello sello--rojo">Agotado</span>` : bajo ? html`<span class="sello">Quedan pocas</span>` : ''}</div>
-            <div class="fila-admin__meta num">${p.categoria} · precio ${money(p.precio)} · costo ${money(p.costo)} · vendió ${p.vendido30} en 30 días</div>
+            <div class="fila-admin__meta num">${p.categoria} · precio ${money(p.precio)}<span class="solo-pc"> · costo ${money(p.costo)} · vendió ${p.vendido30} en 30 días</span></div>
           </div>
           <div class="fila-admin__acc">
             <button class="btn btn--suave btn--chico" data-a="entrada" data-sku="${p.sku}">+ Sumar</button>
@@ -175,13 +179,12 @@ async function vInventario(c) {
   on(c, 'click', '[data-a="entrada"]', (b) => abrirEntrada({ sku: b.dataset.sku }));
   on(c, 'click', '[data-a="ajuste"]', (b) => abrirAjuste(prods.find((p) => p.sku === b.dataset.sku)));
   on(c, 'click', '[data-a="editar"]', (b) => formProducto(prods.find((p) => p.sku === b.dataset.sku), cats));
-  on(c, 'click', '[data-a="conteo"]', () => abrirConteo(prods.filter((p) => p.activo)));
   on(c, 'click', '[data-a="nuevo-prod"]', () => nuevoProducto());
 }
 
 function listaMovimientos(movs) {
   if (movs.length === 0) return vacio('Todavía no hay movimientos');
-  const clase = { ENTRADA: 'sello--ok', VENTA: '', AJUSTE: 'sello--rojo', CONTEO: 'sello--tinta', INICIAL: '' };
+  const clase = { ENTRADA: 'sello--ok', VENTA: '', AJUSTE: 'sello--rojo', CONTEO: 'sello--tinta', CORTE: 'sello--tinta', INICIAL: '' };
   return html`${movs.map((m) => html`
     <div class="renglon">
       <div><strong>${m.producto}</strong><br><small>${m.fecha}${m.usuario ? ' · ' + m.usuario : ''}${m.notas ? ' · ' + m.notas : ''}${m.proveedor ? ' · ' + m.proveedor : ''}</small></div>
@@ -699,7 +702,7 @@ async function vUsuarios(c) {
   const us = r.usuarios.slice().sort((a, b) => (b.activo - a.activo) || porNombre(a, b));
   mount(c, html`
     <div class="acciones-barra"><button class="btn btn--rojo" data-a="nuevo">Nuevo usuario</button></div>
-    <p class="suave" style="margin-bottom:6px"><strong>Cliente</strong> compra y ve su cuenta. <strong>Operador</strong> además maneja inventario y cobros. <strong>Admin</strong> puede todo.</p>
+    <details class="ayuda"><summary>¿Qué hace cada rol?</summary><p class="suave"><strong>Cliente</strong> compra y ve su cuenta. <strong>Operador</strong> además maneja inventario y cobros. <strong>Admin</strong> puede todo.</p></details>
     ${us.map((u) => html`
       <div class="fila-admin fila-admin--apilada" ${u.activo ? '' : raw('style="opacity:.55"')}>
         <div>
@@ -769,5 +772,221 @@ function formUsuario(u) {
     if (!res.ok) { caja.textContent = res.error; return; }
     h.cerrar(); recargar();
     if (res.pinTemporal) mostrarPin(nombre, res.pinTemporal); else toast(res.mensaje);
+  });
+}
+
+
+// ====================== ACCIONES PLEGADAS (celular) ======================
+// En cada fila con varios botones, el principal se queda a la vista y el resto pasa al menú ⋯.
+// En computadora todo se ve igual que siempre (el CSS solo esconde los secundarios en celular).
+function plegarAcciones(root) {
+  $$('.fila-admin__acc:not([data-mas])', root).forEach((acc) => {
+    acc.setAttribute('data-mas', '1');
+    const bs = $$(':scope > button', acc);
+    if (bs.length < 2) return;
+    const prim = bs.find((b) => b.classList.contains('btn--rojo')) || bs[0];
+    bs.forEach((b) => { if (b !== prim) b.classList.add('sec'); });
+    const m = document.createElement('button');
+    m.type = 'button'; m.className = 'btn btn--suave btn--chico mas-btn';
+    m.setAttribute('aria-label', 'Más acciones'); m.textContent = '⋯';
+    acc.appendChild(m);
+  });
+}
+function activarPlegado(root, cuerpo) {
+  let pendiente = false;
+  new MutationObserver(() => {
+    if (pendiente) return;
+    pendiente = true;
+    requestAnimationFrame(() => { pendiente = false; plegarAcciones(cuerpo); });
+  }).observe(cuerpo, { childList: true, subtree: true });
+  on(root, 'click', '.mas-btn', (b) => {
+    const acc = b.parentElement;
+    const sec = $$(':scope > .sec', acc);
+    const nombre = b.closest('.fila-admin').querySelector('.fila-admin__nombre');
+    const h = abrirHoja({
+      titulo: nombre ? (nombre.firstChild ? nombre.firstChild.textContent.trim() : 'Acciones') || 'Acciones' : 'Acciones', ancho: 'chica',
+      cuerpo: html`<div class="menu-acc">${sec.map((x, i) => html`<button class="btn btn--suave" data-i="${i}">${x.textContent}</button>`)}</div>`
+    });
+    on(h.cuerpo, 'click', '[data-i]', (x) => { h.cerrar(); sec[Number(x.dataset.i)].click(); });
+  });
+}
+
+// ====================== CORTE DE INVENTARIO ======================
+
+async function vCorte(c) {
+  mount(c, cargando());
+  const r = await api('corte.lista');
+  if (!r.ok) { mount(c, errorCaja(r.error)); return; }
+  mount(c, html`
+    <div class="acciones-barra"><button class="btn btn--rojo" data-a="nuevo-corte">Hacer corte de inventario</button></div>
+    <details class="ayuda"><summary>¿Cómo funciona?</summary>
+      <ol class="pasos">
+        <li>Cuentas lo que hay de verdad en la tienda y lo escribes aquí.</li>
+        <li>El inventario queda igual a lo que contaste. La tienda sigue desde ahí.</li>
+        <li>En el Sheet se guarda lo que había contra lo que hay (hojas Cortes_Inventario y Corte_Detalle).</li>
+        <li>Lo que faltó lo cobras a una persona o lo absorbe la tienda.</li>
+      </ol></details>
+    ${r.cortes.length === 0 ? vacio('Aún no hay cortes de inventario', 'Cuando hagas el primero, aquí verás lo que faltó y a quién se le cobró.') : r.cortes.map((k) => html`
+      <div class="fila-admin">
+        <div>
+          <div class="fila-admin__nombre">${k.fecha} ${k.pendientePiezas > 0 ? html`<span class="sello sello--rojo">Por repartir ${k.pendientePiezas}</span>` : html`<span class="sello sello--ok">Repartido</span>`}</div>
+          <div class="fila-admin__meta num">Revisó ${k.revisados} · faltaron ${k.faltantePiezas} (${money(k.faltanteCosto)} al costo) · sobraron ${k.sobrantePiezas}</div>
+        </div>
+        <div class="fila-admin__acc"><button class="btn btn--suave btn--chico" data-a="ver-corte" data-id="${k.id}">Ver</button></div>
+      </div>`)}`);
+  on(c, 'click', '[data-a="nuevo-corte"]', async (b) => {
+    const p = await ocupado(b, 'Cargando…', () => api('inv.lista'));
+    if (!p.ok) { toast(p.error, 'error'); return; }
+    abrirCorte(p.productos.filter((x) => x.activo));
+  });
+  on(c, 'click', '[data-a="ver-corte"]', (b) => verCorte(r.cortes.find((k) => k.id === b.dataset.id)));
+}
+
+function abrirCorte(prods) {
+  const reqId = newReqId();
+  const lista = prods.slice().sort(porSeccion);
+  const h = abrirHoja({
+    titulo: 'Corte de inventario', ancho: 'ancha',
+    cuerpo: html`
+      <form id="form-corte" novalidate>
+        <p class="texto">Escribe cuántas piezas hay de verdad. Lo que dejes vacío no se toca.</p>
+        <div class="barra-corte">
+          <span class="sello" id="corte-prog"></span>
+          <button class="btn btn--suave btn--chico" type="button" id="corte-igual">Lo vacío está bien</button>
+        </div>
+        <div class="error-form" id="corte-error" role="alert"></div>
+        ${agrupar(lista).map((g) => html`
+          <h3 class="seccion-corte">${glifo(g.cat)} ${g.cat}</h3>
+          ${g.items.map((p) => html`
+            <div class="fila-admin fila-admin--corte">
+              <div><div class="fila-admin__nombre">${p.nombre}</div><div class="fila-admin__meta num">En el sistema: ${p.stock}</div></div>
+              <div class="fila-admin__acc tabla-conteo"><label class="solo-lector" for="k-${p.sku}">Cuántos hay de ${p.nombre}</label>
+                <input id="k-${p.sku}" data-sku="${p.sku}" data-sis="${p.stock}" type="number" inputmode="numeric" min="0" step="1" placeholder="—">
+                <span class="sello" data-dif></span></div>
+            </div>`)}`)}
+        <div class="campo"><label for="corte-notas">Nota (opcional)</label><input id="corte-notas" maxlength="200" placeholder="Por ejemplo: corte de fin de mes"></div>
+        <div class="acciones"><button class="btn btn--suave" type="button" data-cerrar>Cancelar</button><button class="btn btn--rojo" type="submit">Revisar y cerrar</button></div>
+      </form>`
+  });
+  const entradas = () => $$('[data-sku]', h.el);
+  const progreso = () => {
+    const n = entradas().filter((i) => i.value !== '').length;
+    $('#corte-prog', h.el).textContent = 'Contados ' + n + ' de ' + lista.length;
+  };
+  progreso();
+  h.el.addEventListener('input', (e) => {
+    const i = e.target.closest('[data-sku]'); if (!i) return;
+    const tag = i.parentElement.querySelector('[data-dif]');
+    if (i.value === '') { tag.textContent = ''; tag.className = 'sello'; }
+    else {
+      const d = Number(i.value) - Number(i.dataset.sis);
+      tag.textContent = d === 0 ? 'igual' : (d > 0 ? '+' : '') + d;
+      tag.className = 'sello ' + (d === 0 ? 'sello--ok' : 'sello--rojo');
+    }
+    progreso();
+  });
+  $('#corte-igual', h.el).addEventListener('click', () => {
+    entradas().forEach((i) => { if (i.value === '') { i.value = i.dataset.sis; i.dispatchEvent(new Event('input', { bubbles: true })); } });
+  });
+  $('#form-corte', h.el).addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const caja = $('#corte-error', h.el); caja.textContent = '';
+    const conteos = entradas().filter((i) => i.value !== '').map((i) => ({ sku: i.dataset.sku, real: Number(i.value), sis: Number(i.dataset.sis) }));
+    if (conteos.length === 0) { caja.textContent = 'No escribiste ningún conteo.'; return; }
+    if (conteos.some((x) => !(x.real >= 0) || Math.floor(x.real) !== x.real)) { caja.textContent = 'Los conteos deben ser números enteros.'; return; }
+    const falta = conteos.filter((x) => x.real < x.sis).reduce((t, x) => t + x.sis - x.real, 0);
+    const sobra = conteos.filter((x) => x.real > x.sis).reduce((t, x) => t + x.real - x.sis, 0);
+    const vacios = lista.length - conteos.length;
+    const ok = await confirmar({
+      titulo: 'Cerrar el corte',
+      mensaje: 'Contaste ' + conteos.length + ' de ' + lista.length + ' productos' + (vacios ? ' (' + vacios + ' sin contar no se tocan)' : '') + '. ' +
+        'Faltan ' + falta + ' piezas y sobran ' + sobra + '. El inventario quedará igual a lo que contaste y no se puede deshacer.',
+      si: 'Cerrar corte'
+    });
+    if (!ok) return;
+    const btn = e.submitter || $('button[type=submit]', h.el);
+    const notas = $('#corte-notas', h.el).value.trim();
+    const res = await ocupado(btn, 'Guardando…', () => api('corte.cerrar', { conteos: conteos.map((x) => ({ sku: x.sku, real: x.real })), notas, reqId }));
+    if (!res.ok) { caja.textContent = res.error; return; }
+    h.cerrar(); toast(res.mensaje);
+    recargar();
+    if (res.faltantePiezas > 0) verCorte({ id: res.id, fecha: 'Corte de hoy', faltantePiezas: res.faltantePiezas, sobrantePiezas: res.sobrantePiezas, faltanteCosto: res.faltanteCosto });
+  });
+}
+
+// Detalle de un corte: lo que faltó y a quién se le cobra.
+async function verCorte(k) {
+  const h = abrirHoja({ titulo: k.fecha || 'Corte', ancho: 'ancha', cuerpo: cargando() });
+  let usuarios = null;
+  let filasActuales = [];
+  const pintar = async () => {
+    const r = await api('corte.detalle', { id: k.id });
+    if (!r.ok) { mount(h.cuerpo, errorCaja(r.error)); return; }
+    filasActuales = r.filas;
+    const falt = r.filas.filter((f) => f.diff < 0).sort(porSeccion2);
+    const sobr = r.filas.filter((f) => f.diff > 0).sort(porSeccion2);
+    mount(h.cuerpo, html`
+      ${falt.length === 0 ? vacio('No faltó nada', 'Todo lo contado coincide o sobró.') : html`
+        <h3 class="seccion-corte">Lo que faltó</h3>
+        ${falt.map((f) => html`
+          <div class="fila-admin">
+            <div>
+              <div class="fila-admin__nombre">${f.producto} ${f.pendiente > 0 ? html`<span class="sello sello--rojo">Falta repartir ${f.pendiente}</span>` : html`<span class="sello sello--ok">Repartido</span>`}</div>
+              <div class="fila-admin__meta num">Había ${f.sistema}, hay ${f.real} · faltaron ${-f.diff} (${money(-f.diff * f.precio)} a precio de venta)${f.cobradoA ? ' · cobrado a ' + f.cobradoA : ''}${f.absorbida ? ' · tienda absorbió ' + f.absorbida : ''}</div>
+            </div>
+            ${f.pendiente > 0 ? html`<div class="fila-admin__acc">
+              <button class="btn btn--rojo btn--chico" data-a="cobrar-f" data-sku="${f.sku}">Cobrar a…</button>
+              <button class="btn btn--suave btn--chico" data-a="absorber-f" data-sku="${f.sku}">La tienda lo absorbe</button></div>` : ''}
+          </div>`)}`}
+      ${sobr.length ? html`<h3 class="seccion-corte">Lo que sobró</h3>${sobr.map((f) => html`
+        <div class="renglon"><div>${f.producto}</div><div class="num">${f.sistema} → <strong>${f.real}</strong> (+${f.diff})</div></div>`)}` : ''}
+      <div class="acciones"><button class="btn btn--rojo" data-cerrar>Listo</button></div>`);
+  };
+  on(h.cuerpo, 'click', '[data-a="cobrar-f"]', async (b) => {
+    if (!usuarios) { const u = await api('usr.lista'); if (!u.ok) { toast(u.error, 'error'); return; } usuarios = u.usuarios.filter((x) => x.activo).sort(porNombre); }
+    cobrarFaltante(k.id, filasActuales.find((f) => f.sku === b.dataset.sku), usuarios, pintar);
+  });
+  on(h.cuerpo, 'click', '[data-a="absorber-f"]', async (b) => {
+    const f = filasActuales.find((x) => x.sku === b.dataset.sku);
+    const cant = f.pendiente;
+    const ok = await confirmar({ titulo: 'La tienda lo absorbe', mensaje: 'Se quedan como pérdida de la tienda ' + cant + ' de ' + f.producto + '. No se le cobra a nadie.', si: 'Sí, absorber' });
+    if (!ok) return;
+    const res = await api('corte.asignar', { idCorte: k.id, sku: f.sku, modo: 'absorber', cantidad: cant, reqId: newReqId() });
+    if (!res.ok) { toast(res.error, 'error'); return; }
+    toast(res.mensaje); pintar(); recargar();
+  });
+  pintar();
+}
+const porSeccion2 = (a, b) => (rangoCat(a.categoria) - rangoCat(b.categoria)) || a.producto.localeCompare(b.producto, 'es');
+
+function cobrarFaltante(idCorte, f, usuarios, alTerminar) {
+  const reqId = newReqId();
+  const h = abrirHoja({
+    titulo: 'Cobrar ' + f.producto, ancho: 'chica',
+    cuerpo: html`
+      <form id="form-falt" novalidate>
+        <p class="texto">Faltan por repartir <strong class="num">${f.pendiente}</strong>. Cada una se cobra a <strong class="num">${money(f.precio)}</strong> y se suma a la deuda de la persona.</p>
+        <div class="error-form" id="falt-error" role="alert"></div>
+        <div class="campo"><label for="falt-quien">¿A quién se le cobra?</label>
+          <select id="falt-quien"><option value="">Elige a una persona…</option>
+            ${usuarios.map((u) => html`<option value="${u.correo}">${u.nombre} · debe ${money(u.deuda)}</option>`)}</select></div>
+        <div class="campo"><label for="falt-n">¿Cuántas piezas?</label>
+          <input id="falt-n" type="number" inputmode="numeric" min="1" max="${f.pendiente}" step="1" value="${f.pendiente}"></div>
+        <p class="suave" id="falt-total" style="margin:0 0 12px"></p>
+        <div class="acciones"><button class="btn btn--suave" type="button" data-cerrar>Cancelar</button><button class="btn btn--rojo" type="submit">Cobrar</button></div>
+      </form>`
+  });
+  const total = () => { const n = Number($('#falt-n', h.el).value) || 0; $('#falt-total', h.el).textContent = n > 0 ? 'Se cobran ' + money(n * f.precio) + '.' : ''; };
+  h.el.addEventListener('input', total); total();
+  $('#form-falt', h.el).addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const caja = $('#falt-error', h.el); caja.textContent = '';
+    const correo = $('#falt-quien', h.el).value, n = Number($('#falt-n', h.el).value);
+    if (!correo) { caja.textContent = 'Elige a quién se le cobra.'; return; }
+    if (!(n >= 1) || Math.floor(n) !== n || n > f.pendiente) { caja.textContent = 'Pon un número entre 1 y ' + f.pendiente + '.'; return; }
+    const btn = e.submitter || $('button[type=submit]', h.el);
+    const res = await ocupado(btn, 'Guardando…', () => api('corte.asignar', { idCorte, sku: f.sku, modo: 'cobrar', correo, cantidad: n, reqId }));
+    if (!res.ok) { caja.textContent = res.error; return; }
+    h.cerrar(); toast(res.mensaje); alTerminar(); recargar();
   });
 }
