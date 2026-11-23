@@ -34,3 +34,5 @@ Leer ESTADO.md. No editar relevo/PC2.md.
 - Hecho: auditoría móvil automática y arreglos. Versión lista para publicar con TIENDITA.bat.
 
 - Revisión tras publicar: se corrigió views-admin.js que no había llegado. Pendiente: correr TIENDITA.bat de nuevo y probar Auditoría en el celular.
+
+- Hecho: paleta perla y rosa empolvado. Pendiente: correr TIENDITA.bat (también sube la pestaña Auditoría) y probar.

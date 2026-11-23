@@ -78,3 +78,6 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 ## Revisión tras publicar (22/11 18:38)
 - Hallazgo: el panel publicado no traía la pestaña Auditoría (views-admin.js viejo). Corregido y con versión nueva (views-admin v9, sw v27); hace falta correr TIENDITA.bat otra vez.
 - Sheet sin errores en Logs. Las hojas Cortes_Inventario y Corte_Detalle se crean al hacer el primer corte.
+
+## Paleta "Perla y rosa empolvado" (22/11 19:30)
+- Blancos con tinte rosado (perla #F8ECEE), rosa empolvado #C98A9B en bordes y botones secundarios, bruma vino en el fondo del panel, un solo foco durazno #F7B29A (p. ej. "Por cobrar"), destellos azul hielo #EAF6FF en el brillo. Sigue sin morado. styles v19, app.css v18, sw v28.

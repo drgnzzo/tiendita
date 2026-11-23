@@ -1361,3 +1361,17 @@ body::before { background: radial-gradient(40vmax 40vmax at 12% 8%, rgba(255,95,
   .bot-fab { right: auto; left: 12px; }
 }
 @media (max-width: 380px) { .app-header__heart { display: none; } }
+
+/* ---------- PERLA Y ROSA EMPOLVADO: blancos con tinte rosado, un foco durazno, destellos fríos ---------- */
+:root {
+  --blanco: #F8ECEE;  --crema: #F2DFE3;
+  --grad-bg:   linear-gradient(180deg, #F6E7EA 0%, #E9C9D1 100%);
+  --grad-card: linear-gradient(180deg, #FBF1F3 0%, #F1DADF 100%);
+  --rosa-soft: #F0CBD6;  --rosa-cream: #F7DCD3;  --gris-claro: #EBD8DD;
+  --warn: #F7B29A;  --warn-text: #4A1D12;
+  --polvo: #C98A9B;  --hielo: #EAF6FF;  --gris: #66464D;
+}
+html { background: #E9C9D1; }
+body::before { background: radial-gradient(40vmax 40vmax at 12% 8%, rgba(201,138,155,.34), transparent 60%), radial-gradient(46vmax 46vmax at 92% 88%, rgba(255,95,162,.20), transparent 62%), radial-gradient(30vmax 30vmax at 70% 20%, rgba(247,178,154,.28), transparent 60%); }
+.pill--blanca { background: #F8ECEE; color: #5B1624; border-color: #F8ECEE; }
+.app-header::after { background: linear-gradient(100deg, transparent, rgba(234,246,255,.42), transparent); }

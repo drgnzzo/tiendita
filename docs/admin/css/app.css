@@ -321,3 +321,21 @@ details.ayuda p { margin: 4px 0 8px; }
   .btn--chico, .salir { min-height: 44px; }
   details.ayuda summary { min-height: 44px; }
 }
+
+/* ---------- PERLA Y ROSA EMPOLVADO (panel): bruma vino, bordes rosa empolvado, un foco durazno ---------- */
+:root {
+  --texto: #F8ECEE; --texto-2: #E0BFC7;
+  --borde: #B67C8C;
+  --warn: #F7B29A; --warn-t: #4A1D12;
+  --g-fondo: linear-gradient(180deg, #431B27 0%, #2A0E15 70%, #240B11 100%);
+  --g-card: linear-gradient(180deg, #52242F 0%, #431B25 100%);
+  --polvo: #C98A9B; --hielo: #EAF6FF;
+}
+html { background: #240B11; }
+body::before { background: radial-gradient(46vmax 46vmax at 90% 6%, rgba(201,138,155,.34), transparent 62%), radial-gradient(40vmax 40vmax at 8% 92%, rgba(255,95,162,.18), transparent 60%), radial-gradient(28vmax 28vmax at 60% 40%, rgba(247,178,154,.10), transparent 60%); }
+.caja > div.destacada { background: linear-gradient(135deg, #F9BBA4 0%, #EE947F 100%); border-color: #F7B29A; }
+.caja > div.destacada strong, .caja > div.destacada span { color: #3A1118; }
+.cabecera::after { background: linear-gradient(100deg, transparent, rgba(234,246,255,.34), transparent); }
+.btn--rojo::after, .btn--suave::after { background: linear-gradient(110deg, transparent 30%, rgba(234,246,255,.5) 50%, transparent 70%); }
+.btn--suave { border-color: var(--polvo); color: var(--texto); }
+.stock-grande--bajo { background: var(--warn); color: #4A1D12; border-color: var(--warn); }
