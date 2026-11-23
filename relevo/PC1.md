@@ -46,3 +46,6 @@ Leer ESTADO.md. No editar relevo/PC2.md.
 - Hecho: botón Color toggle (solo globo), logo redondo rehecho, panel Perla suave, catálogo en columnas sin emojis/fotos genéricas, reglas de orden (Mi cuenta, nombres Auditoría/Corte, sin cursiva). Último commit 8b3a924, SW v36. Pruebas: 94 ok.
 - Pendiente: correr TIENDITA.bat en PC2 (sube todo) y revisar en celular. Siguiente bloque: 5 tamaños de letra, ordenar Reportes, revisar atajos repetidos Resumen/Cobros. Fotos de productos (quitar fondo 600x600): sin hacer, versión simple si se pide.
 - Continuar: leer ESTADO.md; si cambias styles.css/app.css regenerar Diamante con tools/generar_tema_diamante.py.
+
+## 23-nov (cierre PC1, actualizado)
+- Ultimo cambio: catalogo sin foto muestra monograma (iniciales), SW v37. Resto igual que arriba. Correr TIENDITA.bat en PC2.

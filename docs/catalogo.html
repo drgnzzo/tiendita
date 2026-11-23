@@ -10,8 +10,8 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" type="image/png" href="./logo-192.png?v=2">
   <link rel="apple-touch-icon" href="./logo-180.png?v=2">
-  <link rel="stylesheet" href="./styles.css?v=23" data-tema-css="perla">
-  <link rel="stylesheet" href="./styles-diamante.css?v=23" data-tema-css="diamante" media="not all">
+  <link rel="stylesheet" href="./styles.css?v=24" data-tema-css="perla">
+  <link rel="stylesheet" href="./styles-diamante.css?v=24" data-tema-css="diamante" media="not all">
   <script src="./tema.js?v=3"></script>
 </head>
 <body>
@@ -243,7 +243,7 @@
         return `
           <div class="product">
             ${badge}
-            ${tieneFoto(p) ? '<div class="product__icon product__icon--' + iconColor + '">' + arteProducto(p) + '</div>' : ''}
+            <div class="product__icon product__icon--${iconColor}${tieneFoto(p) ? '' : ' product__icon--ini'}">${arteProducto(p)}</div>
             <div class="product__info">
               <div class="product__name">${tiendita.esc(p.nombre)}</div>
               <div class="product__meta ${metaCls}">${metaTxt}</div>
@@ -277,10 +277,16 @@
     }
 
     // Solo foto real del producto (Imagen_URL). Sin foto: no se muestra nada (ni emoji ni imagen genérica).
+    // Sin foto: monograma (iniciales del producto), sobrio y sin emojis ni imágenes genéricas.
+    function iniciales(nombre) {
+      var w = String(nombre || '').replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 ]/g, ' ').trim().split(/\s+/).filter(Boolean);
+      if (!w.length) return '·';
+      return (w[0].charAt(0) + (w[1] ? w[1].charAt(0) : '')).toUpperCase();
+    }
     function tieneFoto(p) { return !!(p.imagenUrl && /^https:\/\//i.test(p.imagenUrl)); }
     function arteProducto(p) {
-      if (!tieneFoto(p)) return '';
-      return '<img class="product__foto" src="' + tiendita.esc(p.imagenUrl) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="var c=this.closest(\'.product__icon\');if(c)c.remove()">';
+      if (!tieneFoto(p)) return tiendita.esc(iniciales(p.nombre));
+      return '<img class="product__foto" data-ini="' + tiendita.esc(iniciales(p.nombre)) + '" src="' + tiendita.esc(p.imagenUrl) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="var c=this.closest(\'.product__icon\');if(c){c.classList.add(\'product__icon--ini\');c.textContent=this.getAttribute(\'data-ini\')}">';
     }
     function iconoPorNombre(p) {
       const n = (p.nombre || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');

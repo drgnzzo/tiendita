@@ -101,3 +101,5 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - Logica: Mi cuenta pone la deuda como protagonista; "Registrar compra" ya no se repite en Reportes (vive en Resumen y Productos).
 - Retorica: subtitulos en letra normal y gris, no cursiva. SW v36.
 - Pendiente (siguiente bloque): escala de 5 tamaños de letra, Reportes en secciones/pestanas, revisar Resumen vs Cobros (atajos duplicados).
+
+- Catalogo sin foto: monograma con iniciales (sin emojis ni imagen generica). SW v37.
