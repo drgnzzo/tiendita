@@ -81,3 +81,9 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 
 ## Paleta "Perla y rosa empolvado" (22/11 19:30)
 - Blancos con tinte rosado (perla #F8ECEE), rosa empolvado #C98A9B en bordes y botones secundarios, bruma vino en el fondo del panel, un solo foco durazno #F7B29A (p. ej. "Por cobrar"), destellos azul hielo #EAF6FF en el brillo. Sigue sin morado. styles v19, app.css v18, sw v28.
+
+## Estilos de color: Perla y Diamante (22-nov)
+- Botón "Color" arriba en login, catálogo, Mi cuenta y panel admin (docs/tema.js). Elige Perla (rosa y vino) o Diamante (azul acero y marino, inspirado en Dialga).
+- Preferencia guardada en el dispositivo (localStorage `tiendita.tema` y `tiendita.tema.u.<correo>`), no en el Sheet.
+- Diamante se genera desde Perla: `python tools/generar_tema_diamante.py <carpeta>` -> styles-diamante.css y admin/css/app-diamante.css. Regenerar cada vez que cambie styles.css o app.css.
+- Sin morado. SW tiendita-v29. Pruebas: 94 ok.

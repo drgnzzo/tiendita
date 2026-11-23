@@ -36,3 +36,8 @@ Leer ESTADO.md. No editar relevo/PC2.md.
 - Revisión tras publicar: se corrigió views-admin.js que no había llegado. Pendiente: correr TIENDITA.bat de nuevo y probar Auditoría en el celular.
 
 - Hecho: paleta perla y rosa empolvado. Pendiente: correr TIENDITA.bat (también sube la pestaña Auditoría) y probar.
+
+## 22-nov (tema Diamante)
+- Hecho: botón Color (Perla/Diamante) en todas las pantallas; encabezado angosto corregido.
+- Pendiente: correr TIENDITA.bat, revisar en celular real y mandar capturas.
+- Continuar: si cambias styles.css/app.css, regenerar Diamante con tools/generar_tema_diamante.py.

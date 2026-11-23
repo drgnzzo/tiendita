@@ -82,11 +82,13 @@ function armarMarco() {
         ${enlaces}
         <div class="cabecera__der">
           <span class="yo">${S.usuario.nombre}</span>
+          <span data-tema-boton></span>
           <button class="salir" data-act="salir">Salir</button>
         </div>
       </div>
     </header>
     <main class="pagina" id="vista" tabindex="-1"></main>`);
+  if (window.TiendiTema) window.TiendiTema.montar();
 }
 
 async function dibujar() {

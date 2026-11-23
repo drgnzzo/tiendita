@@ -1375,3 +1375,13 @@ html { background: #E9C9D1; }
 body::before { background: radial-gradient(40vmax 40vmax at 12% 8%, rgba(201,138,155,.34), transparent 60%), radial-gradient(46vmax 46vmax at 92% 88%, rgba(255,95,162,.20), transparent 62%), radial-gradient(30vmax 30vmax at 70% 20%, rgba(247,178,154,.28), transparent 60%); }
 .pill--blanca { background: #F8ECEE; color: #5B1624; border-color: #F8ECEE; }
 .app-header::after { background: linear-gradient(100deg, transparent, rgba(234,246,255,.42), transparent); }
+
+/* Encabezado angosto: que Deuda, Color y Salir quepan siempre */
+@media (max-width: 430px) {
+  .app-header { padding-left: 10px; padding-right: 10px; gap: 6px; }
+  .app-header__heart { display: none; }
+  .app-header__name { font-size: 1.05rem; letter-spacing: .08em; }
+  .app-header__logo { width: 34px; height: 34px; }
+  .app-header__actions { gap: 6px; flex-shrink: 0; }
+  .app-header__actions .pill { padding-left: 10px; padding-right: 10px; }
+}

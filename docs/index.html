@@ -11,9 +11,12 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" type="image/png" href="./logo-192.png">
   <link rel="apple-touch-icon" href="./logo-180.png">
-  <link rel="stylesheet" href="./styles.css?v=19">
+  <link rel="stylesheet" href="./styles.css?v=20" data-tema-css="perla">
+  <link rel="stylesheet" href="./styles-diamante.css?v=20" data-tema-css="diamante" media="not all">
+  <script src="./tema.js?v=1"></script>
 </head>
 <body>
+  <span data-tema-boton data-flotante></span>
 
   <div class="login">
 
@@ -106,9 +109,11 @@
           localStorage.setItem('tiendita.sesion.v2', JSON.stringify({ token: res.token, usuario: res.usuario, permisos: res.permisos || [] }));
         } catch (_) {}
         try { tiendita.setSession(res.usuario); } catch (_) {}
+        try { TiendiTema.alEntrar(res.usuario.correo); } catch (_) {}
         window.location.href = './admin/';
       } else if (res.ok) {
         tiendita.setSession(res.usuario);
+        try { TiendiTema.alEntrar(res.usuario.correo); } catch (_) {}
         window.location.href = './catalogo.html';
       } else {
         showError(res.error || 'No se pudo iniciar sesión.');
