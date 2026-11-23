@@ -125,37 +125,12 @@
     var btn = doc.createElement('button');
     btn.type = 'button';
     btn.className = 'tema__btn';
-    btn.setAttribute('aria-haspopup', 'true');
-    btn.setAttribute('aria-expanded', 'false');
     btn.innerHTML = '<span class="tema__dot" aria-hidden="true"></span><span class="tema__txt">Color</span>';
-    var menu = doc.createElement('div');
-    menu.className = 'tema__menu';
-    menu.setAttribute('role', 'menu');
-    menu.hidden = true;
-    var html = '<p class="tema__tit">Elige tu color</p>';
-    TEMAS.forEach(function (t) {
-      html += '<button type="button" class="tema__op" role="menuitemradio" data-id="' + t.id + '">' +
-        '<span class="tema__dot" aria-hidden="true" style="background:' + dot(t) + '"></span>' +
-        '<span>' + t.nombre + '<small>' + t.nota + '</small></span><span class="tema__ok" aria-hidden="true">✓</span></button>';
-    });
-    menu.innerHTML = html;
     cont.appendChild(btn);
-    doc.body.appendChild(menu);       // el menú va en <body>: ningún encabezado lo recorta
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
-      if (abierto && abierto.menu === menu) cerrarMenu(false); else abrirMenu(btn, menu);
-    });
-    menu.addEventListener('click', function (e) {
-      var op = e.target.closest ? e.target.closest('.tema__op') : null;
-      if (!op) return;
-      elegir(op.getAttribute('data-id'));
-      cerrarMenu(true);
-    });
-    menu.addEventListener('keydown', function (e) {
-      var ops = Array.prototype.slice.call(menu.querySelectorAll('.tema__op'));
-      var i = ops.indexOf(doc.activeElement);
-      if (e.key === 'ArrowDown') { e.preventDefault(); ops[(i + 1) % ops.length].focus(); }
-      else if (e.key === 'ArrowUp') { e.preventDefault(); ops[(i - 1 + ops.length) % ops.length].focus(); }
+      var otro = TEMAS.filter(function (t) { return t.id !== actual.id; })[0] || TEMAS[0];
+      elegir(otro.id);
     });
     return cont;
   }
@@ -167,6 +142,7 @@
       if (!b) continue;
       b.querySelector('.tema__dot').style.background = dot(actual);
       b.setAttribute('aria-label', 'Cambiar color. Ahora: ' + actual.nombre);
+      b.querySelector('.tema__txt').textContent = actual.nombre;
       b.title = 'Color: ' + actual.nombre;
     }
     var ops = doc.querySelectorAll('.tema__op');
