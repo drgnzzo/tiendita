@@ -89,3 +89,5 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - Sin morado. SW tiendita-v29. Pruebas: 94 ok.
 
 - Logo rehecho desde _orig_tmp/logo.png: aro completo y redondo (antes venia recortado). Archivos docs/logo-*.png y docs/admin/img/logo-*.png, refs con ?v=2, sw v31.
+
+- Boton Color solo globo (sin texto). Contraste revisado en ambos estilos (script titles, saludo, corazon). sw v32.

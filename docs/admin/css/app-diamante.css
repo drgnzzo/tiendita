@@ -340,3 +340,6 @@ body::before { background: radial-gradient(46vmax 46vmax at 90% 6%, rgba(143,166
 .btn--rojo::after, .btn--suave::after { background: linear-gradient(110deg, transparent 30%, rgba(234,246,255,.5) 50%, transparent 70%); }
 .btn--suave { border-color: var(--polvo); color: var(--texto); }
 .stock-grande--bajo { background: var(--warn); color: #1D393F; border-color: var(--warn); }
+
+/* Contraste: corazón del encabezado y títulos en script */
+.marca__c { color: #fff; }

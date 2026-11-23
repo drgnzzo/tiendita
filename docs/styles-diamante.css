@@ -1386,3 +1386,7 @@ body::before { background: radial-gradient(40vmax 40vmax at 12% 8%, rgba(143,166
   .app-header__actions { gap: 6px; flex-shrink: 0; }
   .app-header__actions .pill { padding-left: 10px; padding-right: 10px; }
 }
+
+/* Contraste: títulos en script sobre fondo claro y saludo sobre el héroe */
+.catalogo__title-script, .section-title-script { color: #194989; }
+.perfil__greet { color: #fff; font-size: 24px; }

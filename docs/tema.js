@@ -70,11 +70,11 @@
     st.id = 'tema-css';
     st.textContent =
       '.tema{display:inline-flex;align-items:center;margin:0 6px}' +
-      '.tema__btn{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px 0 10px;border-radius:999px;border:2px solid rgba(255,255,255,.9);background:rgba(255,255,255,.92);color:#3A1118;font:600 14px/1 Inter,system-ui,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}' +
+      '.tema__btn{display:inline-flex;align-items:center;gap:8px;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;justify-content:center;border-radius:50%;border:2px solid rgba(255,255,255,.9);background:rgba(255,255,255,.92);color:#3A1118;font:600 14px/1 Inter,system-ui,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}' +
       'html[data-tema="diamante"] .tema__btn{color:#0A2A52}' +
       '.tema__btn:hover{background:#fff}' +
       '.tema__btn:focus-visible,.tema__op:focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 5px rgba(0,0,0,.35)}' +
-      '.tema__dot{width:22px;height:22px;border-radius:50%;border:2px solid rgba(0,0,0,.25);flex:none}' +
+      '.tema__dot{width:28px;height:28px;border-radius:50%;border:2px solid rgba(0,0,0,.25);flex:none}' +
       '.tema__menu{position:fixed;z-index:2147483000;min-width:240px;max-width:calc(100vw - 24px);padding:8px;border-radius:16px;background:#fff;color:#2A1015;border:2px solid #C98A9B;box-shadow:0 16px 40px rgba(0,0,0,.35)}' +
       'html[data-tema="diamante"] .tema__menu{color:#0F1E33;border-color:#4F7FB5}' +
       '.tema__menu[hidden]{display:none}' +
@@ -87,7 +87,7 @@
       '.tema__ok{margin-left:auto;font-size:18px;visibility:hidden}' +
       '.tema__op[aria-checked="true"] .tema__ok{visibility:visible}' +
       '.tema--flotante{position:fixed;top:max(12px,env(safe-area-inset-top));right:12px;z-index:60;margin:0}' +
-      '@media (max-width:639px){.tema{margin:0 4px}.tema__btn{min-width:44px;min-height:44px;padding:0;justify-content:center}.tema__txt{display:none}.tema__dot{width:26px;height:26px}}' +
+      '@media (max-width:639px){.tema{margin:0 4px}.tema__dot{width:26px;height:26px}}' +
       '@media (prefers-reduced-motion:no-preference){.tema__dot{transition:transform .2s}.tema__btn:active .tema__dot{transform:scale(.9)}}';
     doc.head.appendChild(st);
   }
@@ -125,7 +125,7 @@
     var btn = doc.createElement('button');
     btn.type = 'button';
     btn.className = 'tema__btn';
-    btn.innerHTML = '<span class="tema__dot" aria-hidden="true"></span><span class="tema__txt">Color</span>';
+    btn.innerHTML = '<span class="tema__dot" aria-hidden="true"></span>';
     cont.appendChild(btn);
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
@@ -142,8 +142,7 @@
       if (!b) continue;
       b.querySelector('.tema__dot').style.background = dot(actual);
       b.setAttribute('aria-label', 'Cambiar color. Ahora: ' + actual.nombre);
-      b.querySelector('.tema__txt').textContent = actual.nombre;
-      b.title = 'Color: ' + actual.nombre;
+      b.title = 'Cambiar color';
     }
     var ops = doc.querySelectorAll('.tema__op');
     for (var j = 0; j < ops.length; j++) ops[j].setAttribute('aria-checked', ops[j].getAttribute('data-id') === actual.id ? 'true' : 'false');
