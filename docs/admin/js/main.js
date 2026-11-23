@@ -78,7 +78,7 @@ function armarMarco() {
   mount(app, html`
     <header class="cabecera">
       <div class="cabecera__in">
-        <a class="marca" href="../catalogo.html"><img src="./img/logo-192.png" alt="" width="40" height="40"><span class="marca__n">TIENDITA</span><span class="marca__c">♥</span></a>
+        <a class="marca" href="../catalogo.html"><img src="./img/logo-192.png?v=2" alt="" width="40" height="40"><span class="marca__n">TIENDITA</span><span class="marca__c">♥</span></a>
         ${enlaces}
         <div class="cabecera__der">
           <span class="yo">${S.usuario.nombre}</span>

@@ -87,3 +87,5 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - Preferencia guardada en el dispositivo (localStorage `tiendita.tema` y `tiendita.tema.u.<correo>`), no en el Sheet.
 - Diamante se genera desde Perla: `python tools/generar_tema_diamante.py <carpeta>` -> styles-diamante.css y admin/css/app-diamante.css. Regenerar cada vez que cambie styles.css o app.css.
 - Sin morado. SW tiendita-v29. Pruebas: 94 ok.
+
+- Logo rehecho desde _orig_tmp/logo.png: aro completo y redondo (antes venia recortado). Archivos docs/logo-*.png y docs/admin/img/logo-*.png, refs con ?v=2, sw v31.
