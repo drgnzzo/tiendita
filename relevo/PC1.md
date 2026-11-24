@@ -51,3 +51,8 @@ Leer ESTADO.md. No editar relevo/PC2.md.
 - Ultimo cambio: catalogo sin foto muestra monograma (iniciales), SW v37. Resto igual que arriba. Correr TIENDITA.bat en PC2.
 
 - Actualizacion: catalogo sin foto usa dibujos de linea por categoria (SW v38). Correr TIENDITA.bat en PC2.
+
+## Cierre 24-nov
+- Hecho: lector de codigos de barras listo pero apagado (docs/escaner.js, ACTIVO=false). Catalogo igual que antes. SW v40.
+- Pendiente: el usuario carga los codigos de todos los productos en el panel admin; luego poner ACTIVO=true y publicar.
+- Continuar: ver ESTADO.md seccion Codigos de barras.

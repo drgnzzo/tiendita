@@ -153,6 +153,7 @@
   </div>
 
   <script src="./api.js?v=12"></script>
+  <script src="./escaner.js?v=1"></script>
   <script src="./app.js?v=13"></script>
   <script>
     const session = tiendita.requireSession();
@@ -251,7 +252,7 @@
             </div>
             <div class="product__action">
               <div class="product__price">${tiendita.pesosCorto(p.precio)}</div>
-              <button class="btn btn--primary btn--tiny" data-sku="${p.sku}" data-precio="${p.precio}" data-nombre="${tiendita.esc(p.nombre)}" ${disabled}>Llevar</button>
+              <button class="btn btn--primary btn--tiny" data-sku="${p.sku}" data-precio="${p.precio}" data-nombre="${tiendita.esc(p.nombre)}" data-codigo="${tiendita.esc(p.codigoBarras || '')}" ${disabled}>${tiendita_escaner.ACTIVO ? 'Escanear' : 'Llevar'}</button>
             </div>
           </div>
         `;
@@ -266,13 +267,18 @@
           const sku    = btn.dataset.sku;
           const precio = btn.dataset.precio;
           const nombre = btn.dataset.nombre;
-          tiendita.addToCart(sku, nombre, precio);
-          btn.classList.remove('btn--bounce');
-          // forzar reflow para reiniciar la animacion
-          void btn.offsetWidth;
-          btn.classList.add('btn--bounce');
-          renderCart();
-          tiendita.toast(nombre + ' agregado');
+          const agregar = () => {
+            tiendita.addToCart(sku, nombre, precio);
+            btn.classList.remove('btn--bounce');
+            // forzar reflow para reiniciar la animacion
+            void btn.offsetWidth;
+            btn.classList.add('btn--bounce');
+            renderCart();
+            tiendita.toast(nombre + ' agregado');
+          };
+          if (!tiendita_escaner.ACTIVO) return agregar();
+          if (!btn.dataset.codigo) { tiendita.toast('Este producto aún no tiene código de barras.', 'warn'); return; }
+          tiendita_escaner.abrir({ nombre: nombre, codigo: btn.dataset.codigo, alAcertar: agregar });
         });
       });
     }

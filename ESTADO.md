@@ -108,3 +108,10 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 
 ## Modo app en celular (23-nov)
 - docs/app-movil.js (cargado en index, catalogo, perfil y admin): solo en pantallas tactiles; sin zoom (pellizco, doble toque), sin seleccion de texto ni menu al mantener presionado (los campos de escribir si). Viewport sin escala. En computadora no hace nada. SW v39. Pendiente: probar en celular real (iOS y Android).
+
+## Codigos de barras (24-nov) - construido, APAGADO
+- docs/escaner.js: lector por camara (BarcodeDetector en Android; lector propio EAN-13/EAN-8/UPC-A en iPhone; opcion de escribir el numero). Probado con filas sinteticas (60/60) y flujo en navegador.
+- Interruptor: `var ACTIVO = false` al inicio de docs/escaner.js. En true el boton "Llevar" pasa a "Escanear": abre la camara y solo agrega al carrito si el codigo coincide con Codigo_Barras del producto. Producto sin codigo: avisa y no deja llevarlo.
+- Panel admin ya tiene el campo "Codigo de barras" (nuevo/editar) y la hoja Productos la columna Codigo_Barras (H).
+- Limite: la validacion es en la app, el servidor no exige el escaneo.
+- Para encender: cargar todos los codigos, poner ACTIVO = true, subir escaner.js?v=2 y subir version de sw.js.
