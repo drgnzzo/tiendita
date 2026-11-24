@@ -105,3 +105,6 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - Catalogo sin foto: monograma con iniciales (sin emojis ni imagen generica). SW v37.
 
 - Catalogo sin foto: dibujo de linea por categoria (sopas, snacks, dulces, bebidas, otro) en vez de iniciales. SW v38.
+
+## Modo app en celular (23-nov)
+- docs/app-movil.js (cargado en index, catalogo, perfil y admin): solo en pantallas tactiles; sin zoom (pellizco, doble toque), sin seleccion de texto ni menu al mantener presionado (los campos de escribir si). Viewport sin escala. En computadora no hace nada. SW v39. Pendiente: probar en celular real (iOS y Android).
