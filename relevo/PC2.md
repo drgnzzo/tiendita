@@ -4,12 +4,13 @@
 - Carpeta puesta al día con GitHub (759d0bc) usando TIENDITA.bat. El aviso de "chocan" fue falso: el .bat se reemplazó a sí mismo mientras corría; el pull sí entró.
 - "Piezas existentes" en Editar producto: publicado con TIENDITA.bat (28d2f9fbc1) y probado en vivo: quedan AJUSTE en Movimientos.
 - Botón "Escanear con la cámara" en Editar/Nuevo producto (docs/escaner.js?v=2, views-admin v12, main v13). Un código de barras ya no se puede repetir. 103 pruebas pasan.
+- Registro automático de ediciones a mano del Stock (onEdit) y menú Saldo inicial: hechos, 111 pruebas pasan. Ver ESTADO.md.
 - Auditoría app <-> hoja: ver ESTADO.md, sección del 25-nov. Resumen: la app lee y escribe bien en la hoja; lo que se edite a mano en Productos no deja movimiento.
 
 ## Pendiente
 1. Correr TIENDITA.bat para publicar el botón Escanear y el código único.
 2. En la hoja: TIENDITA > Trabajo diario > Preparar las hojas de trabajo (faltan Entradas, Ajustes, Conteo, Cobros).
-3. Decidir (el usuario): saldo inicial en Movimientos y registro automático de ediciones manuales de Stock.
+3. Tras TIENDITA.bat: en la hoja, recargar y correr TIENDITA > Inventario > Saldo inicial (una vez); luego Verificar stock debe decir que todo cuadra.
 4. Conteo físico para arrancar el stock cuadrado (Coca Lata COC-355 dice 12 sin ningún movimiento; Sopa Nissin Mix 4 vs 8).
 5. Cargar los códigos de barras de todos los productos; luego prender el escáner de clientes (ACTIVO = true, escaner.js?v=3, sw.js).
 

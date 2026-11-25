@@ -353,5 +353,68 @@ t('corte: absorber y no pasarse de lo pendiente', () => {
 });
 
 
+// ---- Ediciones a mano en la hoja (onEdit) y saldo inicial ----
+const _hojaProd = () => Object.assign(Object.create(sheets.Productos), { getName: () => 'Productos' });
+const _evento = (fila, col, extra, filas, cols) => Object.assign({
+  range: { getSheet: _hojaProd, getRow: () => fila, getColumn: () => col, getNumRows: () => filas || 1, getNumColumns: () => cols || 1 },
+  user: { getEmail: () => 'sam@x.com' } }, extra);
+const _filaDe = sku => sheets.Productos.rows.findIndex(r => r[0] === sku) + 1;
+let _nProd = 0;
+const _prodDirecto = (nombre, stock) => {   // producto con su ENTRADA, escrito directo en la hoja (sin pasar por la app)
+  run('_asegurarHoja(CONFIG.HOJAS.MOVIMIENTOS, MOV_HEADERS)');
+  const sku = 'TST-' + (++_nProd);
+  sheets.Productos.rows.push([sku, nombre, 'Bebidas', 10, 15, stock, 2, '', '', true]);
+  sheets.Movimientos.rows.push(['M-' + sku, new Date(), sku, nombre, 'ENTRADA', stock, 10, '', 'x', '', stock]);
+  return sku; };
+const _movsHoja = sku => sheets.Movimientos.rows.filter(r => r[2] === sku);
+const _logsManual = () => sheets.Logs.rows.filter(r => r[1] === 'EDICION_MANUAL');
+t('hoja: escribir el Stock a mano deja un AJUSTE con la diferencia, el usuario y "había N"', () => {
+  const sku = _prodDirecto('Prod Mano', 9); const f = _filaDe(sku);
+  sheets.Productos.rows[f - 1][5] = 4;                                    // la persona escribe 4 en la celda
+  ctx.onEdit(_evento(f, 6, { value: '4', oldValue: '9' }));
+  const m = _movsHoja(sku).filter(r => r[4] === 'AJUSTE').pop();
+  assert.ok(m && m[5] === -5 && m[10] === 4 && m[8] === 'sam@x.com' && /había 9/.test(m[9]), JSON.stringify(m));
+  assert.strictEqual(_movsHoja(sku).reduce((a, r) => a + (Number(r[5]) || 0), 0), 4); });
+t('hoja: borrar la celda de Stock cuenta como 0', () => {
+  const sku = _prodDirecto('Prod Mano 2', 6); const f = _filaDe(sku);
+  sheets.Productos.rows[f - 1][5] = '';
+  ctx.onEdit(_evento(f, 6, { oldValue: '6' }));
+  const m = _movsHoja(sku).filter(r => r[4] === 'AJUSTE').pop();
+  assert.ok(m && m[5] === -6 && m[10] === 0, JSON.stringify(m)); });
+t('hoja: cambiar otra columna, otra hoja o dejar el mismo numero no anota nada', () => {
+  const sku = _prodDirecto('Prod Mano 3', 5); const f = _filaDe(sku); const antes = _movsHoja(sku).length;
+  ctx.onEdit(_evento(f, 5, { value: '30', oldValue: '15' }));                       // precio
+  ctx.onEdit(_evento(f, 6, { value: '5', oldValue: '5' }));                         // mismo numero
+  ctx.onEdit(_evento(1, 6, { value: 'Stock', oldValue: 'Stock' }));                 // encabezado
+  const otra = Object.assign(Object.create(sheets.Usuarios), { getName: () => 'Usuarios' });
+  ctx.onEdit({ range: { getSheet: () => otra, getRow: () => 2, getColumn: () => 6, getNumRows: () => 1, getNumColumns: () => 1 }, value: '9', oldValue: '1' });
+  assert.strictEqual(_movsHoja(sku).length, antes); });
+t('hoja: pegar o rellenar varias celdas avisa en Logs y no inventa movimientos', () => {
+  const sku = _prodDirecto('Prod Mano 4', 5); const f = _filaDe(sku); const antes = _movsHoja(sku).length; const logs = _logsManual().length;
+  ctx.onEdit(_evento(f, 6, {}, 3, 1));
+  assert.strictEqual(_movsHoja(sku).length, antes); assert.strictEqual(_logsManual().length, logs + 1); });
+t('hoja: texto en el Stock se avisa en Logs y no se anota como movimiento', () => {
+  const sku = _prodDirecto('Prod Mano 5', 5); const f = _filaDe(sku); const antes = _movsHoja(sku).length; const logs = _logsManual().length;
+  ctx.onEdit(_evento(f, 6, { value: 'abc', oldValue: '5' }));
+  assert.strictEqual(_movsHoja(sku).length, antes); assert.strictEqual(_logsManual().length, logs + 1); });
+t('hoja: un evento raro nunca lanza error (no estorba la edicion)', () => {
+  ctx.onEdit(undefined); ctx.onEdit({}); ctx.onEdit({ range: {} }); });
+t('saldo inicial: iguala Movimientos al stock sin cambiar ningun stock, y al repetirlo no agrega nada', () => {
+  const stocks = () => JSON.stringify(sheets.Productos.rows.map(r => r[5]));
+  const antes = stocks();
+  const dif = run('_diferenciasStockMov().length'); assert.ok(dif > 0, 'deberia haber productos sin saldo (' + dif + ')');
+  const r1 = run('aplicarSaldoInicial("sam@x.com")'); assert.ok(r1.ok && r1.filas === dif, JSON.stringify(r1));
+  assert.strictEqual(stocks(), antes);
+  assert.strictEqual(run('_diferenciasStockMov().length'), 0);
+  const filas = sheets.Movimientos.rows.length;
+  const r2 = run('aplicarSaldoInicial("sam@x.com")'); assert.ok(r2.ok && r2.filas === 0);
+  assert.strictEqual(sheets.Movimientos.rows.length, filas);
+  assert.ok(sheets.Movimientos.rows.filter(r => r[4] === 'SALDO_INICIAL').every(r => r[8] === 'sam@x.com' && /Saldo inicial/.test(r[9]))); });
+t('saldo inicial: despues, una edicion a mano sigue cuadrando con Movimientos', () => {
+  const sku = 'COC-355'; const f = _filaDe(sku); const antes = Number(sheets.Productos.rows[f - 1][5]);
+  sheets.Productos.rows[f - 1][5] = antes + 7;
+  ctx.onEdit(_evento(f, 6, { value: String(antes + 7), oldValue: String(antes) }));
+  assert.strictEqual(run('_diferenciasStockMov().length'), 0); });
+
 console.log(`\n${pass} pasaron, ${fail} fallaron`);
 process.exit(fail ? 1 : 0);

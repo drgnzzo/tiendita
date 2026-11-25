@@ -136,3 +136,9 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
   - La hoja real no tiene las pestañas de trabajo (Entradas, Ajustes, Conteo, Cobros), ni Pagos, ni Cortes_Inventario/Corte_Detalle. Falta correr en la hoja: TIENDITA > Trabajo diario > Preparar las hojas de trabajo.
   - Logs sin errores. Los disparadores diarios (reporte y alerta de stock) corren.
 - Propuestas pendientes de aprobación (tocan datos o comportamiento de la hoja): (1) saldo inicial: una fila por producto en Movimientos para que la suma cuadre con el stock actual; (2) registrar automáticamente en Movimientos lo que se edite a mano en la columna Stock de Productos (onEdit).
+
+## Ediciones a mano y saldo inicial (25-nov, PC2)
+- Nuevo `onEdit` (disparador simple, no se instala): si alguien cambia a mano la columna Stock de Productos, se anota un AJUSTE en Movimientos con la diferencia, el correo de quien editó y "había N". Pegar o rellenar varias celdas, o escribir texto, solo avisa en Logs (EDICION_MANUAL). Los cambios que hace la app no se anotan dos veces (onEdit no se activa con escrituras del script).
+- Nuevo menú TIENDITA > Inventario > Saldo inicial (una vez): muestra la lista y, si se confirma, agrega una fila SALDO_INICIAL por producto para que la suma de Movimientos cuadre con el stock actual. No cambia ningún stock. Repetirlo no agrega nada.
+- "Verificar stock" ahora comparte la misma cuenta y sugiere el saldo inicial cuando hay diferencias.
+- 111 pruebas pasan.

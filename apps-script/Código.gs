@@ -255,6 +255,7 @@ function onOpen() {
       .addItem('💸 Liquidar deuda de usuario', 'menuLiquidarDeuda'))
     .addSubMenu(ui.createMenu('📦 Inventario')
       .addItem('✅ Verificar stock contra movimientos', 'menuVerificarStock')
+      .addItem('🧾 Saldo inicial (una vez)', 'menuSaldoInicial')
       .addItem('🚨 Ver productos con stock bajo', 'menuStockBajo')
       .addItem('📧 Enviar alerta de stock ahora', 'enviarAlertaStockBajo'))
     .addSubMenu(ui.createMenu('💰 Finanzas')
@@ -2554,18 +2555,95 @@ function menuReiniciarPin() {
 }
 
 // Revisa que el stock de Productos coincida con la suma del libro de movimientos.
-function menuVerificarStock() {
-  const ui = SpreadsheetApp.getUi();
+// Productos cuyo stock no coincide con la suma del libro de Movimientos.
+function _diferenciasStockMov() {
   const mov = _memoSS(CONFIG.HOJAS.MOVIMIENTOS);
   const suma = {};
   for (let i = 1; i < mov.length; i++) suma[String(mov[i][2])] = (suma[String(mov[i][2])] || 0) + (Number(mov[i][5]) || 0);
   const dif = [];
   listarProductos().forEach(p => {
     const esperado = suma[p.sku] || 0;
-    if (esperado !== p.stock) dif.push(p.nombre + ': hoja=' + p.stock + ', movimientos=' + esperado);
+    if (esperado !== p.stock) dif.push({ sku: p.sku, nombre: p.nombre, stock: p.stock, suma: esperado });
   });
+  return dif;
+}
+
+function menuVerificarStock() {
+  const ui = SpreadsheetApp.getUi();
+  const dif = _diferenciasStockMov().map(d => d.nombre + ': hoja=' + d.stock + ', movimientos=' + d.suma);
   ui.alert(dif.length === 0 ? '✅ El stock coincide con el libro de movimientos.' :
-    '⚠️ Hay ' + dif.length + ' diferencias (alguien editó Productos a mano):\n\n' + dif.slice(0, 15).join('\n'));
+    '⚠️ Hay ' + dif.length + ' diferencias (alguien editó Productos a mano, o falta el saldo inicial):\n\n' + dif.slice(0, 15).join('\n') +
+    '\n\nSi es por el saldo inicial: menú Inventario > Saldo inicial (una vez).');
+}
+
+// Saldo inicial: una fila SALDO_INICIAL por producto que no cuadra, para que la suma de Movimientos
+// sea igual al stock de hoy. NO cambia el stock. Si se corre otra vez, no agrega nada.
+function aplicarSaldoInicial(usuario) {
+  return _conCandado(() => {
+    const dif = _diferenciasStockMov();
+    if (!dif.length) return { ok: true, filas: 0 };
+    const sMov = _asegurarHoja(CONFIG.HOJAS.MOVIMIENTOS, MOV_HEADERS);
+    dif.forEach(d => {
+      sMov.appendRow([_generarId('M'), new Date(), String(d.sku), String(d.nombre), 'SALDO_INICIAL', d.stock - d.suma,
+        '', '', _seguroCelda(usuario || 'hoja'), 'Saldo inicial: iguala el libro al stock que ya había (movimientos ' + d.suma + ', hoja ' + d.stock + ')', d.stock]);
+    });
+    _log('SALDO_INICIAL', usuario || 'hoja', 'Saldo inicial en ' + dif.length + ' productos', '');
+    return { ok: true, filas: dif.length };
+  });
+}
+
+function menuSaldoInicial() {
+  const ui = SpreadsheetApp.getUi();
+  const dif = _diferenciasStockMov();
+  if (!dif.length) { ui.alert('Nada que hacer', 'El stock de todos los productos ya coincide con Movimientos.', ui.ButtonSet.OK); return; }
+  const lista = dif.slice(0, 20).map(d => '• ' + d.nombre + ': hoja ' + d.stock + ', movimientos ' + d.suma).join('\n');
+  const r = ui.alert('Saldo inicial',
+    'Se agregará 1 fila a Movimientos por cada producto que no cuadra (' + dif.length + ').\nEl stock NO cambia.\n\n' + lista + '\n\n¿Continuar?', ui.ButtonSet.YES_NO);
+  if (r !== ui.Button.YES) return;
+  const res = aplicarSaldoInicial(_actorHoja().correo);
+  ui.alert(res.ok ? 'Listo' : 'No se pudo', res.ok ? 'Filas agregadas: ' + res.filas + '. Ahora "Verificar stock" debe decir que todo coincide.' : res.error, ui.ButtonSet.OK);
+}
+
+// Ediciones a mano en la hoja. Google llama onEdit solo cuando una persona edita una celda;
+// los cambios que hace este script (la app web, los menus) NO la disparan, asi que nada se anota dos veces.
+function onEdit(e) {
+  try { _anotarEdicionManual(e); } catch (err) { /* nunca estorbar la edicion de la persona */ }
+}
+
+function _correoEvento(e) {
+  let c = '';
+  try { c = e.user && e.user.getEmail ? e.user.getEmail() : ''; } catch (_) {}
+  if (!c) { try { c = Session.getActiveUser().getEmail(); } catch (_) {} }
+  return c || 'hoja';
+}
+
+function _anotarEdicionManual(e) {
+  if (!e || !e.range) return;
+  const hoja = e.range.getSheet();
+  if (hoja.getName() !== CONFIG.HOJAS.PRODUCTOS) return;
+  const COL_STOCK = 6;
+  const f0 = e.range.getRow(), c0 = e.range.getColumn();
+  const filas = e.range.getNumRows(), cols = e.range.getNumColumns();
+  if (!(c0 <= COL_STOCK && COL_STOCK < c0 + cols) || f0 + filas - 1 < 2) return;
+  const usuario = _correoEvento(e);
+  if (filas > 1 || cols > 1) {
+    _log('EDICION_MANUAL', usuario, 'Cambio en varias celdas de Productos (filas ' + f0 + ' a ' + (f0 + filas - 1) + '): no se puede anotar cada una. Revisa con Verificar stock.', '');
+    return;
+  }
+  if (f0 < 2) return;
+  const nuevo = (e.value === undefined || e.value === '') ? 0 : Number(e.value);
+  const antes = (e.oldValue === undefined || e.oldValue === '') ? 0 : Number(e.oldValue);
+  if (isNaN(nuevo) || isNaN(antes)) {
+    _log('EDICION_MANUAL', usuario, 'Stock con texto no numerico en la fila ' + f0 + ' de Productos. Revisa la celda.', '');
+    return;
+  }
+  const diff = nuevo - antes;
+  if (diff === 0) return;
+  const id = hoja.getRange(f0, 1, 1, 2).getValues()[0];
+  const sMov = _asegurarHoja(CONFIG.HOJAS.MOVIMIENTOS, MOV_HEADERS);
+  sMov.appendRow([_generarId('M'), new Date(), String(id[0]), String(id[1]), 'AJUSTE', diff, '', '',
+    _seguroCelda(usuario), 'Editado a mano en la hoja (había ' + antes + ')', nuevo]);
+  _log('EDICION_MANUAL', usuario, String(id[1]) + ' de ' + antes + ' a ' + nuevo, 'Productos');
 }
 
 
