@@ -141,7 +141,9 @@
     '.esc__msg--mal{color:#ffb4c0;font-weight:700}' +
     '.esc__manual{display:flex;gap:8px}' +
     '.esc__manual input{flex:1;min-width:0;border:0;border-radius:12px;padding:12px;font-size:16px}' +
-    '.esc__manual button{border:0;border-radius:12px;padding:12px 16px;font-weight:700;background:#fff;color:#7a1f36}';
+    '.esc__manual button{border:0;border-radius:12px;padding:12px 16px;font-weight:700;background:#fff;color:#7a1f36}' +
+    'dialog.esc{width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0}' +
+    'dialog.esc::backdrop{background:#1d0f14}';
 
   function inyectarCSS() {
     if (document.getElementById('esc-css')) return;
@@ -151,18 +153,25 @@
 
   function esc(t) { var d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; }
 
-  /** opts: { nombre, codigo, alAcertar() } */
+  /** Validar (clientes): opts: { nombre, codigo, alAcertar() }
+   *  Capturar (panel admin): opts: { nombre, alLeer(codigo), dialogo: true } -> devuelve el numero leido, sin comparar.
+   *  dialogo: true abre el lector como ventana modal para quedar por encima de otra ventana modal. */
   function abrir(opts) {
     inyectarCSS();
     var nombre = opts.nombre || '', esperado = opts.codigo || '';
-    var el = document.createElement('div');
+    var captura = typeof opts.alLeer === 'function';
+    var el = document.createElement(opts.dialogo ? 'dialog' : 'div');
     el.className = 'esc';
     el.innerHTML =
       '<div class="esc__top"><div class="esc__nombre">' + esc(nombre) + '</div><button class="esc__x" type="button" aria-label="Cerrar">&times;</button></div>' +
       '<div class="esc__vista"><video class="esc__video" playsinline muted autoplay></video><div class="esc__marco"></div></div>' +
-      '<div class="esc__pie"><p class="esc__msg">Apunta la cámara al código de barras del producto.</p>' +
+      '<div class="esc__pie"><p class="esc__msg">' + (captura ? 'Apunta la cámara al código de barras para leerlo.' : 'Apunta la cámara al código de barras del producto.') + '</p>' +
       '<form class="esc__manual"><input inputmode="numeric" autocomplete="off" placeholder="O escribe el número del código"><button type="submit">Listo</button></form></div>';
     document.body.appendChild(el);
+    if (opts.dialogo && el.showModal) {
+      el.addEventListener('cancel', function (e) { e.preventDefault(); cerrar(); });
+      try { el.showModal(); } catch (_) {}
+    }
 
     var video = el.querySelector('video'), msg = el.querySelector('.esc__msg');
     var stream = null, vivo = true, detector = null, ultimoMal = 0;
@@ -171,11 +180,13 @@
     function cerrar() {
       vivo = false;
       if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
+      if (el.open && el.close) { try { el.close(); } catch (_) {} }
       if (el.parentNode) el.parentNode.removeChild(el);
     }
     function aviso(t, mal) { msg.textContent = t; msg.className = 'esc__msg' + (mal ? ' esc__msg--mal' : ''); }
     function recibido(codigo) {
       if (!vivo) return;
+      if (captura) { var limpio = String(codigo || '').replace(/\D/g, ''); if (!limpio) return; cerrar(); opts.alLeer(limpio); return; }
       if (coincide(codigo, esperado)) { cerrar(); if (opts.alAcertar) opts.alAcertar(); return; }
       var ahora = Date.now();
       if (ahora - ultimoMal > 1500) { ultimoMal = ahora; aviso('Ese código no es de ' + nombre + '. Intenta de nuevo.', true); }

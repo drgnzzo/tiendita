@@ -509,12 +509,24 @@ function formProducto(p, cats, alGuardar) {
         ${nuevo ? campo({ id: 'pr-stock', etiqueta: 'Piezas que tienes ahora', tipo: 'number', valor: '', ayuda: 'Quedan registradas como una entrada. Si todavía no llega, déjalo vacío y registra una compra después.', attrs: 'inputmode="numeric" min="0" step="1" placeholder="0"' })
                 : campo({ id: 'pr-stock', etiqueta: 'Piezas existentes', tipo: 'number', valor: p.stock, ayuda: 'Puedes poner cualquier número, incluso 0. Si lo cambias, queda como un ajuste de inventario en el historial (no es una compra). Para una compra usa + Sumar.', attrs: 'inputmode="numeric" min="0" step="1"' })}
         <div class="fila-campos">
-          ${campo({ id: 'pr-codigo', etiqueta: 'Código de barras (opcional)', valor: p.codigoBarras, attrs: 'inputmode="numeric" maxlength="40"' })}
+          <div class="campo">
+            <label for="pr-codigo">Código de barras (opcional)</label>
+            <input id="pr-codigo" name="pr-codigo" type="text" value="${p.codigoBarras}" inputmode="numeric" maxlength="40">
+            <button class="btn btn--suave btn--chico" type="button" id="pr-escanear" style="margin-top:8px">Escanear con la cámara</button>
+          </div>
           ${campo({ id: 'pr-img', etiqueta: 'Enlace de la foto (opcional)', tipo: 'url', valor: p.imagenUrl, attrs: 'maxlength="300" placeholder="https://…"' })}
         </div>
         <div class="campo campo--fila"><input id="pr-activo" type="checkbox" ${p.activo ? raw('checked') : ''}><label for="pr-activo">Mostrar en la tienda (si no hay piezas, no aparece solo)</label></div>
         <div class="acciones"><button class="btn btn--suave" type="button" data-cerrar>Cancelar</button><button class="btn btn--rojo" type="submit">${nuevo ? 'Crear producto' : 'Guardar cambios'}</button></div>
       </form>`
+  });
+  $('#pr-escanear', h.el).addEventListener('click', () => {
+    if (!window.tiendita_escaner) { toast('El lector de códigos no está disponible. Recarga la página.', 'error'); return; }
+    const nombreProd = $('#pr-nombre', h.el).value.trim() || 'Producto nuevo';
+    window.tiendita_escaner.abrir({
+      nombre: nombreProd, dialogo: true,
+      alLeer: (codigo) => { $('#pr-codigo', h.el).value = codigo; toast('Código leído: ' + codigo); }
+    });
   });
   $('#form-prod', h.el).addEventListener('submit', async (e) => {
     e.preventDefault();

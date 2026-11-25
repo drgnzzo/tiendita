@@ -1,15 +1,19 @@
 # Relevo PC2 (2026-11-25)
 
 ## Hecho en PC2
-- Carpeta puesta al día con GitHub (759d0bc) usando TIENDITA.bat. Un aviso de "chocan" fue falso: el .bat se reemplazó a sí mismo mientras corría; el pull sí entró (fast-forward).
-- Tarea nueva: "Piezas existentes" en Editar producto (panel admin). Cambia el stock a cualquier entero desde 0 como AJUSTE en Movimientos. Detalle en ESTADO.md, sección del 25-nov.
-- Archivos tocados: apps-script/Código.gs (apiProdGuardar), docs/admin/js/views-admin.js (formProducto), docs/admin/js/main.js (?v=11), docs/admin/index.html (main.js?v=12), tests/run.js (+8 pruebas, 102 pasan), ESTADO.md, este relevo.
+- Carpeta puesta al día con GitHub (759d0bc) usando TIENDITA.bat. El aviso de "chocan" fue falso: el .bat se reemplazó a sí mismo mientras corría; el pull sí entró.
+- "Piezas existentes" en Editar producto: publicado con TIENDITA.bat (28d2f9fbc1) y probado en vivo: quedan AJUSTE en Movimientos.
+- Botón "Escanear con la cámara" en Editar/Nuevo producto (docs/escaner.js?v=2, views-admin v12, main v13). Un código de barras ya no se puede repetir. 103 pruebas pasan.
+- Auditoría app <-> hoja: ver ESTADO.md, sección del 25-nov. Resumen: la app lee y escribe bien en la hoja; lo que se edite a mano en Productos no deja movimiento.
 
 ## Pendiente
-1. Correr TIENDITA.bat (hace commit, trae lo nuevo, sube a Apps Script, actualiza la implementación y sube a GitHub).
-2. Probar en el panel con un producto de prueba: Editar producto > Piezas existentes = 0 > Guardar; revisar la hoja Movimientos (tipo AJUSTE).
-3. Después: prender el escáner cuando estén todos los códigos (ACTIVO = true en docs/escaner.js, subir escaner.js?v y sw.js).
+1. Correr TIENDITA.bat para publicar el botón Escanear y el código único.
+2. En la hoja: TIENDITA > Trabajo diario > Preparar las hojas de trabajo (faltan Entradas, Ajustes, Conteo, Cobros).
+3. Decidir (el usuario): saldo inicial en Movimientos y registro automático de ediciones manuales de Stock.
+4. Conteo físico para arrancar el stock cuadrado (Coca Lata COC-355 dice 12 sin ningún movimiento; Sopa Nissin Mix 4 vs 8).
+5. Cargar los códigos de barras de todos los productos; luego prender el escáner de clientes (ACTIVO = true, escaner.js?v=3, sw.js).
 
 ## Notas
 - Claude no puede correr git ni terminal en PC2: el commit lo hace el paso "Guardar" de TIENDITA.bat.
 - Si un comando de Git deja un .lock, moverlo a otro nombre dentro de .git, no borrarlo.
+- Cuidado: los archivos del proyecto usan saltos de línea de Windows (CRLF); conservarlos al editar.

@@ -1973,6 +1973,20 @@ function apiProdGuardar(u, p) {
     const s = ss.getSheetByName(CONFIG.HOJAS.PRODUCTOS);
     const existente = p.sku ? obtenerProducto(String(p.sku)) : null;
 
+    // Un codigo de barras identifica a un solo producto: si ya lo tiene otro, no se guarda.
+    if (codigo) {
+      const limpio = c => String(c || '').replace(/\D/g, '').replace(/^0+/, '');
+      const quiero = limpio(codigo);
+      if (quiero) {
+        const filas = s.getDataRange().getValues();
+        for (let i = 1; i < filas.length; i++) {
+          if (limpio(filas[i][7]) === quiero && String(filas[i][0]) !== String(existente ? existente.sku : '')) {
+            return { ok: false, code: 'CODIGO_REPETIDO', error: 'Ese código de barras ya lo tiene "' + filas[i][1] + '".' };
+          }
+        }
+      }
+    }
+
     if (existente) {
       // Si cambiaron las piezas y mientras tanto hubo una venta o un ajuste, no se pisa: se pide revisar.
       if (stockNuevo != null && stockAntes != null && stockAntes !== existente.stock) {

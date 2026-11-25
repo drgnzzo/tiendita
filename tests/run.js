@@ -224,6 +224,14 @@ t('editar producto: sin sesion de admin nadie cambia las piezas (solo correo no 
   assert.strictEqual(call('prod.guardar', { email: 'victor.walmart.04@gmail.com', sku, nombre: 'X', precio: 5, stock: 0 }).code, 'AUTH');
   assert.strictEqual(call('prod.guardar', { token: 'token-falso', sku, nombre: 'X', precio: 5, stock: 0 }).code, 'AUTH');
   assert.strictEqual(_stockDe(w, sku), 5); });
+t('codigo de barras: no se puede repetir en otro producto, pero si conservar el propio', () => {
+  const w = _wAdmin(); const a = _prodEd(w, 'Prod Codigo A', 3); const b = _prodEd(w, 'Prod Codigo B', 3);
+  assert.ok(call('prod.guardar', { token: w.token, sku: a, nombre: 'Prod Codigo A', precio: 15, activo: true, codigoBarras: '7501055300075' }).ok);
+  const r = call('prod.guardar', { token: w.token, sku: b, nombre: 'Prod Codigo B', precio: 15, activo: true, codigoBarras: '7501055300075' });
+  assert.strictEqual(r.ok, false); assert.strictEqual(r.code, 'CODIGO_REPETIDO');
+  assert.strictEqual(call('prod.guardar', { token: w.token, nombre: 'Prod Codigo C', precio: 15, activo: true, codigoBarras: '07501055300075' }).code, 'CODIGO_REPETIDO');
+  assert.ok(call('prod.guardar', { token: w.token, sku: a, nombre: 'Prod Codigo A', precio: 16, activo: true, codigoBarras: '7501055300075' }).ok);
+  assert.ok(call('prod.guardar', { token: w.token, sku: b, nombre: 'Prod Codigo B', precio: 15, activo: true, codigoBarras: '' }).ok); });
 t('reporte del mes: compras al proveedor suman las entradas y las piezas llegan a los productos', () => {
   const w = call('login', { email: 'admin@tiendita.com', pin: 'clave-larga-1' });
   const pr = call('inv.lista', { token: w.token }).productos[0];

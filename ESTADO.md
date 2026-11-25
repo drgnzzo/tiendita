@@ -122,4 +122,17 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - Producto nuevo sigue igual ("Piezas que tienes ahora" = ENTRADA).
 - Versiones: views-admin.js?v=11, main.js?v=12 (el panel no usa el SW). El service worker no cambió.
 - 8 pruebas nuevas (a 0, subir, cuadra con Movimientos, negativos/decimales/texto, sin cambio, doble toque, cambio concurrente, sin sesión). Total: 102 pasan (simulador).
-- No probado: Apps Script real ni el formulario en un navegador real. Pendiente: correr TIENDITA.bat y probar con un producto de prueba.
+- Probado en Apps Script real (25-nov 11:25): dos ajustes quedaron como AJUSTE en Movimientos y Logs con usuario admin@tiendita.com.
+
+## Escanear código en Editar producto + auditoría de dos sentidos (25-nov, PC2)
+- Panel: en Editar/Nuevo producto, botón "Escanear con la cámara" pone el número leído en el campo Código de barras (o se escribe a mano en el lector). Usa `docs/escaner.js?v=2` (modo `alLeer`, ventana modal para quedar por encima del formulario). El modo de clientes (validar con `alAcertar`) sigue igual y sigue APAGADO (`ACTIVO = false`). Probado en navegador headless (Chromium): lee, rellena el campo y cierra; el lector queda por encima del modal. No probado con cámara real en Android/iPhone.
+- Backend: un código de barras no se puede repetir en otro producto (`CODIGO_REPETIDO`; compara solo dígitos y sin ceros a la izquierda). 103 pruebas pasan.
+- Versiones: views-admin.js?v=12, main.js?v=13, escaner.js?v=2 (solo el panel; catalogo.html y sw.js siguen con escaner.js?v=1, que quedó con el mismo código). Al prender el escáner de clientes, subir a ?v=3 en catalogo.html y sw.js como se acordó.
+- Auditoría app <-> hoja:
+  - Hoja -> app: bien. Cada llamada lee la hoja de nuevo (`_memoSS` solo dura una petición). El panel guarda la lista de productos en memoria hasta recargar o guardar; el ajuste de piezas manda `stockAntes` y el backend avisa si cambió.
+  - App -> hoja: bien. Movimientos y Logs registran cada cambio (comprobado con datos reales).
+  - Editar Productos a mano en la hoja: cambia el stock pero NO deja movimiento. Ejemplo real: MRC-CAM (Movimientos=4, Productos=8).
+  - Movimientos empezó el 22-nov: 10 de 17 productos no tienen ningún movimiento (stock sin saldo inicial), así que "Verificar stock contra movimientos" marcará diferencias aunque no haya errores.
+  - La hoja real no tiene las pestañas de trabajo (Entradas, Ajustes, Conteo, Cobros), ni Pagos, ni Cortes_Inventario/Corte_Detalle. Falta correr en la hoja: TIENDITA > Trabajo diario > Preparar las hojas de trabajo.
+  - Logs sin errores. Los disparadores diarios (reporte y alerta de stock) corren.
+- Propuestas pendientes de aprobación (tocan datos o comportamiento de la hoja): (1) saldo inicial: una fila por producto en Movimientos para que la suma cuadre con el stock actual; (2) registrar automáticamente en Movimientos lo que se edite a mano en la columna Stock de Productos (onEdit).
