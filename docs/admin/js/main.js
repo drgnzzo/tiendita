@@ -1,7 +1,7 @@
 import { api, setToken, setAuthHandler, newReqId } from './api.js';
 import { S, cargarSesion, iniciarSesion, cerrarSesion, guardarSesion, puede, esStaff } from './state.js';
 import { html, raw, mount, on, $, toast, ocupado, abrirHoja, campo } from './ui.js';
-import { renderAdmin } from './views-admin.js?v=10';
+import { renderAdmin } from './views-admin.js?v=11';
 
 const app = document.getElementById('app');
 

@@ -489,6 +489,7 @@ async function nuevoProducto() {
 
 function formProducto(p, cats, alGuardar) {
   const nuevo = !p;
+  const reqId = newReqId();
   p = p || { nombre: '', categoria: '', precio: '', stockMinimo: 2, costo: '', codigoBarras: '', imagenUrl: '', activo: true };
   const h = abrirHoja({
     titulo: nuevo ? 'Producto nuevo' : 'Editar producto', ancho: 'media',
@@ -506,7 +507,7 @@ function formProducto(p, cats, alGuardar) {
           ${campo({ id: 'pr-min', etiqueta: 'Avisar cuando queden', tipo: 'number', valor: p.stockMinimo, attrs: 'inputmode="numeric" min="0" step="1"' })}
         </div>
         ${nuevo ? campo({ id: 'pr-stock', etiqueta: 'Piezas que tienes ahora', tipo: 'number', valor: '', ayuda: 'Quedan registradas como una entrada. Si todavía no llega, déjalo vacío y registra una compra después.', attrs: 'inputmode="numeric" min="0" step="1" placeholder="0"' })
-                : html`<p class="suave" style="margin:0 0 12px">Existencia actual: <strong>${p.stock}</strong>. Para subirla o bajarla usa <em>+ Sumar</em> o <em>Quitar / ajustar</em> en la lista.</p>`}
+                : campo({ id: 'pr-stock', etiqueta: 'Piezas existentes', tipo: 'number', valor: p.stock, ayuda: 'Puedes poner cualquier número, incluso 0. Si lo cambias, queda como un ajuste de inventario en el historial (no es una compra). Para una compra usa + Sumar.', attrs: 'inputmode="numeric" min="0" step="1"' })}
         <div class="fila-campos">
           ${campo({ id: 'pr-codigo', etiqueta: 'Código de barras (opcional)', valor: p.codigoBarras, attrs: 'inputmode="numeric" maxlength="40"' })}
           ${campo({ id: 'pr-img', etiqueta: 'Enlace de la foto (opcional)', tipo: 'url', valor: p.imagenUrl, attrs: 'maxlength="300" placeholder="https://…"' })}
@@ -529,7 +530,13 @@ function formProducto(p, cats, alGuardar) {
       stockMinimo: Number($('#pr-min', h.el).value || 0), costo: $('#pr-costo', h.el).value,
       codigoBarras: $('#pr-codigo', h.el).value.trim(), imagenUrl: img, activo: $('#pr-activo', h.el).checked
     };
-    if (nuevo) datos.stockInicial = $('#pr-stock', h.el).value;
+    const crudo = $('#pr-stock', h.el).value.trim();
+    if (nuevo) datos.stockInicial = crudo;
+    else if (crudo !== String(p.stock)) {
+      if (!/^\d+$/.test(crudo)) { caja.textContent = 'Las piezas existentes deben ser un número entero, desde 0.'; return; }
+      datos.stock = crudo; datos.stockAntes = p.stock;
+    }
+    datos.reqId = reqId;
     const btn = e.submitter || $('button[type=submit]', h.el);
     const res = await ocupado(btn, 'Guardando…', () => api('prod.guardar', datos));
     if (!res.ok) { caja.textContent = res.error; return; }

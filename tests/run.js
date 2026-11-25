@@ -174,6 +174,56 @@ t('admin web: producto nuevo sin piezas queda en 0 y piezas absurdas se rechazan
   const r = call('prod.guardar', { token: w.token, nombre: 'Chicles Trident', precio: 10, activo: true });
   assert.ok(r.ok && /sin piezas/i.test(r.mensaje), JSON.stringify(r));
   assert.strictEqual(call('prod.guardar', { token: w.token, nombre: 'Otro', precio: 10, stockInicial: 99999 }).ok, false); });
+// ---- Editar producto: piezas existentes como ajuste de inventario ----
+const _wAdmin = () => call('login', { email: 'admin@tiendita.com', pin: 'clave-larga-1' });
+const _prodEd = (w, nombre, piezas) => { const r = call('prod.guardar', { token: w.token, nombre, precio: 15, costo: 8, stockMinimo: 2, activo: true, stockInicial: piezas }); assert.ok(r.ok && r.nuevo, JSON.stringify(r)); return r.sku; };
+const _stockDe = (w, sku) => call('inv.lista', { token: w.token }).productos.find(x => x.sku === sku).stock;
+const _movsDe = (w, sku) => call('inv.movimientos', { token: w.token, sku, limite: 300 }).movimientos;
+const _guardaEd = (w, sku, extra) => call('prod.guardar', Object.assign({ token: w.token, sku, nombre: 'Prod Ajuste', precio: 15, costo: 8, stockMinimo: 2, activo: true }, extra));
+t('editar producto: piezas a 0 queda como AJUSTE negativo y el stock en 0', () => {
+  const w = _wAdmin(); const sku = _prodEd(w, 'Prod Ajuste', 7);
+  const r = _guardaEd(w, sku, { stock: 0, stockAntes: 7, reqId: 'ed-0' });
+  assert.ok(r.ok, JSON.stringify(r)); assert.strictEqual(_stockDe(w, sku), 0);
+  const m = _movsDe(w, sku).find(x => x.tipo === 'AJUSTE');
+  assert.ok(m && m.cantidad === -7 && m.stockDespues === 0 && /había 7/.test(m.notas), JSON.stringify(m)); });
+t('editar producto: subir las piezas a cualquier numero tambien es AJUSTE (no entrada)', () => {
+  const w = _wAdmin(); const sku = _prodEd(w, 'Prod Ajuste', 2);
+  const entradasAntes = _movsDe(w, sku).filter(x => x.tipo === 'ENTRADA').length;
+  const r = _guardaEd(w, sku, { stock: 15, stockAntes: 2, reqId: 'ed-15' });
+  assert.ok(r.ok, JSON.stringify(r)); assert.strictEqual(_stockDe(w, sku), 15);
+  assert.strictEqual(_movsDe(w, sku).filter(x => x.tipo === 'ENTRADA').length, entradasAntes);
+  assert.ok(_movsDe(w, sku).some(x => x.tipo === 'AJUSTE' && x.cantidad === 13)); });
+t('editar producto: el inventario cuadra (stock = suma de movimientos)', () => {
+  const w = _wAdmin(); const sku = _prodEd(w, 'Prod Ajuste', 9);
+  _guardaEd(w, sku, { stock: 4, stockAntes: 9, reqId: 'cu-1' });
+  _guardaEd(w, sku, { stock: 11, stockAntes: 4, reqId: 'cu-2' });
+  const suma = _movsDe(w, sku).reduce((a, x) => a + x.cantidad, 0);
+  assert.strictEqual(suma, _stockDe(w, sku)); assert.strictEqual(suma, 11); });
+t('editar producto: piezas negativas, decimales o texto se rechazan y no cambian nada', () => {
+  const w = _wAdmin(); const sku = _prodEd(w, 'Prod Ajuste', 5); const movs = _movsDe(w, sku).length;
+  [-1, 2.5, 'abc', 100001].forEach(v => assert.strictEqual(_guardaEd(w, sku, { stock: v }).ok, false, 'acepto ' + v));
+  assert.strictEqual(_stockDe(w, sku), 5); assert.strictEqual(_movsDe(w, sku).length, movs); });
+t('editar producto: sin tocar las piezas no se crea ningun movimiento', () => {
+  const w = _wAdmin(); const sku = _prodEd(w, 'Prod Ajuste', 6); const movs = _movsDe(w, sku).length;
+  assert.ok(_guardaEd(w, sku, { precio: 17 }).ok);
+  assert.ok(_guardaEd(w, sku, { stock: 6, stockAntes: 6 }).ok);
+  assert.strictEqual(_movsDe(w, sku).length, movs); assert.strictEqual(_stockDe(w, sku), 6); });
+t('editar producto: el mismo reqId no repite el ajuste (doble toque)', () => {
+  const w = _wAdmin(); const sku = _prodEd(w, 'Prod Ajuste', 8);
+  const a = _guardaEd(w, sku, { stock: 3, stockAntes: 8, reqId: 'dup-1' });
+  const b = _guardaEd(w, sku, { stock: 3, stockAntes: 8, reqId: 'dup-1' });
+  assert.ok(a.ok && b.ok); assert.strictEqual(_stockDe(w, sku), 3);
+  assert.strictEqual(_movsDe(w, sku).filter(x => x.tipo === 'AJUSTE').length, 1); });
+t('editar producto: si las piezas cambiaron mientras editabas no se pisan', () => {
+  const w = _wAdmin(); const sku = _prodEd(w, 'Prod Ajuste', 10);
+  call('inv.ajuste', { token: w.token, sku, delta: -2, motivo: 'se cayeron', reqId: 'ch-1' });   // ahora hay 8
+  const r = _guardaEd(w, sku, { stock: 0, stockAntes: 10, reqId: 'ch-2' });
+  assert.strictEqual(r.ok, false); assert.strictEqual(r.code, 'STOCK_CAMBIO'); assert.strictEqual(_stockDe(w, sku), 8); });
+t('editar producto: sin sesion de admin nadie cambia las piezas (solo correo no basta)', () => {
+  const w = _wAdmin(); const sku = _prodEd(w, 'Prod Ajuste', 5);
+  assert.strictEqual(call('prod.guardar', { email: 'victor.walmart.04@gmail.com', sku, nombre: 'X', precio: 5, stock: 0 }).code, 'AUTH');
+  assert.strictEqual(call('prod.guardar', { token: 'token-falso', sku, nombre: 'X', precio: 5, stock: 0 }).code, 'AUTH');
+  assert.strictEqual(_stockDe(w, sku), 5); });
 t('reporte del mes: compras al proveedor suman las entradas y las piezas llegan a los productos', () => {
   const w = call('login', { email: 'admin@tiendita.com', pin: 'clave-larga-1' });
   const pr = call('inv.lista', { token: w.token }).productos[0];

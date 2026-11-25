@@ -1963,13 +1963,22 @@ function apiProdGuardar(u, p) {
   if (imagen && !/^https:\/\//i.test(imagen)) return { ok: false, error: 'La imagen debe ser un enlace que empiece con https://' };
   const activo = p.activo === true || p.activo === 'true';
   const stockInicial = (p.stockInicial == null || p.stockInicial === '') ? 0 : _entero(p.stockInicial, 0, 5000, 'El stock inicial');
+  // Piezas existentes (solo al editar): cualquier numero entero desde 0. Queda como AJUSTE en Movimientos.
+  const stockNuevo = (p.stock == null || p.stock === '') ? null : _entero(p.stock, 0, 100000, 'Las piezas existentes');
+  const stockAntes = (p.stockAntes == null || p.stockAntes === '') ? null : _entero(p.stockAntes, 0, 100000, 'Las piezas que veías');
 
+  return _idempotente(p.reqId, () => {
   const res = _conCandado(() => {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const s = ss.getSheetByName(CONFIG.HOJAS.PRODUCTOS);
     const existente = p.sku ? obtenerProducto(String(p.sku)) : null;
 
     if (existente) {
+      // Si cambiaron las piezas y mientras tanto hubo una venta o un ajuste, no se pisa: se pide revisar.
+      if (stockNuevo != null && stockAntes != null && stockAntes !== existente.stock) {
+        return { ok: false, code: 'STOCK_CAMBIO',
+                 error: 'Las piezas cambiaron mientras editabas (ahora hay ' + existente.stock + '). Cierra y abre el producto otra vez.' };
+      }
       const f = existente.fila;
       s.getRange(f, 2, 1, 3).setValues([[_seguroCelda(nombre), _seguroCelda(categoria),
         p.costo != null && p.costo !== '' ? _decimal(p.costo, 0, 5000, 'El costo') : existente.costo]]);
@@ -1977,7 +1986,16 @@ function apiProdGuardar(u, p) {
       s.getRange(f, 7).setValue(stockMinimo);
       s.getRange(f, 8, 1, 3).setValues([[_seguroCelda(codigo), imagen, activo]]);
       _log('PRODUCTO', u.correo, 'Editado: ' + existente.sku);
-      return { ok: true, sku: existente.sku, mensaje: 'Producto guardado.' };
+      let mensaje = 'Producto guardado.';
+      let ajuste = null;
+      if (stockNuevo != null && stockNuevo !== existente.stock) {
+        // Ajuste de inventario (no es compra): la diferencia queda en Movimientos y el stock sigue cuadrando.
+        ajuste = _moverStock(existente.sku, stockNuevo - existente.stock, 'AJUSTE',
+          { usuario: u.correo, notas: 'Piezas existentes cambiadas al editar el producto (había ' + existente.stock + ')' });
+        _log('AJUSTE', u.correo, ajuste.nombre + ' de ' + ajuste.antes + ' a ' + ajuste.despues, 'Editar producto');
+        mensaje = 'Producto guardado. Piezas: ' + ajuste.antes + ' a ' + ajuste.despues + '.';
+      }
+      return { ok: true, sku: existente.sku, mensaje: mensaje, ajuste: ajuste };
     }
 
     const sku = _skuNuevo(nombre);
@@ -1998,6 +2016,7 @@ function apiProdGuardar(u, p) {
     }
   }
   return res;
+  });
 }
 
 

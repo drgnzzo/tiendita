@@ -115,3 +115,11 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - Panel admin ya tiene el campo "Codigo de barras" (nuevo/editar) y la hoja Productos la columna Codigo_Barras (H).
 - Limite: la validacion es en la app, el servidor no exige el escaneo.
 - Para encender: cargar todos los codigos, poner ACTIVO = true, subir escaner.js?v=2 y subir version de sw.js.
+
+## Piezas existentes en "Editar producto" (25-nov, PC2)
+- En el panel, al editar un producto hay un campo "Piezas existentes": se puede poner cualquier entero desde 0 (por ejemplo 0). Si cambia, el backend aplica la diferencia con `_moverStock` como **AJUSTE** (no es compra) y queda en Movimientos con "había N". El stock sigue siendo la suma de los movimientos.
+- Backend (`apiProdGuardar`): recibe `stock` (nuevo) y `stockAntes` (lo que veía el panel). Valida entero 0 a 100000. Va dentro de `_idempotente` (reqId) y `_conCandado`. Si las piezas cambiaron mientras se editaba (venta o ajuste), responde `STOCK_CAMBIO` y no pisa nada. Si no se toca el campo, no se crea movimiento.
+- Producto nuevo sigue igual ("Piezas que tienes ahora" = ENTRADA).
+- Versiones: views-admin.js?v=11, main.js?v=12 (el panel no usa el SW). El service worker no cambió.
+- 8 pruebas nuevas (a 0, subir, cuadra con Movimientos, negativos/decimales/texto, sin cambio, doble toque, cambio concurrente, sin sesión). Total: 102 pasan (simulador).
+- No probado: Apps Script real ni el formulario en un navegador real. Pendiente: correr TIENDITA.bat y probar con un producto de prueba.
