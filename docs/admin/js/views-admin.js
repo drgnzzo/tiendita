@@ -73,13 +73,6 @@ async function vResumen(c) {
       <div><strong class="num">${money(r.valorInventarioCosto)}</strong><span>Mercancía en la tienda (a costo)</span></div>
     </div>
 
-    <div class="acciones-barra">
-      <button class="btn btn--rojo" data-a="entrada">Registrar compra</button>
-      ${puede('prod.guardar') ? html`<button class="btn btn--suave" data-a="nuevo-prod">Nuevo producto</button>` : ''}
-      ${puede('venta.admin') ? html`<button class="btn btn--suave" data-a="venta">Anotar venta a un cliente</button>` : ''}
-      ${puede('reporte.enviar') ? html`<button class="btn btn--suave" data-a="reporte">Enviar reporte del día</button>` : ''}
-    </div>
-
     <div class="dos-col">
       <section>
         <h2>Ventas de la semana</h2>
@@ -121,18 +114,13 @@ async function vResumen(c) {
     </div>`);
 
   on(c, 'click', '[data-a="entrada"]', (b) => abrirEntrada({ sku: b.dataset.sku }));
-  on(c, 'click', '[data-a="nuevo-prod"]', () => nuevoProducto());
-  on(c, 'click', '[data-a="venta"]', () => abrirVenta());
   on(c, 'click', '[data-a="cobrar"]', (b) => abrirCobro(b.dataset));
-  on(c, 'click', '[data-a="reporte"]', async (b) => {
-    const res = await ocupado(b, 'Enviando…', () => api('reporte.enviar'));
-    toast(res.ok ? res.mensaje : res.error, res.ok ? 'ok' : 'error');
-  });
 }
 
 // ====================== INVENTARIO ======================
 
 let invFiltro = '';
+let invVista = 'venta'; // 'venta' | 'archivados'
 
 async function vInventario(c) {
   mount(c, cargando());
@@ -147,39 +135,58 @@ async function vInventario(c) {
       <button class="btn btn--rojo" data-a="entrada">Registrar compra</button>
       ${puede('prod.guardar') ? html`<button class="btn btn--suave" data-a="nuevo-prod">Nuevo producto</button>` : ''}
     </div>
+    <div class="acciones-barra" id="inv-vistas"></div>
     <div id="inv-lista"></div>
     <p class="pie-lista"><a class="link" href="#/admin/corte">Hacer una auditoría de inventario</a></p>`);
+  const nVenta = prods.filter((p) => p.activo).length, nArch = prods.length - nVenta;
   const pintarProductos = () => {
     const q = invFiltro.trim().toLowerCase();
-    const visibles = prods.filter((p) => !q || (p.nombre + p.categoria + p.sku).toLowerCase().includes(q));
-    const grupos = agrupar(visibles.filter((p) => p.activo).sort(porSeccion));
-    const ocultos = visibles.filter((p) => !p.activo).sort(porSeccion);
-    if (ocultos.length) grupos.push({ cat: 'Ocultos en la tienda', items: ocultos });
+    const archivados = invVista === 'archivados';
+    mount($('#inv-vistas', c), html`
+      <button class="btn ${archivados ? 'btn--suave' : 'btn--rojo'} btn--chico" data-vista="venta">En venta (${nVenta})</button>
+      <button class="btn ${archivados ? 'btn--rojo' : 'btn--suave'} btn--chico" data-vista="archivados">Archivados (${nArch})</button>`);
+    const visibles = prods.filter((p) => (!q || (p.nombre + p.categoria + p.sku).toLowerCase().includes(q)) && (archivados ? !p.activo : p.activo));
+    const grupos = agrupar(visibles.sort(porSeccion));
     const fila = (p) => {
       const bajo = p.stock <= p.stockMinimo;
       return html`
-        <div class="fila-admin" ${p.activo ? '' : raw('style="opacity:.6"')}>
-          <span class="stock-grande ${p.stock === 0 ? 'stock-grande--cero' : bajo ? 'stock-grande--bajo' : ''}" aria-label="Hay ${p.stock}">${p.stock}</span>
+        <div class="fila-admin">
+          <span class="stock-grande ${p.stock === 0 ? 'stock-grande--cero' : bajo && p.activo ? 'stock-grande--bajo' : ''}" aria-label="Hay ${p.stock}">${p.stock}</span>
           <div class="fila-admin__texto">
-            <div class="fila-admin__nombre">${p.nombre} ${p.activo ? '' : html`<span class="sello">Oculto</span>`} ${p.stock === 0 ? html`<span class="sello sello--rojo">Agotado</span>` : bajo ? html`<span class="sello">Quedan pocas</span>` : ''}</div>
+            <div class="fila-admin__nombre">${p.nombre} ${p.activo ? (p.stock === 0 ? html`<span class="sello sello--rojo">Agotado</span>` : bajo ? html`<span class="sello">Quedan pocos</span>` : '') : html`<span class="sello">Archivado</span>`}</div>
             <div class="fila-admin__meta num">${p.categoria} · precio ${money(p.precio)}<span class="solo-pc"> · costo ${money(p.costo)} · vendió ${p.vendido30} en 30 días</span></div>
           </div>
           <div class="fila-admin__acc">
-            <button class="btn btn--suave btn--chico" data-a="entrada" data-sku="${p.sku}">+ Sumar</button>
-            <button class="btn btn--suave btn--chico" data-a="ajuste" data-sku="${p.sku}">Quitar</button>
+            ${p.activo ? html`<button class="btn btn--suave btn--chico" data-a="entrada" data-sku="${p.sku}">Sumar</button>` : (puede('prod.guardar') ? html`<button class="btn btn--rojo btn--chico" data-a="desarchivar" data-sku="${p.sku}">Sacar del archivo</button>` : '')}
             ${puede('prod.guardar') ? html`<button class="btn btn--suave btn--chico" data-a="editar" data-sku="${p.sku}">Editar</button>` : ''}
           </div>
         </div>`;
     };
-    mount($('#inv-lista', c), grupos.length === 0 ? vacio('Sin resultados') : html`${grupos.map((g) => html`
+    mount($('#inv-lista', c), grupos.length === 0
+      ? (archivados ? vacio('No hay productos archivados', 'Archiva los que no vas a vender por un tiempo desde Editar.') : vacio('Sin resultados'))
+      : html`${grupos.map((g) => html`
       <section class="seccion-admin"><h2 class="seccion-admin__titulo">${g.cat} <small>${g.items.length}</small></h2>${g.items.map(fila)}</section>`)}`);
   };
   pintarProductos();
   $('#inv-q', c).addEventListener('input', (e) => { invFiltro = e.target.value; pintarProductos(); });
   on(c, 'click', '[data-a="entrada"]', (b) => abrirEntrada({ sku: b.dataset.sku }));
-  on(c, 'click', '[data-a="ajuste"]', (b) => abrirAjuste(prods.find((p) => p.sku === b.dataset.sku)));
+  on(c, 'click', '[data-vista]', (b) => { invVista = b.dataset.vista; pintarProductos(); });
+  on(c, 'click', '[data-a="desarchivar"]', (b) => cambiarArchivo(prods.find((p) => p.sku === b.dataset.sku), false));
   on(c, 'click', '[data-a="editar"]', (b) => formProducto(prods.find((p) => p.sku === b.dataset.sku), cats));
   on(c, 'click', '[data-a="nuevo-prod"]', () => nuevoProducto());
+}
+
+// Archivar = dejar de venderlo sin perder su historial. Sacar del archivo = volver a ponerlo en venta.
+async function cambiarArchivo(p, archivar) {
+  const ok = await confirmar(archivar
+    ? { titulo: 'Archivar producto', mensaje: p.nombre + ' dejará de aparecer en la tienda y en tus listas. ' + (p.stock > 0 ? 'Todavía tiene ' + p.stock + ' piezas; se quedan registradas. ' : '') + 'Lo encuentras en Archivados.', si: 'Archivar' }
+    : { titulo: 'Sacar del archivo', mensaje: p.nombre + ' vuelve a la lista de productos. En la tienda aparece cuando tenga piezas.', si: 'Sacar del archivo' });
+  if (!ok) return false;
+  const res = await api('prod.guardar', { sku: p.sku, nombre: p.nombre, categoria: p.categoria, precio: p.precio, stockMinimo: p.stockMinimo, costo: p.costo, codigoBarras: p.codigoBarras, imagenUrl: p.imagenUrl, activo: !archivar });
+  if (!res.ok) { toast(res.error, 'error'); return false; }
+  toast(archivar ? 'Producto archivado.' : 'Producto de vuelta en venta.');
+  recargar();
+  return true;
 }
 
 function listaMovimientos(movs) {
@@ -448,38 +455,6 @@ function abrirCobro({ correo, nombre, deuda }) {
 
 // ====================== PRODUCTOS ======================
 
-let prodFiltro = '';
-async function vProductos(c) {
-  mount(c, cargando());
-  const r = await api('inv.lista');
-  if (!r.ok) { mount(c, errorCaja(r.error)); return; }
-  const prods = r.productos.slice().sort((a, b) => (b.activo - a.activo) || porNombre(a, b));
-  const cats = Array.from(new Set(prods.map((p) => p.categoria).filter(Boolean))).sort();
-  mount(c, html`
-    <div class="acciones-barra"><button class="btn btn--rojo" data-a="nuevo">Nuevo producto</button></div>
-    <div class="campo"><input id="prod-buscar" type="search" placeholder="Buscar producto…" aria-label="Buscar producto" value="${prodFiltro}"></div>
-    <div id="prod-lista"></div>`);
-  const pintar = () => {
-    const q = prodFiltro.trim().toLowerCase();
-    const lista = prods.filter((p) => !q || (p.nombre + p.categoria + p.sku).toLowerCase().includes(q));
-    mount($('#prod-lista', c), lista.length === 0 ? vacio('Sin resultados') : html`${lista.map((p) => html`
-      <div class="fila-admin" ${p.activo ? '' : raw('style="opacity:.55"')}>
-        <div><div class="fila-admin__nombre">${p.nombre} ${p.activo ? '' : html`<span class="sello">Oculto en la tienda</span>`}</div>
-          <div class="fila-admin__meta num">${p.categoria} · ${p.stock} en existencia · costo ${money(p.costo)} · ${p.sku}</div></div>
-        <div class="fila-admin__acc"><strong class="num">${money(p.precio)}</strong>
-          <button class="btn btn--suave btn--chico" data-a="entrada" data-sku="${p.sku}">+ Sumar</button>
-          <button class="btn btn--suave btn--chico" data-a="ajuste" data-sku="${p.sku}">Quitar / ajustar</button>
-          <button class="btn btn--suave btn--chico" data-a="editar" data-sku="${p.sku}">Editar</button></div>
-      </div>`)}`);
-  };
-  pintar();
-  $('#prod-buscar', c).addEventListener('input', (e) => { prodFiltro = e.target.value; pintar(); });
-  on(c, 'click', '[data-a="nuevo"]', () => formProducto(null, cats));
-  on(c, 'click', '[data-a="editar"]', (b) => formProducto(prods.find((p) => p.sku === b.dataset.sku), cats));
-  on(c, 'click', '[data-a="entrada"]', (b) => abrirEntrada({ sku: b.dataset.sku }));
-  on(c, 'click', '[data-a="ajuste"]', (b) => abrirAjuste(prods.find((p) => p.sku === b.dataset.sku)));
-}
-
 // Abre el formulario de producto nuevo con las categorías que ya existen.
 async function nuevoProducto() {
   const r = await listaProds();
@@ -516,10 +491,14 @@ function formProducto(p, cats, alGuardar) {
           </div>
           ${campo({ id: 'pr-img', etiqueta: 'Enlace de la foto (opcional)', tipo: 'url', valor: p.imagenUrl, attrs: 'maxlength="300" placeholder="https://…"' })}
         </div>
-        <div class="campo campo--fila"><input id="pr-activo" type="checkbox" ${p.activo ? raw('checked') : ''}><label for="pr-activo">Mostrar en la tienda (si no hay piezas, no aparece solo)</label></div>
+        ${nuevo ? '' : html`<div class="campo"><label>${p.activo ? 'En venta' : 'Archivado'}</label>
+          <button class="btn btn--suave btn--chico" type="button" data-archivo>${p.activo ? 'Archivar producto' : 'Sacar del archivo'}</button>
+          <p class="suave" style="margin:4px 0 0">${p.activo ? 'Si no lo vas a vender en un buen tiempo, archívalo. Se oculta sin perder su historial.' : 'Ahora no aparece en la tienda ni en tus listas.'}</p></div>`}
         <div class="acciones"><button class="btn btn--suave" type="button" data-cerrar>Cancelar</button><button class="btn btn--rojo" type="submit">${nuevo ? 'Crear producto' : 'Guardar cambios'}</button></div>
       </form>`
   });
+  const ar = $('[data-archivo]', h.el);
+  if (ar) ar.addEventListener('click', async () => { if (await cambiarArchivo(p, p.activo)) h.cerrar(); });
   $('#pr-escanear', h.el).addEventListener('click', () => {
     if (!window.tiendita_escaner) { toast('El lector de códigos no está disponible. Recarga la página.', 'error'); return; }
     const nombreProd = $('#pr-nombre', h.el).value.trim() || 'Producto nuevo';
@@ -540,7 +519,7 @@ function formProducto(p, cats, alGuardar) {
     const datos = {
       sku: nuevo ? '' : p.sku, nombre, categoria: $('#pr-cat', h.el).value.trim(), precio,
       stockMinimo: Number($('#pr-min', h.el).value || 0), costo: $('#pr-costo', h.el).value,
-      codigoBarras: $('#pr-codigo', h.el).value.trim(), imagenUrl: img, activo: $('#pr-activo', h.el).checked
+      codigoBarras: $('#pr-codigo', h.el).value.trim(), imagenUrl: img, activo: p.activo
     };
     const crudo = $('#pr-stock', h.el).value.trim();
     if (nuevo) datos.stockInicial = crudo;
@@ -633,6 +612,7 @@ async function vReportes(c) {
     <div class="acciones-barra">
       <div class="campo" style="margin:0;max-width:260px"><label for="rep-mes" class="solo-lector">Mes</label>
         <select id="rep-mes">${r.meses.map((m) => html`<option value="${m}" ${m === r.mes ? raw('selected') : ''}>${nombreMes(m)}</option>`)}</select></div>
+      ${puede('reporte.enviar') ? html`<button class="btn btn--suave" data-a="reporte">Enviar reporte del día</button>` : ''}
     </div>
     <div class="caja">
       <div><strong class="num">${money(r.ventas)}</strong><span>Vendido en ${nombreMes(r.mes)}${dif === null ? '' : ' · ' + (dif >= 0 ? '+' : '') + dif + '% vs. mes anterior'}</span></div>
@@ -706,6 +686,10 @@ async function vReportes(c) {
     });
   });
   $('#rep-mes', c).addEventListener('change', (e) => { repMes = e.target.value; vReportes(c); });
+  on(c, 'click', '[data-a="reporte"]', async (b) => {
+    const res = await ocupado(b, 'Enviando…', () => api('reporte.enviar'));
+    toast(res.ok ? res.mensaje : res.error, res.ok ? 'ok' : 'error');
+  });
 }
 
 // ====================== USUARIOS ======================
@@ -800,7 +784,7 @@ function plegarAcciones(root) {
   $$('.fila-admin__acc:not([data-mas])', root).forEach((acc) => {
     acc.setAttribute('data-mas', '1');
     const bs = $$(':scope > button', acc);
-    if (bs.length < 2) return;
+    if (bs.length < 3) return; // con dos botones se ven los dos
     const prim = bs.find((b) => b.classList.contains('btn--rojo')) || bs[0];
     bs.forEach((b) => { if (b !== prim) b.classList.add('sec'); });
     const m = document.createElement('button');

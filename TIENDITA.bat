@@ -1,11 +1,15 @@
 @echo off
 if not defined TND_MAX if not defined TND_SIN_PAUSA (
   set "TND_MAX=1"
-  start "TIENDITA" /max cmd /c ""%~f0" %*"
+  set "TND_DIR=%~dp0"
+  REM Corre una copia temporal: el pull de Git puede reemplazar este archivo mientras corre y eso lo cerraba a media ejecucion.
+  copy /y "%~f0" "%TEMP%\tiendita_run.bat" >nul
+  start "TIENDITA" /max cmd /c ""%TEMP%\tiendita_run.bat" %*"
   exit /b 0
 )
+if not defined TND_DIR set "TND_DIR=%~dp0"
 setlocal enabledelayedexpansion
-cd /d "%~dp0"
+cd /d "%TND_DIR%"
 call "_ui.bat" INIT
 call "_config.bat"
 if not exist logs mkdir logs

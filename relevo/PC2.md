@@ -18,3 +18,6 @@
 - Claude no puede correr git ni terminal en PC2: el commit lo hace el paso "Guardar" de TIENDITA.bat.
 - Si un comando de Git deja un .lock, moverlo a otro nombre dentro de .git, no borrarlo.
 - Cuidado: los archivos del proyecto usan saltos de línea de Windows (CRLF); conservarlos al editar.
+
+## 26-nov
+- Panel admin (archivar, pestañas En venta/Archivados, reportes) aplicado a mano sobre el parche de PC1; se mantuvo "Piezas existentes". Arreglo de TIENDITA.bat (copia temporal). Falta correr TIENDITA.bat.
