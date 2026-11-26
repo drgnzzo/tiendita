@@ -4,14 +4,14 @@ import { html, raw, mount, on, $, $$, reiniciarRaiz, toast, ocupado, abrirHoja, 
 
 const TITULOS = {
   resumen: ['Resumen', 'cómo va la tiendita'], inventario: ['Productos', 'lo que hay en el estante'], cobros: ['Cobros', 'quién debe y cuánto'],
-  reportes: ['Reportes', 'el mes en números'], corte: ['Auditoría', 'contar lo que hay y compararlo con el sistema'], usuarios: ['Usuarios', 'quién entra a la tiendita']
+  reportes: ['Reportes', 'el mes en números'], corte: ['Contar inventario', 'contar lo que hay y compararlo con el sistema'], usuarios: ['Usuarios', 'quién entra a la tiendita']
 };
 const SUBS = [
   { id: 'resumen', nombre: 'Resumen', permiso: 'admin.resumen' },
   { id: 'inventario', nombre: 'Productos', permiso: 'inv.lista' },
   { id: 'cobros', nombre: 'Cobros', permiso: 'cobros.lista' },
   { id: 'reportes', nombre: 'Reportes', permiso: 'reporte.mes' },
-  { id: 'corte', nombre: 'Auditoría', permiso: 'corte.lista' },
+  { id: 'corte', nombre: 'Contar inventario', permiso: 'corte.lista', oculta: true },
     { id: 'usuarios', nombre: 'Usuarios', permiso: 'usr.lista', oculta: true }
 ];
 // Criterio de orden de todo el panel:
@@ -43,7 +43,7 @@ export async function renderAdmin(root, sub) {
   if (!subs.find((s) => s.id === sub)) sub = subs[0].id;
   mount(root, html`
   <nav class="subnav" aria-label="Panel">
-      ${subs.filter((s) => !s.oculta).map((s) => html`<a href="#/admin/${s.id}" ${s.id === sub || (sub === 'productos' && s.id === 'inventario') ? raw('aria-current="page"') : ''}>${s.nombre}</a>`)}
+      ${subs.filter((s) => !s.oculta).map((s) => html`<a href="#/admin/${s.id}" ${s.id === sub || ((sub === 'productos' || sub === 'corte') && s.id === 'inventario') ? raw('aria-current="page"') : ''}>${s.nombre}</a>`)}
       ${subs.find((s) => s.id === 'usuarios') ? html`<a class="subnav__aparte" href="#/admin/usuarios" ${sub === 'usuarios' ? raw('aria-current="page"') : ''}>Usuarios</a>` : ''}
     </nav>
     <div class="titulo"><h1>${(TITULOS[sub] || TITULOS.resumen)[0]}</h1><span>${(TITULOS[sub] || TITULOS.resumen)[1]}</span></div>
@@ -88,7 +88,7 @@ async function vResumen(c) {
           <div class="fila-admin">
             <div><div class="fila-admin__nombre">${p.nombre}</div><div class="fila-admin__meta">${p.stock === 0 ? 'Agotado' : 'Quedan pocas'} · mínimo ${p.stockMinimo}</div></div>
             <div class="fila-admin__acc"><span class="stock-grande ${p.stock === 0 ? 'stock-grande--cero' : 'stock-grande--bajo'}">${p.stock}</span>
-              <button class="btn btn--suave btn--chico" data-a="entrada" data-sku="${p.sku}">+ Sumar</button></div>
+              <button class="btn btn--suave btn--chico" data-a="entrada" data-sku="${p.sku}">Llegó mercancía</button></div>
           </div>`)}
         
       </section>
@@ -132,12 +132,12 @@ async function vInventario(c) {
   mount(c, html`
     <div class="barra-productos">
       <input id="inv-q" type="search" placeholder="Buscar producto…" aria-label="Buscar producto" value="${invFiltro}" autocomplete="off">
-      <button class="btn btn--rojo" data-a="entrada">Registrar compra</button>
+      <button class="btn btn--rojo" data-a="entrada">Llegó mercancía</button>
       ${puede('prod.guardar') ? html`<button class="btn btn--suave" data-a="nuevo-prod">Nuevo producto</button>` : ''}
+      ${puede('corte.lista') ? html`<a class="btn btn--suave" href="#/admin/corte">Contar inventario</a>` : ''}
     </div>
     <div class="acciones-barra" id="inv-vistas"></div>
-    <div id="inv-lista"></div>
-    <p class="pie-lista"><a class="link" href="#/admin/corte">Hacer una auditoría de inventario</a></p>`);
+    <div id="inv-lista"></div>`);
   const nVenta = prods.filter((p) => p.activo).length, nArch = prods.length - nVenta;
   const pintarProductos = () => {
     const q = invFiltro.trim().toLowerCase();
@@ -157,7 +157,7 @@ async function vInventario(c) {
             <div class="fila-admin__meta num">${p.categoria} · precio ${money(p.precio)}<span class="solo-pc"> · costo ${money(p.costo)} · vendió ${p.vendido30} en 30 días</span></div>
           </div>
           <div class="fila-admin__acc">
-            ${p.activo ? html`<button class="btn btn--suave btn--chico" data-a="entrada" data-sku="${p.sku}">Sumar</button>` : (puede('prod.guardar') ? html`<button class="btn btn--rojo btn--chico" data-a="desarchivar" data-sku="${p.sku}">Sacar del archivo</button>` : '')}
+            ${p.activo ? html`<button class="btn btn--suave btn--chico" data-a="entrada" data-sku="${p.sku}">Llegó mercancía</button>` : (puede('prod.guardar') ? html`<button class="btn btn--rojo btn--chico" data-a="desarchivar" data-sku="${p.sku}">Sacar del archivo</button>` : '')}
             ${puede('prod.guardar') ? html`<button class="btn btn--suave btn--chico" data-a="editar" data-sku="${p.sku}">Editar</button>` : ''}
           </div>
         </div>`;
@@ -217,7 +217,7 @@ async function abrirEntrada({ sku } = {}) {
       <button class="icono-btn" data-quitar aria-label="Quitar línea" type="button">✕</button>
     </div>`;
   const h = abrirHoja({
-    titulo: 'Registrar compra', ancho: 'ancha',
+    titulo: 'Llegó mercancía', ancho: 'ancha',
     cuerpo: html`
       <form id="form-entrada" novalidate>
         <div class="error-form" id="entrada-error" role="alert"></div>
@@ -482,7 +482,7 @@ function formProducto(p, cats, alGuardar) {
           ${campo({ id: 'pr-min', etiqueta: 'Avisar cuando queden', tipo: 'number', valor: p.stockMinimo, attrs: 'inputmode="numeric" min="0" step="1"' })}
         </div>
         ${nuevo ? campo({ id: 'pr-stock', etiqueta: 'Piezas que tienes ahora', tipo: 'number', valor: '', ayuda: 'Quedan registradas como una entrada. Si todavía no llega, déjalo vacío y registra una compra después.', attrs: 'inputmode="numeric" min="0" step="1" placeholder="0"' })
-                : campo({ id: 'pr-stock', etiqueta: 'Piezas existentes', tipo: 'number', valor: p.stock, ayuda: 'Puedes poner cualquier número, incluso 0. Si lo cambias, queda como un ajuste de inventario en el historial (no es una compra). Para una compra usa + Sumar.', attrs: 'inputmode="numeric" min="0" step="1"' })}
+                : campo({ id: 'pr-stock', etiqueta: 'Piezas existentes', tipo: 'number', valor: p.stock, ayuda: 'Puedes poner cualquier número, incluso 0. Si lo cambias, queda como un ajuste de inventario en el historial (no es una compra). Si llegó mercancía, usa Llegó mercancía.', attrs: 'inputmode="numeric" min="0" step="1"' })}
         <div class="fila-campos">
           <div class="campo">
             <label for="pr-codigo">Código de barras (opcional)</label>
@@ -819,7 +819,7 @@ async function vCorte(c) {
   const r = await api('corte.lista');
   if (!r.ok) { mount(c, errorCaja(r.error)); return; }
   mount(c, html`
-    <div class="acciones-barra"><button class="btn btn--rojo" data-a="nuevo-corte">Nueva auditoría</button></div>
+    <div class="acciones-barra"><button class="btn btn--rojo" data-a="nuevo-corte">Nuevo conteo</button></div>
     <details class="ayuda"><summary>¿Cómo funciona?</summary>
       <ol class="pasos">
         <li>Cuentas lo que hay de verdad en la tienda y lo escribes aquí.</li>
@@ -827,7 +827,7 @@ async function vCorte(c) {
         <li>En el Sheet se guarda lo que había contra lo que hay (hojas Cortes_Inventario y Corte_Detalle).</li>
         <li>Lo que faltó lo cobras a una persona o lo absorbe la tienda.</li>
       </ol></details>
-    ${r.cortes.length === 0 ? vacio('Aún no hay auditorías', 'Cuando hagas el primero, aquí verás lo que faltó y a quién se le cobró.') : r.cortes.map((k) => html`
+    ${r.cortes.length === 0 ? vacio('Aún no hay conteos', 'Cuando hagas el primero, aquí verás lo que faltó y a quién se le cobró.') : r.cortes.map((k) => html`
       <div class="fila-admin">
         <div>
           <div class="fila-admin__nombre">${k.fecha} ${k.pendientePiezas > 0 ? html`<span class="sello sello--rojo">Por repartir ${k.pendientePiezas}</span>` : html`<span class="sello sello--ok">Repartido</span>`}</div>
@@ -847,7 +847,7 @@ function abrirCorte(prods) {
   const reqId = newReqId();
   const lista = prods.slice().sort(porSeccion);
   const h = abrirHoja({
-    titulo: 'Nueva auditoría', ancho: 'ancha',
+    titulo: 'Nuevo conteo', ancho: 'ancha',
     cuerpo: html`
       <form id="form-corte" novalidate>
         <p class="texto">Escribe cuántas piezas hay de verdad. Lo que dejes vacío no se toca.</p>
@@ -899,10 +899,10 @@ function abrirCorte(prods) {
     const sobra = conteos.filter((x) => x.real > x.sis).reduce((t, x) => t + x.real - x.sis, 0);
     const vacios = lista.length - conteos.length;
     const ok = await confirmar({
-      titulo: 'Cerrar la auditoría',
+      titulo: 'Cerrar el conteo',
       mensaje: 'Contaste ' + conteos.length + ' de ' + lista.length + ' productos' + (vacios ? ' (' + vacios + ' sin contar no se tocan)' : '') + '. ' +
         'Faltan ' + falta + ' piezas y sobran ' + sobra + '. El inventario quedará igual a lo que contaste y no se puede deshacer.',
-      si: 'Cerrar auditoría'
+      si: 'Cerrar conteo'
     });
     if (!ok) return;
     const btn = e.submitter || $('button[type=submit]', h.el);

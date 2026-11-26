@@ -370,3 +370,11 @@ input:focus, select:focus, textarea:focus { background: #33242A; border-color: #
 .titulo span { font: 500 15px var(--fuente); color: var(--texto-2); }
 .nav .ico { line-height: 0; }
 .nav .ico .ico-svg { margin: 0 auto 2px; }
+
+/* Barra de productos con tres botones (Llegó mercancía, Nuevo producto, Contar inventario) */
+.barra-productos { grid-template-columns: 1fr auto auto auto; }
+a.btn { text-decoration: none; }
+@media (max-width: 639px) {
+  .barra-productos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .barra-productos > a.btn { grid-column: 1 / -1; }
+}
