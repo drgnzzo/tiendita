@@ -148,3 +148,9 @@ Apps Script real (menús, listas desplegables, Session), GitHub Pages.
 - Reportes: aquí vive "Enviar reporte del día". Se quitó vProductos (sin uso). En celular, filas con 2 botones muestran los dos.
 - Versiones: views-admin.js?v=13, main.js?v=14, sw.js tiendita-v41. 111 pruebas pasan.
 - TIENDITA.bat: ahora corre desde una copia temporal para que el git pull no lo cierre a media ejecución. La primera corrida con el arreglo todavía usa el .bat viejo.
+
+## Panel: orden y archivar varios (26-nov, PC2)
+- Pestaña Auditoría pasó a botón "Contar inventario" dentro de Productos. "Registrar compra"/"Sumar" se llaman "Llegó mercancía". Barra de Productos con 3 botones (CSS en los dos temas).
+- Nuevo: "Elegir varios" en Productos: se marcan productos y se archivan (o se sacan del archivo) de una vez. Usa prod.guardar uno por uno; si uno falla se detiene y avisa cuántos se hicieron.
+- Versiones: views-admin.js?v=15, main.js?v=16, sw.js tiendita-v43.
+- Ideas y repositorios revisados: claude/repos-y-mejoras-26-nov.md en el proyecto. Siguiente: votos en "Lo que piden" (necesita backend y hoja Sugerencias), modo kiosco.

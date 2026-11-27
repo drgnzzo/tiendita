@@ -121,6 +121,7 @@ async function vResumen(c) {
 
 let invFiltro = '';
 let invVista = 'venta'; // 'venta' | 'archivados'
+let invSel = null; // null = normal; Set de SKU = modo "Elegir varios"
 
 async function vInventario(c) {
   mount(c, cargando());
@@ -139,13 +140,25 @@ async function vInventario(c) {
     <div class="acciones-barra" id="inv-vistas"></div>
     <div id="inv-lista"></div>`);
   const nVenta = prods.filter((p) => p.activo).length, nArch = prods.length - nVenta;
-  const pintarProductos = () => {
+  const visiblesAhora = () => {
     const q = invFiltro.trim().toLowerCase();
+    return prods.filter((p) => (!q || (p.nombre + p.categoria + p.sku).toLowerCase().includes(q)) && (invVista === 'archivados' ? !p.activo : p.activo));
+  };
+  const pintarBarra = () => {
     const archivados = invVista === 'archivados';
+    const n = invSel ? invSel.size : 0;
     mount($('#inv-vistas', c), html`
       <button class="btn ${archivados ? 'btn--suave' : 'btn--rojo'} btn--chico" data-vista="venta">En venta (${nVenta})</button>
-      <button class="btn ${archivados ? 'btn--rojo' : 'btn--suave'} btn--chico" data-vista="archivados">Archivados (${nArch})</button>`);
-    const visibles = prods.filter((p) => (!q || (p.nombre + p.categoria + p.sku).toLowerCase().includes(q)) && (archivados ? !p.activo : p.activo));
+      <button class="btn ${archivados ? 'btn--rojo' : 'btn--suave'} btn--chico" data-vista="archivados">Archivados (${nArch})</button>
+      ${puede('prod.guardar') ? (invSel ? html`
+        <button class="btn btn--rojo btn--chico" data-a="sel-aplicar" ${n ? '' : raw('disabled')}>${archivados ? 'Sacar del archivo' : 'Archivar'} (${n})</button>
+        <button class="btn btn--suave btn--chico" data-a="sel-todos">Elegir todos</button>
+        <button class="btn btn--suave btn--chico" data-a="sel-fin">Cancelar</button>` : html`<button class="btn btn--suave btn--chico" data-a="sel-inicio">Elegir varios</button>`) : ''}`);
+  };
+  const pintarProductos = () => {
+    const archivados = invVista === 'archivados';
+    pintarBarra();
+    const visibles = visiblesAhora();
     const grupos = agrupar(visibles.sort(porSeccion));
     const fila = (p) => {
       const bajo = p.stock <= p.stockMinimo;
@@ -156,10 +169,10 @@ async function vInventario(c) {
             <div class="fila-admin__nombre">${p.nombre} ${p.activo ? (p.stock === 0 ? html`<span class="sello sello--rojo">Agotado</span>` : bajo ? html`<span class="sello">Quedan pocos</span>` : '') : html`<span class="sello">Archivado</span>`}</div>
             <div class="fila-admin__meta num">${p.categoria} · precio ${money(p.precio)}<span class="solo-pc"> · costo ${money(p.costo)} · vendió ${p.vendido30} en 30 días</span></div>
           </div>
-          <div class="fila-admin__acc">
+          ${invSel ? html`<div class="fila-admin__acc"><label class="btn btn--suave btn--chico"><input type="checkbox" data-sel="${p.sku}" ${invSel.has(p.sku) ? raw('checked') : ''} style="width:20px;height:20px;margin:0"> Elegir</label></div>` : html`<div class="fila-admin__acc">
             ${p.activo ? html`<button class="btn btn--suave btn--chico" data-a="entrada" data-sku="${p.sku}">Llegó mercancía</button>` : (puede('prod.guardar') ? html`<button class="btn btn--rojo btn--chico" data-a="desarchivar" data-sku="${p.sku}">Sacar del archivo</button>` : '')}
             ${puede('prod.guardar') ? html`<button class="btn btn--suave btn--chico" data-a="editar" data-sku="${p.sku}">Editar</button>` : ''}
-          </div>
+          </div>`}
         </div>`;
     };
     mount($('#inv-lista', c), grupos.length === 0
@@ -170,19 +183,46 @@ async function vInventario(c) {
   pintarProductos();
   $('#inv-q', c).addEventListener('input', (e) => { invFiltro = e.target.value; pintarProductos(); });
   on(c, 'click', '[data-a="entrada"]', (b) => abrirEntrada({ sku: b.dataset.sku }));
-  on(c, 'click', '[data-vista]', (b) => { invVista = b.dataset.vista; pintarProductos(); });
+  on(c, 'click', '[data-vista]', (b) => { invVista = b.dataset.vista; if (invSel) invSel = new Set(); pintarProductos(); });
+  on(c, 'click', '[data-a="sel-inicio"]', () => { invSel = new Set(); pintarProductos(); });
+  on(c, 'click', '[data-a="sel-fin"]', () => { invSel = null; pintarProductos(); });
+  on(c, 'click', '[data-a="sel-todos"]', () => { visiblesAhora().forEach((p) => invSel.add(p.sku)); pintarProductos(); });
+  on(c, 'click', '[data-sel]', (b) => { if (b.checked) invSel.add(b.dataset.sel); else invSel.delete(b.dataset.sel); pintarBarra(); });
+  on(c, 'click', '[data-a="sel-aplicar"]', () => cambiarArchivoVarios(prods, invSel, invVista !== 'archivados'));
   on(c, 'click', '[data-a="desarchivar"]', (b) => cambiarArchivo(prods.find((p) => p.sku === b.dataset.sku), false));
   on(c, 'click', '[data-a="editar"]', (b) => formProducto(prods.find((p) => p.sku === b.dataset.sku), cats));
   on(c, 'click', '[data-a="nuevo-prod"]', () => nuevoProducto());
 }
 
 // Archivar = dejar de venderlo sin perder su historial. Sacar del archivo = volver a ponerlo en venta.
+const datosActivo = (p, activo) => ({ sku: p.sku, nombre: p.nombre, categoria: p.categoria, precio: p.precio, stockMinimo: p.stockMinimo, costo: p.costo, codigoBarras: p.codigoBarras, imagenUrl: p.imagenUrl, activo });
+
+// Archivar o sacar del archivo varios productos a la vez (uno por uno, se detiene si alguno falla).
+async function cambiarArchivoVarios(prods, skus, archivar) {
+  const lista = prods.filter((p) => skus.has(p.sku));
+  if (!lista.length) return;
+  const ok = await confirmar(archivar
+    ? { titulo: 'Archivar ' + lista.length + ' productos', mensaje: 'Dejarán de aparecer en la tienda y en tus listas. Sus piezas e historial se quedan registrados. Los encuentras en Archivados.', si: 'Archivar' }
+    : { titulo: 'Sacar ' + lista.length + ' productos del archivo', mensaje: 'Vuelven a la lista de productos. En la tienda aparecen cuando tengan piezas.', si: 'Sacar del archivo' });
+  if (!ok) return;
+  let hechos = 0, error = '';
+  for (const p of lista) {
+    const res = await api('prod.guardar', datosActivo(p, !archivar));
+    if (!res.ok) { error = res.error; break; }
+    hechos++;
+  }
+  invSel = null;
+  if (error) toast('Se hicieron ' + hechos + ' de ' + lista.length + '. ' + error, 'error');
+  else toast(archivar ? hechos + ' productos archivados.' : hechos + ' productos de vuelta en venta.');
+  recargar();
+}
+
 async function cambiarArchivo(p, archivar) {
   const ok = await confirmar(archivar
     ? { titulo: 'Archivar producto', mensaje: p.nombre + ' dejará de aparecer en la tienda y en tus listas. ' + (p.stock > 0 ? 'Todavía tiene ' + p.stock + ' piezas; se quedan registradas. ' : '') + 'Lo encuentras en Archivados.', si: 'Archivar' }
     : { titulo: 'Sacar del archivo', mensaje: p.nombre + ' vuelve a la lista de productos. En la tienda aparece cuando tenga piezas.', si: 'Sacar del archivo' });
   if (!ok) return false;
-  const res = await api('prod.guardar', { sku: p.sku, nombre: p.nombre, categoria: p.categoria, precio: p.precio, stockMinimo: p.stockMinimo, costo: p.costo, codigoBarras: p.codigoBarras, imagenUrl: p.imagenUrl, activo: !archivar });
+  const res = await api('prod.guardar', datosActivo(p, !archivar));
   if (!res.ok) { toast(res.error, 'error'); return false; }
   toast(archivar ? 'Producto archivado.' : 'Producto de vuelta en venta.');
   recargar();

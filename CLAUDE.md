@@ -11,3 +11,4 @@ Lee `ESTADO.md` y `relevo/*.md` al empezar. El usuario no es técnico: explica e
 - Subir a Apps Script NO cambia la implementación publicada: la URL /exec vieja sigue igual hasta crear una nueva implementación (la hace el dueño del script).
 - Cambios a la hoja o a datos reales solo con aprobación del usuario.
 - Cierre de sesión: actualizar `ESTADO.md` y SOLO el `relevo/PCn.md` de la PC actual; subir con `TIENDITA.bat`.
+- Bitácora viva: `relevo/BITACORA.md`. Cada vez que hagas algo (cambio, prueba, publicación), agrega arriba de su registro una línea con fecha, PC, qué se hizo, estado (guardado en carpeta / publicado con .bat / probado) y qué sigue. Todo chat nuevo, de cualquier PC, empieza leyéndola. El repositorio es privado: ahí va todo el detalle que haga falta.
