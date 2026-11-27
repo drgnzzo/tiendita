@@ -1423,3 +1423,33 @@ body::before { background: radial-gradient(40vmax 40vmax at 12% 8%, rgba(201,138
 /* Sin foto: dibujo de línea por categoría sobre fondo perla */
 .product__icon--ini { background: #F3DDE2; color: #8B2F4D; border: 2px solid #C98A9B; box-shadow: none; }
 .product__icon--ini .ico-prod { display: block; width: 62%; height: 62%; }
+
+/* v26: categorías como botones, columnas sin huecos en PC y botón del asistente más discreto */
+.filtros-cat { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 4px; scrollbar-width: none; }
+.filtros-cat::-webkit-scrollbar { display: none; }
+.filtros-cat .chip { flex: none; min-height: 40px; }
+@media (min-width: 900px) {
+  .catalogo-secciones { display: block; column-width: 300px; column-gap: 24px; }
+  .catalogo-secciones .seccion { break-inside: avoid; margin: 0 0 28px; }
+}
+.bot-fab { width: 48px; height: 48px; opacity: .92; }
+.chip--active, .chip--active:hover { background: var(--negro); color: var(--blanco); }
+
+/* v27: franja de la cuenta y "Lo que más llevas" */
+.franja-cuenta { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; border: 2px solid var(--negro); border-radius: 16px; background: var(--blanco); }
+.franja-cuenta:empty { display: none; }
+.franja-cuenta__txt { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; font-size: 14px; }
+.franja-cuenta__txt strong { font-size: 16px; }
+.franja-cuenta__barra { height: 10px; border-radius: 999px; background: #F3DDE2; overflow: hidden; }
+.franja-cuenta__barra i { display: block; height: 100%; background: linear-gradient(90deg, #FF5FA2, #B3124F); border-radius: 999px; }
+.franja-cuenta--alerta { border-color: #B3124F; }
+.franja-cuenta--alerta .franja-cuenta__barra i { background: #B3124F; }
+.otra-vez { margin: 4px 0 20px; }
+.otra-vez__titulo { font-size: 18px; margin: 0 0 10px; }
+.otra-vez__lista { display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 10px; scrollbar-width: none; }
+.otra-vez__lista::-webkit-scrollbar { display: none; }
+.otra-vez__item { flex: none; width: 150px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; padding: 12px; border: 2px solid var(--negro); border-radius: 16px; background: var(--blanco); }
+.otra-vez__nombre { font-weight: 600; font-size: 14px; line-height: 1.25; min-height: 36px; }
+.otra-vez__pie { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.otra-vez__precio { font-weight: 800; color: #B3124F; font-size: 18px; }
+@media (min-width: 900px) { .franja-cuenta { flex-direction: row; align-items: center; } .franja-cuenta__txt { flex: 1; } .franja-cuenta__barra { flex: 0 0 280px; } .otra-vez__item { width: 180px; } }

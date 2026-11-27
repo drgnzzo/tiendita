@@ -21,3 +21,8 @@
 
 ## 26-nov
 - Panel admin (archivar, pestañas En venta/Archivados, reportes) aplicado a mano sobre el parche de PC1; se mantuvo "Piezas existentes". Arreglo de TIENDITA.bat (copia temporal). Falta correr TIENDITA.bat.
+
+## 27-nov (cierre en PC2)
+- Falta correr TIENDITA.bat en PC2 para publicar catalogo v27, admin css v24 y sw v45. Luego en PC1: correr TIENDITA.bat primero (baja todo) y leer relevo/BITACORA.md.
+- En la hoja: TIENDITA > Inventario > Saldo inicial (una vez), Verificar stock, y luego Productos > Contar inventario.
+
